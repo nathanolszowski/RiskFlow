@@ -134,4 +134,14 @@ STATIC_URL = 'static/'
 
 TAILWIND_APP_NAME = 'theme'
 
+# Authentication settings
+
 AUTH_USER_MODEL = 'accounts.CustomUser'
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'dashboard'
+# Session duration (60 seconds * 10)
+SESSION_COOKIE_AGE = 600
+# Restart the countdown every time the user loads or refreshes a page
+SESSION_SAVE_EVERY_REQUEST = True
+# Session expires when the user closes the browser
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True

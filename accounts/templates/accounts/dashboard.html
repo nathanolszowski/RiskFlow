@@ -1,0 +1,40 @@
+{% extends "app_layout.html" %}
+
+{% block page_title %}Dashboard{% endblock page_title %}
+
+{% block app_content %}
+<div class="w-full max-w-md bg-gray-900/60 p-8 rounded-2xl shadow-2xl border border-gray-800 backdrop-blur-sm">
+  
+  <div class="flex h-12 w-12 items-center justify-center rounded-full bg-green-500/10 text-green-400 mb-4 mx-auto">
+    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  </div>
+
+  <h2 class="text-2xl font-bold tracking-tight text-white mb-2 text-center">
+    Bienvenue, <span class="text-red-400">{{ user.username }}</span> !
+  </h2>
+  
+  <p class="text-sm text-gray-400 mb-6 text-center">
+    Vous êtes maintenant connecté à l'application RiskFlow.
+  </p>
+  <p class="text-sm text-gray-400 mb-6 text-center">
+    L'application pour gérer votre flux de travail.
+  </p>
+
+  <div class="border-t border-gray-800/80 pt-4 text-left space-y-2 text-sm text-gray-300">
+    <p><span class="text-gray-500">Email :</span> {{ user.email|default:"Non renseigné" }}</p>
+    <p><span class="text-gray-500">Téléphone :</span> {{ user.phone_number|default:"Non renseigné" }}</p>
+    <p><span class="text-gray-500">Statut :</span> 
+      {% if user.is_superuser %}
+        <span class="inline-flex items-center rounded-md bg-purple-400/10 px-2 py-1 text-xs font-medium text-purple-400 ring-1 ring-inset ring-purple-400/30">Administrateur</span>
+      {% elif user.inspector_profile %}
+        <span class="inline-flex items-center rounded-md bg-blue-400/10 px-2 py-1 text-xs font-medium text-blue-400 ring-1 ring-inset ring-blue-400/30">Inspecteur</span>
+      {% else %}
+        <span class="inline-flex items-center rounded-md bg-gray-400/10 px-2 py-1 text-xs font-medium text-gray-400 ring-1 ring-inset ring-gray-400/20">Utilisateur Standard</span>
+      {% endif %}
+    </p>
+  </div>
+
+</div>
+{% endblock app_content %}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
+  <div class="sm:mx-auto sm:w-full sm:max-w-sm">
+    <img src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=red&shade=500" alt="RiskFlow" class="mx-auto h-10 w-auto" />
+    <h2 class="mt-10 text-center text-2xl/9 font-bold tracking-tight text-white">Connexion à votre compte</h2>
+  </div>
+
+  <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+    
+    {% if form.errors %}
+      <div class="mb-4 p-3 rounded-md bg-red-500/10 border border-red-500/50 text-sm text-red-400">
+        Votre identifiant ou mot de passe est incorrect.
+      </div>
+    {% endif %}
+
+    <form method="POST" class="space-y-6">
+      {% csrf_token %}
+
+      <div>
+        <label for="id_username" class="block text-sm/6 font-medium text-gray-100">Nom d'utilisateur</label>
+        <div class="mt-2">
+          <input id="id_username" type="text" name="username" required autocomplete="username" 
+                 class="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6" />
+        </div>
+      </div>
+
+      <div>
+        <div class="flex items-center justify-between">
+          <label for="id_password" class="block text-sm/6 font-medium text-gray-100">Mot de passe</label>
+          <div class="text-sm">
+            <a href="#" class="font-semibold text-indigo-400 hover:text-indigo-300">Mot de passe oublié ?</a>
+          </div>
+        </div>
+        <div class="mt-2">
+          <input id="id_password" type="password" name="password" required autocomplete="current-password" 
+                 class="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6" />
+        </div>
+      </div>
+
+      <div>
+        <button type="submit" class="flex w-full justify-center rounded-md bg-indigo-500 px-3 py-1.5 text-sm/6 font-semibold text-white hover:bg-indigo-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500">
+          Se connecter
+        </button>
+      </div>
+    </form>
+
+  </div>
+</div>
+{% endblock content %}

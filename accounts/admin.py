@@ -13,11 +13,11 @@ class CustomUserAdmin(UserAdmin):
     inlines = [InspectorInline]
     
     fieldsets = list(UserAdmin.fieldsets) + [
-        ('Global user', {'fields': ('phone_number',)}),
+        (None, {'fields': ('phone_number',)}),
     ]
     
     add_fieldsets = list(UserAdmin.add_fieldsets) + [
-        ('Global user', {'fields': ('phone_number',)}),
+        (None, {'fields': ('phone_number',)}),
     ]
 
 admin.site.register(CustomUser, CustomUserAdmin)
