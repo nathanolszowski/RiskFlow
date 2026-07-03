@@ -13,7 +13,7 @@
             <div class="ml-10 flex items-baseline space-x-4">
               <a href="{% url 'dashboard' %}" class="rounded-md {% if request.resolver_match.url_name == 'dashboard' %}bg-gray-950/50 text-white{% else %}text-gray-300 hover:bg-white/5 hover:text-white{% endif %} px-3 py-2 text-sm font-medium" {% if request.resolver_match.url_name == 'dashboard' %}aria-current="page"{% endif %}>Dashboard</a>
               
-              <a href="#" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white">Dossiers</a>
+              <a href="{% url 'folders' %}" class="rounded-md {% if request.resolver_match.url_name == 'folders' %}bg-gray-950/50 text-white{% else %}text-gray-300 hover:bg-white/5 hover:text-white{% endif %} px-3 py-2 text-sm font-medium" {% if request.resolver_match.url_name == 'folders' %}aria-current="page"{% endif %}>Mes Dossiers</a>
               <a href="#" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white">Calendrier</a>
               <a href="#" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white">Rapports</a>
             </div>

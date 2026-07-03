@@ -1,0 +1,33 @@
+<div id="create-folder-modal" class="fixed inset-0 z-50 overflow-y-auto">
+  <div class="flex min-h-screen items-center justify-center p-4 text-center">
+    
+    <div class="fixed inset-0 bg-gray-950/70 backdrop-blur-xs" onclick="document.getElementById('create-folder-modal').remove()"></div>
+
+    <div class="relative transform overflow-hidden rounded-2xl bg-gray-900 border border-gray-800 p-6 text-left shadow-2xl transition-all sm:w-full sm:max-w-md">
+      <div class="mb-4">
+        <h3 class="text-lg font-semibold text-white">Créer un dossier d'inspection</h3>
+      </div>
+
+      <form hx-post="{% url 'create_folder_htmx' %}" hx-target="#folder-grid-container" class="space-y-4">
+        {% csrf_token %}
+        <div>
+          <label class="block text-xs font-medium text-gray-300 mb-1">Référence unique</label>
+          {{ form.reference }}
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-300 mb-1">Sélectionner le Client</label>
+          {{ form.client }}
+        </div>
+
+        <div class="mt-6 flex justify-end space-x-3 border-t border-gray-800/60 pt-4">
+          <button type="button" onclick="document.getElementById('create-folder-modal').remove()" class="rounded-md bg-white/5 px-3 py-2 text-sm font-semibold text-gray-300 hover:bg-white/10">
+            Annuler
+          </button>
+          <button type="submit" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500">
+            Initialiser le dossier
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

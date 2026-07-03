@@ -14,7 +14,7 @@ class VisitInstanceInline(admin.TabularInline):
     model = VisitInstance
     extra = 0
     readonly_fields = ('created_by', 'created_at', 'updated_by', 'updated_at')
-    # On exclut le champ data du tableau inline car le JSON brut prend trop de place
+    # Exclude the 'data' field from the inline form to prevent it from being displayed or edited in the admin interface.
     exclude = ('data',) 
 
 
