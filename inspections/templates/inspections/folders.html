@@ -30,7 +30,6 @@
 <script>
   document.body.addEventListener('closeModal', function() {
     const modal = document.getElementById('create-folder-modal');
-    if (modal) modal.remove(); // On détruit proprement le HTML injecté
-  });
+    if (modal) modal.remove();
 </script>
 {% endblock app_content %}

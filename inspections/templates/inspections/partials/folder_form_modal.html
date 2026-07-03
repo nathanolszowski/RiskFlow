@@ -8,7 +8,10 @@
         <h3 class="text-lg font-semibold text-white">Créer un dossier d'inspection</h3>
       </div>
 
-      <form hx-post="{% url 'create_folder_htmx' %}" hx-target="#folder-grid-container" class="space-y-4">
+      <form hx-post="{% url 'create_folder_htmx' %}" 
+            hx-target="#folder-grid-container" 
+            hx-on::after-request="if(event.detail.successful) document.getElementById('create-folder-modal').remove()"
+            class="space-y-4">
         {% csrf_token %}
         <div>
           <label class="block text-xs font-medium text-gray-300 mb-1">Référence unique</label>
@@ -24,7 +27,7 @@
             Annuler
           </button>
           <button type="submit" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500">
-            Initialiser le dossier
+            Créer le dossier
           </button>
         </div>
       </form>

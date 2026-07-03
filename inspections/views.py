@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from inspections.models import InspectionFolder, InspectionFolderForm
+from inspections.models import InspectionFolder
+from inspections.forms import InspectionFolderForm
 
 
 

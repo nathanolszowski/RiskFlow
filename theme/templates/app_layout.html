@@ -63,18 +63,18 @@
   </nav>
 
   <header class="relative bg-gray-800 after:pointer-events-none after:absolute after:inset-x-0 after:inset-y-0 after:border-y after:border-white/10">
-    <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-      <h1 class="text-3xl font-bold tracking-tight text-white">
-        {% block page_title %}Tableau de bord{% endblock page_title %}
-      </h1>
-    </div>
-  </header>
-  
-    <main class="flex flex-col justify-center items-center px-4 py-12 sm:px-6 lg:px-8" style="min-height: calc(100vh - 160px);">
-        <div class="w-full max-w-7xl flex justify-center items-center">
-        {% block app_content %}
-        {% endblock app_content %}
+      <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <h1 class="text-3xl font-bold tracking-tight text-white">
+          {% block page_title %}Tableau de bord{% endblock page_title %}
+        </h1>
+      </div>
+    </header>
+    
+    <main class="flex flex-col items-center px-4 pt-6 pb-12 sm:px-6 lg:px-8" style="min-height: calc(100vh - 160px);">
+        <div class="w-full max-w-7xl">
+          {% block app_content %}
+          {% endblock app_content %}
         </div>
     </main>
-</div>
+  </div>
 {% endblock content %}
