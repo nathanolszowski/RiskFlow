@@ -43,7 +43,6 @@ INSTALLED_APPS = [
     'accounts',
 ]
 
-
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -134,3 +133,5 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 TAILWIND_APP_NAME = 'theme'
+
+AUTH_USER_MODEL = 'accounts.CustomUser'
