@@ -7,7 +7,7 @@
   
   <div class="sm:flex sm:items-center sm:justify-between mb-8">
     <div>
-      <p class="mt-2 text-sm text-gray-400">Gestion de vos audits en temps réel.</p>
+      <p class="mt-2 text-sm text-gray-400">Gestion de vos dossiers en temps réel.</p>
     </div>
     <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
       <button type="button" 
@@ -31,5 +31,7 @@
   document.body.addEventListener('closeModal', function() {
     const modal = document.getElementById('create-folder-modal');
     if (modal) modal.remove();
+  });
 </script>
+
 {% endblock app_content %}

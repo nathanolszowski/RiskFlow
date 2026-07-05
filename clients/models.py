@@ -2,7 +2,7 @@ from django.db import models
 from django.conf import settings
 from config.models import TrackingModel
 
-class Client(TrackingModel):
+class Clients(TrackingModel):
     reference = models.CharField(max_length=50, unique=True, verbose_name="Référence Client")
     name = models.CharField(max_length=255, verbose_name="Nom de l'entreprise")
     address = models.TextField(verbose_name="Adresse")

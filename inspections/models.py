@@ -23,7 +23,7 @@ class InspectionFolder(TrackingModel):
 
     # --- CLIENT RELATIONSHIP ---
     client = models.ForeignKey(
-        'clients.Client',
+        'clients.Clients',
         on_delete=models.PROTECT, # Protect the client if there are inspection folders associated with it
         related_name='inspection_folders', # Can access to all inspection folders of a client via client.inspection_folders.all()
         verbose_name="Client"

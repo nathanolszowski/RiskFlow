@@ -9,7 +9,7 @@ from inspections.services import create_inspection_folder, get_inspection_folder
 def folders_view(request):
     folders = get_inspection_folders_by_user(request.user)
 
-    return render(request, 'inspections/folders.html', {'folders': folders})
+    return render(request, 'inspections/dossiers.html', {'folders': folders})
 
 @login_required
 def create_folder_htmx(request):
