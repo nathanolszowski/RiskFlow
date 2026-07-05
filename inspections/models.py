@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from config.models import TrackingModel
 from django.core.exceptions import ValidationError
 
 """
@@ -8,7 +9,7 @@ from django.core.exceptions import ValidationError
 
 """
 
-class InspectionFolder(models.Model):
+class InspectionFolder(TrackingModel):
     class Phase(models.TextChoices):
         CREATION = 'CREATION', 'En création'
         ASSIGNED = 'ASSIGNED', 'Assigné / Planifié'
@@ -19,42 +20,22 @@ class InspectionFolder(models.Model):
 
     reference = models.CharField(max_length=100, unique=True, verbose_name="Référence du dossier")
     current_phase = models.CharField(max_length=20, choices=Phase.choices, default=Phase.CREATION, verbose_name="Phase actuelle")
-    is_active = models.BooleanField(default=True, verbose_name="Dossier actif")
 
     # --- CLIENT RELATIONSHIP ---
     client = models.ForeignKey(
-        'clients.Clients',
+        'clients.Client',
         on_delete=models.PROTECT, # Protect the client if there are inspection folders associated with it
         related_name='inspection_folders', # Can access to all inspection folders of a client via client.inspection_folders.all()
         verbose_name="Client"
     )
 
-    # --- ACTIONS ---
-    created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
-        related_name='created_folders',
-        verbose_name="Créé par"
-    )
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Date de création")
-    
-    updated_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
-        related_name='updated_folders',
-        verbose_name="Modifié en dernier par",
-        blank=True,
-        null=True
-    )
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="Dernière mise à jour")
-
-    class Meta:
+    class Meta(TrackingModel.Meta):
         verbose_name = "Dossier d'inspection"
         verbose_name_plural = "Dossiers d'inspection"
         ordering = ['-updated_at']
 
     def __str__(self):
-        return f"{self.reference} - {self.client} {self.get_current_phase_display()}"
+        return f"{self.reference} - {self.client} {self.current_phase}"
 
 """
 
@@ -62,16 +43,14 @@ class InspectionFolder(models.Model):
 
 """
 
-class VisitTemplate(models.Model):
+class VisitTemplate(TrackingModel):
     name = models.CharField(max_length=255, verbose_name="Nom du template")
     description = models.TextField(blank=True, verbose_name="Description")
     
     # Stocke la structure dynamique du formulaire (champs, types, etc.)
     schema = models.JSONField(verbose_name="Schéma du formulaire (JSON)")
-    
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Date de création")
 
-    class Meta:
+    class Meta(TrackingModel.Meta):
         verbose_name = "Modèle de visite"
         verbose_name_plural = "Modèles de visite"
 
@@ -79,7 +58,7 @@ class VisitTemplate(models.Model):
         return self.name
 
 
-class VisitInstance(models.Model):
+class VisitInstance(TrackingModel):
     class Status(models.TextChoices):
         SCHEDULED = 'SCHEDULED', 'Planifiée'
         IN_PROGRESS = 'IN_PROGRESS', 'En cours'
@@ -109,28 +88,8 @@ class VisitInstance(models.Model):
     # --- DATA & STATUS ---
     data = models.JSONField(blank=True, default=dict, verbose_name="Données saisies (JSON)")
     current_status = models.CharField(max_length=20, choices=Status.choices, default=Status.SCHEDULED, verbose_name="Statut de la visite")
-    is_active = models.BooleanField(default=True, verbose_name="Visite active")
 
-    # --- ACTIONS ---
-    created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
-        related_name='created_visits',
-        verbose_name="Créé par"
-    )
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Date de création")
-    
-    updated_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
-        related_name='updated_visits',
-        verbose_name="Modifié en dernier par",
-        blank=True,
-        null=True
-    )
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="Dernière mise à jour")
-
-    class Meta:
+    class Meta(TrackingModel.Meta):
         verbose_name = "Instance de visite"
         verbose_name_plural = "Instances de visite"
         ordering = ['-created_at']

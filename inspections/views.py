@@ -1,33 +1,28 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from inspections.models import InspectionFolder
 from inspections.forms import InspectionFolderForm
+from inspections.services import create_inspection_folder, get_inspection_folders_by_user
 
 
 
 @login_required
 def folders_view(request):
-    folders = InspectionFolder.objects.filter(
-        created_by=request.user, 
-        is_active=True
-    ).select_related('client')
-    
+    folders = get_inspection_folders_by_user(request.user)
+
     return render(request, 'inspections/folders.html', {'folders': folders})
 
 @login_required
 def create_folder_htmx(request):
-    """Gère l'affichage de la popup ET la création en HTMX"""
+    """HTMX view to create a new inspection folder."""
     if request.method == 'POST':
         form = InspectionFolderForm(request.POST)
         if form.is_valid():
-            folder = form.save(commit=False)
-            folder.created_by = request.user
-            folder.save()
+            create_inspection_folder(form, request.user)
             
-            # Option HTMX : On recharge les dossiers en tâche de fond et on ferme la modal
-            folders = InspectionFolder.objects.filter(created_by=request.user, is_active=True).select_related('client')
+            # Reload the list of folders after creation
+            folders = get_inspection_folders_by_user(request.user)
             response = render(request, 'inspections/partials/folder_grid.html', {'folders': folders})
-            response['HX-Trigger'] = 'closeModal' # Déclenche un événement JS pour fermer la popup
+            response['HX-Trigger'] = 'closeModal' # Trigger to close the modal in HTMX
             return response
     else:
         form = InspectionFolderForm()
