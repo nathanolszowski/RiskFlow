@@ -67,7 +67,7 @@ class InspectionFolderAdmin(admin.ModelAdmin):
 @admin.register(VisitInstance)
 class VisitInstanceAdmin(admin.ModelAdmin):
     list_display = ('id', 'folder', 'template', 'current_status', 'is_active')
-    list_filter = ('current_status', 'is_active')
+    list_filter = ('current_status', 'is_active', 'due_date')
     search_fields = ('folder__reference', 'template__name')
     readonly_fields = ('created_by', 'created_at', 'updated_by', 'updated_at', 'archived_at', 'archived_by')
 

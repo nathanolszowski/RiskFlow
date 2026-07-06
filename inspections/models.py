@@ -93,9 +93,8 @@ class VisitTemplate(TrackingModel):
 class VisitInstance(TrackingModel):
     class Status(models.TextChoices):
         SCHEDULED = 'SCHEDULED', 'Planifiée'
-        IN_PROGRESS = 'IN_PROGRESS', 'En cours'
-        SUBMITTED = 'SUBMITTED', 'Soumise / À valider'
-        VALIDATED = 'VALIDATED', 'Validée'
+        DELAY = 'DELAY', 'En retard'
+        VALIDATED = 'VALIDATED', 'Effectuée'
 
     # --- INSPECTION FOLDER RELATIONSHIP ---
     folder = models.ForeignKey(
@@ -114,6 +113,7 @@ class VisitInstance(TrackingModel):
     # --- DATA & STATUS ---
     data = models.JSONField(blank=True, default=dict, verbose_name="Données saisies (JSON)")
     current_status = models.CharField(max_length=20, choices=Status.choices, default=Status.SCHEDULED, verbose_name="Statut de la visite")
+    due_date = models.DateField(null=True, blank=True, verbose_name="Date de visite")
 
     class Meta(TrackingModel.Meta):
         verbose_name = "Instance de visite"
