@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'accounts',
     'inspections',
     'clients',
+    'core',
 ]
 
 MIDDLEWARE = [

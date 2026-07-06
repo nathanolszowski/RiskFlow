@@ -1,6 +1,5 @@
 from django.db import models
-from django.conf import settings
-from config.models import TrackingModel
+from core.models import TrackingModel
 
 class Clients(TrackingModel):
     reference = models.CharField(max_length=50, unique=True, verbose_name="Référence Client")

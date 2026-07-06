@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from config.models import TrackingModel
+from core.models import TrackingModel
 from django.core.exceptions import ValidationError
 
 """
