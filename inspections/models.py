@@ -2,6 +2,8 @@ from django.db import models
 from django.conf import settings
 from core.models import TrackingModel
 from django.core.exceptions import ValidationError
+from pydantic import ValidationError as PydanticValidationError
+from .visit_schema import VisitTemplateSchema
 
 """
 
@@ -43,18 +45,47 @@ class InspectionFolder(TrackingModel):
 
 """
 
+def get_default_template_structure():
+    """
+    Retourne le squelette JSON par défaut pour un nouveau gabarit de visite.
+    """
+    return {
+        "version": "1.0",
+        "sections": [
+            {
+                "id": "sec_exemple",
+                "title": "Nom de la Section (Ex: Sécurité)",
+                "order": 1,
+                "fields": [
+                    {
+                        "id": "f_champ_exemple",
+                        "label": "Libellé de la question ?",
+                        "type": "boolean",
+                        "required": True,
+                        "order": 1
+                    }
+                ]
+            }
+        ]
+    }
+
 class VisitTemplate(TrackingModel):
     name = models.CharField(max_length=255, verbose_name="Nom du template")
     description = models.TextField(blank=True, verbose_name="Description")
     shared = models.BooleanField(default=False, verbose_name="Partagé avec tous les utilisateurs")
-    
-    # Stocke la structure dynamique du formulaire (champs, types, etc.)
-    schema = models.JSONField(verbose_name="Schéma du formulaire (JSON)")
+    schema = models.JSONField(default=get_default_template_structure, verbose_name="Structure du template (JSON)")
 
     class Meta(TrackingModel.Meta):
         verbose_name = "Modèle de visite"
         verbose_name_plural = "Modèles de visite"
 
+    def clean(self):
+        super().clean()
+        try:
+            VisitTemplateSchema(**self.schema)
+        except PydanticValidationError as e:
+            raise ValidationError(f"Le format JSON de la structure est invalide : {e}")
+        
     def __str__(self):
         return self.name
 

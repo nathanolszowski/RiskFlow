@@ -1,10 +1,24 @@
 from django.contrib import admin
+from django.db import models
+from django_json_widget.widgets import JSONEditorWidget
 from .models import VisitTemplate, InspectionFolder, VisitInstance
 
 @admin.register(VisitTemplate)
 class VisitTemplateAdmin(admin.ModelAdmin):
-    list_display = ('name', 'description', 'created_at')
+    list_display = ('name', 'is_active', 'created_at', 'created_by')
+    list_filter = ('is_active', 'created_at')
     search_fields = ('name',)
+    
+    formfield_overrides = {
+        models.JSONField: {'widget': JSONEditorWidget},
+    }
+
+    # Optionally, you can override the save_model method to automatically set the created_by and updated_by fields based on the current user.
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.created_by = request.user
+        obj.updated_by = request.user
+        super().save_model(request, obj, form, change)
 
 
 class VisitInstanceInline(admin.TabularInline):
