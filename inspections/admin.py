@@ -13,7 +13,7 @@ class VisitInstanceInline(admin.TabularInline):
     """
     model = VisitInstance
     extra = 0
-    readonly_fields = ('created_by', 'created_at', 'updated_by', 'updated_at')
+    readonly_fields = ('created_by', 'created_at', 'updated_by', 'updated_at', 'archived_at', 'archived_by')
     # Exclude the 'data' field from the inline form to prevent it from being displayed or edited in the admin interface.
     exclude = ('data',) 
 
@@ -23,7 +23,7 @@ class InspectionFolderAdmin(admin.ModelAdmin):
     list_display = ('reference', 'client', 'current_phase', 'is_active', 'created_by', 'updated_at')
     list_filter = ('current_phase', 'is_active', 'created_at')
     search_fields = ('reference', 'client__name') # 'client__name' authorizes searching by the name of the related client
-    readonly_fields = ('created_by', 'created_at', 'updated_by', 'updated_at')
+    readonly_fields = ('created_by', 'created_at', 'updated_by', 'updated_at', 'archived_at', 'archived_by')
     
     inlines = [VisitInstanceInline]
 
@@ -52,10 +52,10 @@ class InspectionFolderAdmin(admin.ModelAdmin):
 
 @admin.register(VisitInstance)
 class VisitInstanceAdmin(admin.ModelAdmin):
-    list_display = ('id', 'folder', 'template', 'owner', 'current_status', 'is_active')
+    list_display = ('id', 'folder', 'template', 'current_status', 'is_active')
     list_filter = ('current_status', 'is_active')
-    search_fields = ('folder__reference', 'owner__username', 'template__name')
-    readonly_fields = ('created_by', 'created_at', 'updated_by', 'updated_at')
+    search_fields = ('folder__reference', 'template__name')
+    readonly_fields = ('created_by', 'created_at', 'updated_by', 'updated_at', 'archived_at', 'archived_by')
 
     def save_model(self, request, obj, form, change):
         if not change:

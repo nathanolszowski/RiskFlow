@@ -12,7 +12,7 @@ class ClientsAdmin(admin.ModelAdmin):
     search_fields = ('name', 'reference', 'siret')
     
     # Readonly fields to prevent direct modification of these fields
-    readonly_fields = ('created_by', 'created_at', 'updated_by', 'updated_at')
+    readonly_fields = ('created_by', 'created_at', 'updated_by', 'updated_at', 'archived_at', 'archived_by')
 
     def save_model(self, request, obj, form, change):
         """

@@ -46,6 +46,7 @@ class InspectionFolder(TrackingModel):
 class VisitTemplate(TrackingModel):
     name = models.CharField(max_length=255, verbose_name="Nom du template")
     description = models.TextField(blank=True, verbose_name="Description")
+    shared = models.BooleanField(default=False, verbose_name="Partagé avec tous les utilisateurs")
     
     # Stocke la structure dynamique du formulaire (champs, types, etc.)
     schema = models.JSONField(verbose_name="Schéma du formulaire (JSON)")
@@ -78,12 +79,6 @@ class VisitInstance(TrackingModel):
         related_name='instances', 
         verbose_name="Template utilisé"
     )
-    owner = models.ForeignKey(
-        settings.AUTH_USER_MODEL, 
-        on_delete=models.PROTECT, 
-        related_name='assigned_visits', 
-        verbose_name="Inspecteur terrain"
-    )
     
     # --- DATA & STATUS ---
     data = models.JSONField(blank=True, default=dict, verbose_name="Données saisies (JSON)")
@@ -115,3 +110,65 @@ class VisitInstance(TrackingModel):
 
     def __str__(self):
         return f"Visite {self.template.name} - Dossier {self.folder.reference}"
+
+"""
+
+==== INSPECTION RECOMMANDATION SECTION ====
+
+"""
+
+class Recommandation(TrackingModel):
+    """
+    Model representing a recommendation associated with an inspection folder. Each recommendation has a description, priority, status, and 
+    an optional due date. The model also includes relationships to the InspectionFolder model.
+    """
+    class Priority(models.TextChoices):
+        LOW = 'LOW', 'Basse'
+        MEDIUM = 'MEDIUM', 'Moyenne'
+        HIGH = 'HIGH', 'Haute'
+        CRITICAL = 'CRITICAL', 'Critique'
+
+    class Status(models.TextChoices):
+        OPEN = 'OPEN', 'Ouverte'
+        IN_PROGRESS = 'IN_PROGRESS', 'En cours'
+        RESOLVED = 'RESOLVED', 'Résolue'
+        ABANDONED = 'ABANDONED', 'Abandonnée'
+
+    # --- FOLDER RELATIONSHIP ---
+    folder = models.ForeignKey(
+        InspectionFolder,
+        on_delete=models.CASCADE,
+        related_name='recommandations',
+        verbose_name="Dossier d'inspection"
+    )
+
+    # --- DATA ---
+    description = models.TextField(verbose_name="Description de la recommandation")
+    
+    priority = models.CharField(
+        max_length=20,
+        choices=Priority.choices,
+        default=Priority.MEDIUM,
+        verbose_name="Priorité"
+    )
+    
+    current_status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.OPEN,
+        verbose_name="Statut actuel"
+    )
+    
+    due_date = models.DateField(
+        blank=True,
+        null=True,
+        verbose_name="Date limite d'exécution"
+    )
+
+    class Meta(TrackingModel.Meta):
+        verbose_name = "Recommandation"
+        verbose_name_plural = "Recommandations"
+        ordering = ['due_date', '-priority']
+
+    def __str__(self):
+        return f"Rec #{self.folder.reference} - {self.description[:50]} : ({self.current_status})"
