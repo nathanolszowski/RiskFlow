@@ -141,8 +141,8 @@ TAILWIND_APP_NAME = 'theme'
 # Authentication settings
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
-LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'dashboard'
+LOGIN_URL = 'accounts:login'
+LOGIN_REDIRECT_URL = 'core:dashboard'
 # Session duration (60 seconds * 10)
 SESSION_COOKIE_AGE = 600
 # Restart the countdown every time the user loads or refreshes a page

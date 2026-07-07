@@ -1,0 +1,21 @@
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    
+    <div class="lg:col-span-2 space-y-6">
+        <div class="rounded-2xl border border-gray-800 bg-gray-900/40 p-6 backdrop-blur-xs">
+            <h3 class="text-lg font-bold text-white mb-4">📁 Informations du Dossier</h3>
+            <p class="text-sm text-gray-300">Réf : {{ folder.reference }}</p>
+            <p class="text-sm text-gray-300">Phase : {{ folder.get_current_phase_display }}</p>
+        </div>
+
+        <div class="rounded-2xl border border-gray-800 bg-gray-900/40 p-6 backdrop-blur-xs">
+            <h3 class="text-lg font-bold text-white mb-4">⚠️ Recommandations Actives</h3>
+            </div>
+    </div>
+
+    <div class="lg:col-span-1">
+        <div class="rounded-2xl border border-gray-800 bg-gray-900/40 p-6 backdrop-blur-xs h-full">
+            <h3 class="text-lg font-bold text-white mb-4">🏢 Informations Client</h3>
+            <p class="text-sm text-white font-bold">{{ folder.client.name }}</p>
+        </div>
+    </div>
+</div>

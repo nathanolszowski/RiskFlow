@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.db import models
 from django_json_widget.widgets import JSONEditorWidget
-from .models import VisitTemplate, InspectionFolder, VisitInstance
+from .models import VisitTemplate, InspectionFolder, VisitInstance, Recommandation
 
 @admin.register(VisitTemplate)
 class VisitTemplateAdmin(admin.ModelAdmin):
@@ -76,4 +76,20 @@ class VisitInstanceAdmin(admin.ModelAdmin):
             obj.created_by = request.user
         else:
             obj.updated_by = request.user
+        super().save_model(request, obj, form, change)
+
+
+@admin.register(Recommandation)
+class RecommandationAdmin(admin.ModelAdmin):
+    list_display = ('id', 'folder', 'current_status', 'is_active')
+    list_filter = ('is_active', 'priority', 'current_status', 'created_at', 'folder')
+    search_fields = ('description', 'folder__name', 'folder__reference')
+    list_select_related = ('folder', 'created_by')
+    
+    readonly_fields = ('created_at', 'updated_at', 'archived_at')
+
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.created_by = request.user
+        obj.updated_by = request.user
         super().save_model(request, obj, form, change)

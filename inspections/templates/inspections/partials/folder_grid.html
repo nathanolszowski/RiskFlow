@@ -12,7 +12,7 @@
         <p class="text-xs text-gray-500 mb-4">Siret : {{ folder.client.siret }}</p>
         <div class="mt-6 border-t border-gray-800/80 pt-4 flex items-center justify-between text-xs text-gray-400">
           <span>Modifié le {{ folder.updated_at|date:"d/m/Y" }}</span>
-          <a href="#" class="font-semibold text-white hover:text-indigo-400">Ouvrir</a>
+          <a href="{% url 'inspections:folder_tab_overview' folder.id %}" class="font-semibold text-white hover:text-indigo-400">Ouvrir</a>
         </div>
       </div>
     {% endfor %}

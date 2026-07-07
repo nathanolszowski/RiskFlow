@@ -4,7 +4,6 @@ from django.core.exceptions import ValidationError
 from pydantic import ValidationError as PydanticValidationError
 from .visit_schema import VisitTemplateSchema
 from django.utils import timezone
-from django.db.models.manager import RelatedManager
 """
 
 ==== INSPECTION FOLDER SECTION ====
@@ -22,7 +21,6 @@ class InspectionFolder(TrackingModel):
 
     reference = models.CharField(max_length=100, unique=True, verbose_name="Référence du dossier")
     current_phase = models.CharField(max_length=20, choices=Phase.choices, default=Phase.CREATION, verbose_name="Phase actuelle")
-    recommandations: RelatedManager['Recommandation']
 
     # --- CLIENT RELATIONSHIP ---
     client = models.ForeignKey(
