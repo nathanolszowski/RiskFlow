@@ -1,3 +1,5 @@
+from django.utils import timezone
+
 from django.db import models
 from django.conf import settings
 
@@ -38,3 +40,20 @@ class TrackingModel(models.Model):
 
     class Meta:
         abstract = True  # <--- Django will not create a database table for this model, but other models can inherit from it to get these fields.
+
+    def archive(self, user=None):
+        """
+        Method to archive (soft delete) the instance. It sets is_active to False, records the current time in archived_at, and 
+        optionally records the user who performed the action.
+        """
+        self.is_active = False
+        self.archived_at = timezone.now()
+        if user:
+            self.archived_by = user
+            self.updated_by = user
+        self.save()
+        self.cascade_archive(user=user)
+
+    def cascade_archive(self, user=None):
+        """To be overridden in child classes if needed to propagate the archiving action"""
+        pass

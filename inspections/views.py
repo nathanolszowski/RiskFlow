@@ -1,7 +1,8 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from inspections.forms import InspectionFolderForm
-from inspections.services import create_inspection_folder, get_inspection_folders_by_user
+from core.services import create_tracked_instance
+from services.inspectionfolder import get_inspection_folders_by_user
 
 
 
@@ -17,8 +18,8 @@ def create_folder_htmx(request):
     if request.method == 'POST':
         form = InspectionFolderForm(request.POST)
         if form.is_valid():
-            create_inspection_folder(form, request.user)
-            
+            create_tracked_instance(form, request.user)
+
             # Reload the list of folders after creation
             folders = get_inspection_folders_by_user(request.user)
             response = render(request, 'inspections/partials/folder_grid.html', {'folders': folders})

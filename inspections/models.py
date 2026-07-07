@@ -1,10 +1,10 @@
 from django.db import models
-from django.conf import settings
 from core.models import TrackingModel
 from django.core.exceptions import ValidationError
 from pydantic import ValidationError as PydanticValidationError
 from .visit_schema import VisitTemplateSchema
-
+from django.utils import timezone
+from django.db.models.manager import RelatedManager
 """
 
 ==== INSPECTION FOLDER SECTION ====
@@ -22,6 +22,7 @@ class InspectionFolder(TrackingModel):
 
     reference = models.CharField(max_length=100, unique=True, verbose_name="Référence du dossier")
     current_phase = models.CharField(max_length=20, choices=Phase.choices, default=Phase.CREATION, verbose_name="Phase actuelle")
+    recommandations: RelatedManager['Recommandation']
 
     # --- CLIENT RELATIONSHIP ---
     client = models.ForeignKey(
@@ -38,6 +39,20 @@ class InspectionFolder(TrackingModel):
 
     def __str__(self):
         return f"{self.reference} - {self.client} {self.current_phase}"
+    
+    def cascade_archive(self, user=None):
+        """
+        Propage l'archivage du dossier à toutes ses recommandations liées.
+        """
+        update_data = {
+            'is_active': False,
+            'archived_at': timezone.now(),
+        }
+        if user:
+            update_data['archived_by'] = user
+            update_data['updated_by'] = user
+
+        self.recommandations.update(**update_data)
 
 """
 
