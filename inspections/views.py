@@ -31,8 +31,14 @@ def create_folder_htmx(request):
     return render(request, 'inspections/partials/folder_form_modal.html', {'form': form})
 
 @login_required
+def folder_detail_view(request, folder_id):
+    """Show the default details of a specific inspection folder."""
+    folder = get_inspection_folder_by_id(folder_id, request.user)
+    return render(request, 'inspections/folder_detail.html', {'folder': folder})
+
+@login_required
 def folder_tab_overview(request, folder_id):
-    """Renvoie UNIQUEMENT le contenu de l'onglet vue d'ensemble."""
+    """Show only the content of the overview tab."""
     folder = get_inspection_folder_by_id(folder_id, request.user)
     
     return render(request, 'inspections/partials/tab_overview.html', {'folder': folder,})
@@ -40,7 +46,7 @@ def folder_tab_overview(request, folder_id):
 @login_required
 def folder_tab_visit(request, folder_id):
     """
-    Vue HTMX : Déplie le premier formulaire de visite trouvé pour ce dossier.
+    Open the content of the visit tab, including the latest visit and its sections.
     """
     folder = get_inspection_folder_by_id(folder_id, request.user)
     latest_visit = folder.visits.select_related('template').first()
@@ -56,6 +62,6 @@ def folder_tab_visit(request, folder_id):
 
 @login_required
 def folder_tab_recommandations(request, folder_id):
-    """Contenu de l'onglet Liste des Recommandations."""
+    """Show only the content of the recommendations tab."""
     folder = get_inspection_folder_by_id(folder_id, request.user)
     return render(request, 'inspections/partials/tab_recommandations.html', {'recommandations': folder.recommandations.all()})

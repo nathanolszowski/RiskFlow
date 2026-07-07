@@ -25,8 +25,8 @@ class InspectionFolder(TrackingModel):
     # --- CLIENT RELATIONSHIP ---
     client = models.ForeignKey(
         'clients.Clients',
-        on_delete=models.PROTECT, # Protect the client if there are inspection folders associated with it
-        related_name='inspection_folders', # Can access to all inspection folders of a client via client.inspection_folders.all()
+        on_delete=models.PROTECT,
+        related_name='inspection_folders',
         verbose_name="Client"
     )
 
@@ -135,20 +135,39 @@ class VisitInstance(TrackingModel):
 
     def clean(self):
         """
-        Only the inspection folder's owner can create a VisitInstance for that folder.
+        Automatic population of the template structure if the data field is empty, based on the selected VisitTemplate.
         """
         super().clean()
-        
-        # Check if the folder is set and if this is a new instance (not yet saved)
-        if self.folder and not self.pk:
-            # self.created_by is the user who is creating the VisitInstance, we check if they are the same as the folder's created_by
-            if self.folder.created_by != self.created_by:
-                raise ValidationError({
-                    'folder': "Sécurité : Vous ne pouvez pas créer de visite pour ce dossier car vous n'en êtes pas le propriétaire."
-                })
+
+        if self.template and (not self.data or self.data == {}):
+
+            template_schema = self.template.schema if isinstance(self.template.schema, dict) else {}
+            sections = template_schema.get('sections', [])
+            
+            initial_data = {
+                "template_name": self.template.name,
+                "sections": []
+            }
+            
+            for section in sections:
+                section_data = {
+                    "title": section.get("title", ""),
+                    "fields": []
+                }
+                # Pour chaque champ du template, on prépare une clé 'value' vide
+                for field in section.get("fields", []):
+                    section_data["fields"].append({
+                        "label": field.get("label", ""),
+                        "type": field.get("type", "text"),
+                        "required": field.get("required", False),
+                        "value": ""  # 🎯 C'est ici que l'utilisateur écrira sa réponse dans l'admin
+                    })
+                initial_data["sections"].append(section_data)
+            
+            # On injecte la structure prête à remplir dans le champ data
+            self.data = initial_data
 
     def save(self, *args, **kwargs):
-        # Clean force the instance before saving to enforce validation rules
         self.full_clean()
         super().save(*args, **kwargs)
 
