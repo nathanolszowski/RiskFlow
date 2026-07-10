@@ -1,19 +1,13 @@
 from django.contrib import admin
-from .models import Clients
+from .models import Company
 
-@admin.register(Clients)
-class ClientsAdmin(admin.ModelAdmin):
+@admin.register(Company)
+class CompanyAdmin(admin.ModelAdmin):
     list_display = ('reference', 'name', 'siret', 'business_line', 'is_active', 'created_at')
-    
-    # Filters on right sidebar for quick filtering
     list_filter = ('is_active', 'business_line')
-    
-    # Search fields for quick lookup
     search_fields = ('name', 'reference', 'siret')
-    
-    # Readonly fields to prevent direct modification of these fields
     readonly_fields = ('created_by', 'created_at', 'updated_by', 'updated_at', 'archived_at', 'archived_by')
-
+    
     def save_model(self, request, obj, form, change):
         """
         Fill in the created_by and updated_by fields automatically based on the current user.

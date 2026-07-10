@@ -20,7 +20,6 @@ def create_folder_htmx(request):
         if form.is_valid():
             create_tracked_instance(form, request.user)
 
-            # Reload the list of folders after creation
             folders = get_inspection_folders_by_user(request.user)
             response = render(request, 'inspections/partials/folder_grid.html', {'folders': folders})
             response['HX-Trigger'] = 'closeModal' # Trigger to close the modal in HTMX

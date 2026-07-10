@@ -15,10 +15,10 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Clients',
+            name='Company',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('reference', models.CharField(max_length=50, unique=True, verbose_name='Référence Client')),
+                ('reference', models.CharField(max_length=50, unique=True, verbose_name='Référence client')),
                 ('name', models.CharField(max_length=255, verbose_name="Nom de l'entreprise")),
                 ('address', models.TextField(verbose_name='Adresse')),
                 ('siret', models.CharField(max_length=14, unique=True, verbose_name='Numéro SIRET')),
@@ -30,8 +30,8 @@ class Migration(migrations.Migration):
                 ('updated_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='updated_clients', to=settings.AUTH_USER_MODEL, verbose_name='Modifié en dernier par')),
             ],
             options={
-                'verbose_name': 'Client',
-                'verbose_name_plural': 'Clients',
+                'verbose_name': 'Société',
+                'verbose_name_plural': 'Sociétés',
                 'ordering': ['name'],
             },
         ),

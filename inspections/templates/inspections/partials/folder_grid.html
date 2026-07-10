@@ -8,8 +8,8 @@
           </span>
           <span class="inline-flex items-center rounded-md bg-blue-400/10 px-2 py-1 text-xs font-medium text-blue-400 ring-1 ring-inset ring-blue-400/30">{{ folder.get_current_phase_display }}</span>
         </div>
-        <h3 class="text-xl font-bold tracking-tight text-white mb-1">{{ folder.client.name }}</h3>
-        <p class="text-xs text-gray-500 mb-4">Siret : {{ folder.client.siret }}</p>
+        <h3 class="text-xl font-bold tracking-tight text-white mb-1">{{ folder.company.name }}</h3>
+        <p class="text-xs text-gray-500 mb-4">Siret : {{ folder.company.siret }}</p>
         <div class="mt-6 border-t border-gray-800/80 pt-4 flex items-center justify-between text-xs text-gray-400">
           <span>Modifié le {{ folder.updated_at|date:"d/m/Y" }}</span>
           <a href="{% url 'inspections:folder_detail' folder.id %}" class="font-semibold text-white hover:text-indigo-400">Ouvrir</a>

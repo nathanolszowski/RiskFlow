@@ -5,9 +5,9 @@ from .models import VisitTemplate, InspectionFolder, VisitInstance, Recommandati
 
 @admin.register(InspectionFolder)
 class InspectionFolderAdmin(admin.ModelAdmin):
-    list_display = ('reference', 'client', 'current_phase', 'is_active', 'created_by', 'updated_at')
+    list_display = ('reference', 'company', 'current_phase', 'is_active', 'created_by', 'updated_at')
     list_filter = ('current_phase', 'is_active', 'created_at')
-    search_fields = ('reference', 'client__name')
+    search_fields = ('reference', 'company__name')
     readonly_fields = ('created_at', 'updated_by', 'updated_at', 'archived_at', 'archived_by')
     
     def save_model(self, request, obj, form, change):

@@ -8,33 +8,33 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('clients', '0001_initial'),
+        ('crm', '0001_initial'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='clients',
+            model_name='company',
             name='archived_at',
             field=models.DateTimeField(blank=True, null=True, verbose_name="Date d'archivage"),
         ),
         migrations.AddField(
-            model_name='clients',
+            model_name='company',
             name='archived_by',
             field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='archived_%(class)s_set', to=settings.AUTH_USER_MODEL, verbose_name='Archivé par'),
         ),
         migrations.AlterField(
-            model_name='clients',
+            model_name='company',
             name='created_by',
             field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='created_%(class)s_set', to=settings.AUTH_USER_MODEL, verbose_name='Créé par'),
         ),
         migrations.AlterField(
-            model_name='clients',
+            model_name='company',
             name='is_active',
             field=models.BooleanField(default=True, verbose_name='Actif'),
         ),
         migrations.AlterField(
-            model_name='clients',
+            model_name='company',
             name='updated_by',
             field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='updated_%(class)s_set', to=settings.AUTH_USER_MODEL, verbose_name='Modifié en dernier par'),
         ),

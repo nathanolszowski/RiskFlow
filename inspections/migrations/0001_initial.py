@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('clients', '0001_initial'),
+        ('crm', '0001_initial'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
@@ -38,7 +38,7 @@ class Migration(migrations.Migration):
                 ('is_active', models.BooleanField(default=True, verbose_name='Dossier actif')),
                 ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Date de création')),
                 ('updated_at', models.DateTimeField(auto_now=True, verbose_name='Dernière mise à jour')),
-                ('client', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='inspection_folders', to='clients.clients', verbose_name='Client')),
+                ('company', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='inspection_folders', to='crm.Company', verbose_name='Société')),
                 ('created_by', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='created_folders', to=settings.AUTH_USER_MODEL, verbose_name='Créé par')),
                 ('updated_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='updated_folders', to=settings.AUTH_USER_MODEL, verbose_name='Modifié en dernier par')),
             ],

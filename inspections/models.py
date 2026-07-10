@@ -22,12 +22,12 @@ class InspectionFolder(TrackingModel):
     reference = models.CharField(max_length=100, unique=True, verbose_name="Référence du dossier")
     current_phase = models.CharField(max_length=20, choices=Phase.choices, default=Phase.CREATION, verbose_name="Phase actuelle")
 
-    # --- CLIENT RELATIONSHIP ---
-    client = models.ForeignKey(
-        'clients.Clients',
+    # --- COMPANY RELATIONSHIP ---
+    company = models.ForeignKey(
+        'crm.Company',
         on_delete=models.PROTECT,
         related_name='inspection_folders',
-        verbose_name="Client"
+        verbose_name="Société"
     )
 
     class Meta(TrackingModel.Meta):
@@ -36,7 +36,7 @@ class InspectionFolder(TrackingModel):
         ordering = ['-updated_at']
 
     def __str__(self):
-        return f"{self.reference} - {self.client} {self.current_phase}"
+        return f"{self.reference} - {self.company} {self.current_phase}"
     
     def cascade_archive(self, user=None):
         """
