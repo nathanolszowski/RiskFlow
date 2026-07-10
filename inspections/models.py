@@ -2,7 +2,7 @@ from django.db import models
 from core.models import TrackingModel
 from django.core.exceptions import ValidationError
 from pydantic import ValidationError as PydanticValidationError
-from .visit_schema import VisitTemplateSchema
+from .validators import VisitTemplateSchema, get_default_template_structure, reference_validator
 from django.utils import timezone
 """
 
@@ -19,8 +19,10 @@ class InspectionFolder(TrackingModel):
         COMPLETED = 'COMPLETED', 'Terminé / Clôturé'
         ARCHIVED = 'ARCHIVED', 'Archivé'
 
-    reference = models.CharField(max_length=100, unique=True, verbose_name="Référence du dossier")
+    reference = models.CharField(max_length=100, unique=True, validators=[reference_validator], verbose_name="Référence du dossier")
     current_phase = models.CharField(max_length=20, choices=Phase.choices, default=Phase.CREATION, verbose_name="Phase actuelle")
+    notes = models.TextField(blank=True, verbose_name="Notes internes")
+    inspection_site_address = models.TextField(blank=True, verbose_name="Adresse du site d'inspection")
 
     # --- COMPANY RELATIONSHIP ---
     company = models.ForeignKey(
@@ -52,35 +54,32 @@ class InspectionFolder(TrackingModel):
 
         self.recommandations.update(**update_data)
 
+    @property
+    def count_all_recommandations(self):
+        """
+        Retourne le nombre total de recommandations associées à ce dossier.
+        """
+        return self.recommandations.count()
+    
+    @property
+    def count_all_visits(self):
+        """
+        Retourne le nombre total de visites associées à ce dossier.
+        """
+        return self.visits.count()
+    
+    @property
+    def get_latest_visit(self):
+        """
+        Retourne la dernière visite associée à ce dossier, basée sur la date de création.
+        """
+        return self.visits.order_by('-created_at').first()
+
 """
 
 ==== INSPECTION VISIT SECTION ====
 
 """
-
-def get_default_template_structure():
-    """
-    Retourne le squelette JSON par défaut pour un nouveau gabarit de visite.
-    """
-    return {
-        "version": "1.0",
-        "sections": [
-            {
-                "id": "sec_exemple",
-                "title": "Nom de la Section (Ex: Sécurité)",
-                "order": 1,
-                "fields": [
-                    {
-                        "id": "f_champ_exemple",
-                        "label": "Libellé de la question ?",
-                        "type": "boolean",
-                        "required": True,
-                        "order": 1
-                    }
-                ]
-            }
-        ]
-    }
 
 class VisitTemplate(TrackingModel):
     name = models.CharField(max_length=255, verbose_name="Nom du template")
@@ -122,6 +121,7 @@ class VisitInstance(TrackingModel):
         related_name='instances', 
         verbose_name="Template utilisé"
     )
+    instance_schema = models.JSONField(blank=True, default=dict, verbose_name="Structure de l'instance (JSON)")
     
     # --- DATA & STATUS ---
     data = models.JSONField(blank=True, default=dict, verbose_name="Données saisies (JSON)")
@@ -140,7 +140,6 @@ class VisitInstance(TrackingModel):
         super().clean()
 
         if self.template and (not self.data or self.data == {}):
-
             template_schema = self.template.schema if isinstance(self.template.schema, dict) else {}
             sections = template_schema.get('sections', [])
             
@@ -148,7 +147,6 @@ class VisitInstance(TrackingModel):
                 "template_name": self.template.name,
                 "sections": []
             }
-            
             for section in sections:
                 section_data = {
                     "title": section.get("title", ""),
@@ -160,11 +158,9 @@ class VisitInstance(TrackingModel):
                         "label": field.get("label", ""),
                         "type": field.get("type", "text"),
                         "required": field.get("required", False),
-                        "value": ""  # 🎯 C'est ici que l'utilisateur écrira sa réponse dans l'admin
+                        "value": ""
                     })
                 initial_data["sections"].append(section_data)
-            
-            # On injecte la structure prête à remplir dans le champ data
             self.data = initial_data
 
     def save(self, *args, **kwargs):
@@ -207,25 +203,27 @@ class Recommandation(TrackingModel):
 
     # --- DATA ---
     description = models.TextField(verbose_name="Description de la recommandation")
-    
     priority = models.CharField(
         max_length=20,
         choices=Priority.choices,
         default=Priority.MEDIUM,
         verbose_name="Priorité"
     )
-    
     current_status = models.CharField(
         max_length=20,
         choices=Status.choices,
         default=Status.OPEN,
         verbose_name="Statut actuel"
     )
-    
     due_date = models.DateField(
         blank=True,
         null=True,
         verbose_name="Date limite d'exécution"
+    )
+    topic = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name="Sujet de la recommandation"
     )
 
     class Meta(TrackingModel.Meta):
