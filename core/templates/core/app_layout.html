@@ -13,7 +13,8 @@
             <div class="ml-10 flex items-baseline space-x-4">
               <a href="{% url 'core:dashboard' %}" class="rounded-md {% if request.resolver_match.url_name == 'dashboard' %}bg-gray-950/50 text-white{% else %}text-gray-300 hover:bg-white/5 hover:text-white{% endif %} px-3 py-2 text-sm font-medium" {% if request.resolver_match.url_name == 'dashboard' %}aria-current="page"{% endif %}>Dashboard</a>
               
-              <a href="{% url 'inspections:folders' %}" class="rounded-md {% if request.resolver_match.url_name == 'folders' %}bg-gray-950/50 text-white{% else %}text-gray-300 hover:bg-white/5 hover:text-white{% endif %} px-3 py-2 text-sm font-medium" {% if request.resolver_match.url_name == 'folders' %}aria-current="page"{% endif %}>Mes Dossiers</a>
+              <a href="{% url 'inspections:folders' %}" class="rounded-md {% if request.resolver_match.url_name == 'folders' %}bg-gray-950/50 text-white{% else %}text-gray-300 hover:bg-white/5 hover:text-white{% endif %} px-3 py-2 text-sm font-medium" {% if request.resolver_match.url_name == 'folders' %}aria-current="page"{% endif %}>Dossiers</a>
+              <a href="#" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white">Clients</a>
               <a href="#" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white">Calendrier</a>
               <a href="#" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white">Rapports</a>
             </div>
@@ -46,8 +47,6 @@
     <div id="mobile-menu" class="hidden md:hidden border-t border-white/10 bg-gray-800/90">
       <div class="space-y-1 px-2 pt-2 pb-3 sm:px-3">
         <a href="{% url 'core:dashboard' %}" class="block rounded-md {% if request.resolver_match.url_name == 'dashboard' %}bg-gray-950/50 text-white{% else %}text-gray-300 hover:bg-white/5 hover:text-white{% endif %} px-3 py-2 text-base font-medium">Dashboard</a>
-        <a href="#" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-white/5 hover:text-white">Team</a>
-        <a href="#" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-white/5 hover:text-white">Projects</a>
       </div>
       
       <div class="border-t border-white/10 pt-4 pb-3 px-5 flex items-center justify-between">
