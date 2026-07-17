@@ -73,6 +73,18 @@ class InspectionFolder(TrackingModel):
         Return the latest visit instance associated with this inspection folder, ordered by creation date in descending order.
         """
         return self.visits.order_by('-created_at').first()
+    
+    @property
+    def next_visit_date(self):
+        """Return the date of the next scheduled visit for this inspection folder, or None if there are no upcoming visits."""
+        from django.utils import timezone
+        
+        # On cherche la première visite dont la date est supérieure ou égale à aujourd'hui
+        next_visit = self.visits.filter(
+            due_date__gte=timezone.now()
+        ).order_by('due_date').first()
+        
+        return next_visit.due_date if next_visit else None
 
 """
 
