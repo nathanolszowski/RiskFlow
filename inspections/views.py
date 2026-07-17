@@ -3,40 +3,29 @@ from django.contrib.auth.decorators import login_required
 from crm.models import Company
 from inspections.forms import InspectionFolderForm
 from core.services import create_tracked_instance
+from inspections.models import InspectionFolder
 from .services.inspectionfolder import get_inspection_folders_by_user, get_inspection_folder_by_id
 
 
 
 def _filter_and_sort_folders(request):
-    """Fonction utilitaire mise à jour avec le filtre par liste de clients."""
+    """Utility function to filter and sort inspection folders based on request parameters."""
     folders = get_inspection_folders_by_user(request.user)
 
-    # 2. Recherche textuelle
-    q = request.GET.get('q') or request.POST.get('q', '').strip()
-    if q:
-        folders = folders.filter(
-            Q(reference__icontains=q) | Q(company__name__icontains=q)
-        )
-
-    # 3. Filtre par Phase
     phase = request.GET.get('phase') or request.POST.get('phase', '').strip()
     if phase:
         folders = folders.filter(current_phase=phase)
 
-    # 4. Filtre par État
     status = request.GET.get('status') or request.POST.get('status', '').strip()
     if status == 'active':
         folders = folders.filter(is_active=True)
     elif status == 'archived':
         folders = folders.filter(is_active=False)
 
-    # 🌟 NEW : Filtre par Liste de Clients (Multi-sélection par cases à cocher)
-    # .getlist() permet de récupérer un tableau d'identifiants ['1', '4', '12']
-    selected_companies = request.GET.getlist('companies') or request.POST.getlist('companies')
-    if selected_companies:
-        folders = folders.filter(company_id__in=selected_companies)
+    company_id = request.GET.get('company') or request.POST.get('company', '').strip()
+    if company_id:
+        folders = folders.filter(company_id=company_id)
 
-    # 5. Tri sécurisé
     sort_by = request.GET.get('sort') or request.POST.get('sort', '-updated_at')
     allowed_sorts = ['-updated_at', '-created_at', 'reference', 'company__name']
     if sort_by not in allowed_sorts:
@@ -57,6 +46,7 @@ def folders_view(request):
         'folders': folders,
         'companies': companies,
         'selected_companies': request.GET.getlist('companies'),
+        'phase_choices': InspectionFolder.Phase.choices,
     }
     return render(request, 'inspections/folders.html', context)
 
@@ -97,7 +87,7 @@ def folder_tab_visit(request, folder_id):
     Open the content of the visit tab, including the latest visit and its sections.
     """
     folder = get_inspection_folder_by_id(folder_id, request.user)
-    latest_visit = folder.visits.select_related('template').first()
+    latest_visit = folder.get_latest_visit  
     context = {
         'folder': folder,
         'visit': latest_visit,

@@ -13,7 +13,6 @@ from django.utils import timezone
 class InspectionFolder(TrackingModel):
     class Phase(models.TextChoices):
         CREATION = 'CREATION', 'En création'
-        ASSIGNED = 'ASSIGNED', 'Assigné / Planifié'
         IN_PROGRESS = 'IN_PROGRESS', 'Dossier en cours'
         REVIEW = 'REVIEW', 'En cours de revue'
         COMPLETED = 'COMPLETED', 'Terminé / Clôturé'
@@ -42,7 +41,7 @@ class InspectionFolder(TrackingModel):
     
     def cascade_archive(self, user=None):
         """
-        Propage l'archivage du dossier à toutes ses recommandations liées.
+        Properly archive the inspection folder and all its associated recommendations. This method sets the `is_active` field to False and records the current timestamp in the `archived_at` field for both the folder and its recommendations. If a user is provided, it also records who performed the archiving action.
         """
         update_data = {
             'is_active': False,
@@ -57,21 +56,21 @@ class InspectionFolder(TrackingModel):
     @property
     def count_all_recommandations(self):
         """
-        Retourne le nombre total de recommandations associées à ce dossier.
+        Return the total number of recommendation instances associated with this inspection folder.
         """
         return self.recommandations.count()
     
     @property
     def count_all_visits(self):
         """
-        Retourne le nombre total de visites associées à ce dossier.
+        Return the total number of visit instances associated with this inspection folder.
         """
         return self.visits.count()
     
     @property
     def get_latest_visit(self):
         """
-        Retourne la dernière visite associée à ce dossier, basée sur la date de création.
+        Return the latest visit instance associated with this inspection folder, ordered by creation date in descending order.
         """
         return self.visits.order_by('-created_at').first()
 
