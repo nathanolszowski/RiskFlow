@@ -1,16 +1,64 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
+from crm.models import Company
 from inspections.forms import InspectionFolderForm
 from core.services import create_tracked_instance
 from .services.inspectionfolder import get_inspection_folders_by_user, get_inspection_folder_by_id
 
 
 
-@login_required
-def folders_view(request):
+def _filter_and_sort_folders(request):
+    """Fonction utilitaire mise à jour avec le filtre par liste de clients."""
     folders = get_inspection_folders_by_user(request.user)
 
-    return render(request, 'inspections/folders.html', {'folders': folders})
+    # 2. Recherche textuelle
+    q = request.GET.get('q') or request.POST.get('q', '').strip()
+    if q:
+        folders = folders.filter(
+            Q(reference__icontains=q) | Q(company__name__icontains=q)
+        )
+
+    # 3. Filtre par Phase
+    phase = request.GET.get('phase') or request.POST.get('phase', '').strip()
+    if phase:
+        folders = folders.filter(current_phase=phase)
+
+    # 4. Filtre par État
+    status = request.GET.get('status') or request.POST.get('status', '').strip()
+    if status == 'active':
+        folders = folders.filter(is_active=True)
+    elif status == 'archived':
+        folders = folders.filter(is_active=False)
+
+    # 🌟 NEW : Filtre par Liste de Clients (Multi-sélection par cases à cocher)
+    # .getlist() permet de récupérer un tableau d'identifiants ['1', '4', '12']
+    selected_companies = request.GET.getlist('companies') or request.POST.getlist('companies')
+    if selected_companies:
+        folders = folders.filter(company_id__in=selected_companies)
+
+    # 5. Tri sécurisé
+    sort_by = request.GET.get('sort') or request.POST.get('sort', '-updated_at')
+    allowed_sorts = ['-updated_at', '-created_at', 'reference', 'company__name']
+    if sort_by not in allowed_sorts:
+        sort_by = '-updated_at'
+
+    return folders.order_by(sort_by)
+
+
+@login_required
+def folders_view(request):
+    folders = _filter_and_sort_folders(request)
+    
+    companies = Company.objects.filter(
+        inspection_folders__in=get_inspection_folders_by_user(request.user)
+    ).distinct()
+    
+    context = {
+        'folders': folders,
+        'companies': companies,
+        'selected_companies': request.GET.getlist('companies'),
+    }
+    return render(request, 'inspections/folders.html', context)
 
 @login_required
 def create_folder_htmx(request):
@@ -19,10 +67,11 @@ def create_folder_htmx(request):
         form = InspectionFolderForm(request.POST)
         if form.is_valid():
             create_tracked_instance(form, request.user)
-
-            folders = get_inspection_folders_by_user(request.user)
+            
+            folders = _filter_and_sort_folders(request)
+            
             response = render(request, 'inspections/partials/folder_grid.html', {'folders': folders})
-            response['HX-Trigger'] = 'closeModal' # Trigger to close the modal in HTMX
+            response['HX-Trigger'] = 'closeModal'
             return response
     else:
         form = InspectionFolderForm()

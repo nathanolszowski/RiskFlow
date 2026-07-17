@@ -11,13 +11,81 @@
     </div>
     <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
       <button type="button" 
-              hx-get="{% url 'inspections:create_folder_htmx' %}" 
+              hx-get="{% url 'inspections:create_folder_htmx' %}"
+              hx-include="#form" 
               hx-target="#modal-container" 
               class="block rounded-md bg-indigo-600 px-3.5 py-2 text-center text-sm font-semibold text-white hover:bg-indigo-500 cursor-pointer">
         Nouveau dossier
       </button>
     </div>
   </div>
+
+  <!-- Barre d'outils globale : Filtres + Tri -->
+<div class="mb-8 px-6 bg-gray-900/40 border border-gray-800 rounded-2xl p-4 backdrop-blur-xs flex flex-col gap-4">
+    <div class="flex items-center justify-between">
+        <h2 class="text-xl font-bold text-white tracking-tight">Dossiers d'inspection</h2>
+    </div>
+    
+    <!-- Formulaire unique pour les Filtres et le Tri -->
+    <form method="GET" action="." class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+        
+        <!-- 1. Filtre par Clients (Liste à cocher) -->
+        <div class="flex flex-col gap-1.5">
+            <label for="company" class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Client</label>
+            <select name="company" id="company" class="bg-gray-950/60 border border-gray-800 text-gray-200 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block px-3 py-2 cursor-pointer outline-none transition w-full">
+                <option value="">Tous les clients</option>
+                {% for company in companies %}
+                    <option value="{{ company.id }}" {% if request.GET.company == company.id|stringformat:"i" or request.POST.company == company.id|stringformat:"i" %}selected{% endif %}>
+                        {{ company.name }}
+                    </option>
+                {% empty %}
+                    <option value="" disabled>Aucun client disponible</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- 2. Filtre par Phase -->
+        <div class="flex flex-col gap-1.5">
+            <label for="phase" class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Phase</label>
+            <select name="phase" id="phase" class="bg-gray-950/60 border border-gray-800 text-gray-200 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block px-3 py-2 cursor-pointer outline-none transition">
+                <option value="">Toutes les phases</option>
+                <!-- Remplace les valeurs ci-dessous par les clés exactes de tes Enums/Choices -->
+                <option value="FIELD_VISIT" {% if request.GET.phase == 'FIELD_VISIT' %}selected{% endif %}>Field Visit</option>
+                <option value="REPORT_WRITING" {% if request.GET.phase == 'REPORT_WRITING' %}selected{% endif %}>Report Writing</option>
+                <option value="CLOSED" {% if request.GET.phase == 'CLOSED' %}selected{% endif %}>Closed</option>
+            </select>
+        </div>
+
+        <!-- 3. Filtre par État (Actif / Archivé) -->
+        <div class="flex flex-col gap-1.5">
+            <label for="status" class="text-xs font-semibold text-gray-400 uppercase tracking-wider">État</label>
+            <select name="status" id="status" class="bg-gray-950/60 border border-gray-800 text-gray-200 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block px-3 py-2 cursor-pointer outline-none transition">
+                <option value="">Tous les états</option>
+                <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Actifs uniquement</option>
+                <option value="archived" {% if request.GET.status == 'archived' %}selected{% endif %}>Archivés uniquement</option>
+            </select>
+        </div>
+
+        <!-- 4. Menu de Tri (Fusionné ici) + Bouton de soumission -->
+        <div class="flex items-center gap-2">
+            <div class="flex flex-col gap-1.5 flex-1">
+                <label for="sort" class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Trier par</label>
+                <select name="sort" id="sort" class="bg-gray-950/60 border border-gray-800 text-gray-200 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block px-3 py-2 cursor-pointer outline-none transition">
+                    <option value="-updated_at" {% if request.GET.sort == '-updated_at' or not request.GET.sort %}selected{% endif %}>Modifié (Récents)</option>
+                    <option value="-created_at" {% if request.GET.sort == '-created_at' %}selected{% endif %}>Création</option>
+                    <option value="reference" {% if request.GET.sort == 'reference' %}selected{% endif %}>Référence (A-Z)</option>
+                    <option value="company__name" {% if request.GET.sort == 'company__name' %}selected{% endif %}>Client (A-Z)</option>
+                </select>
+            </div>
+            
+            <!-- Bouton Filtrer -->
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm rounded-lg px-4 py-2 transition h-[38px] self-end cursor-pointer">
+                Filtrer
+            </button>
+        </div>
+
+    </form>
+</div>
 
   <div id="folder-grid-container">
     {% include "inspections/partials/folder_grid.html" %}
