@@ -2,7 +2,7 @@
     {% for company in companies %}
         <div class="group relative bg-gray-900/50 hover:bg-gray-900/80 border border-gray-800 hover:border-gray-700/80 rounded-2xl p-5 backdrop-blur-xs transition-all duration-200 flex flex-col justify-between shadow-lg hover:shadow-indigo-500/5">
             
-            <!-- Haut de carte : Initiale + Nom + Badge Statut -->
+            <!-- Top of card : Initial + Name + Status Badge -->
             <div class="space-y-4">
                 <div class="flex items-start justify-between gap-3">
                     <div class="flex items-center gap-3">
@@ -60,7 +60,7 @@
                 </div>
 
                 <!-- Company detail view button -->
-                <a href="#" class="inline-flex items-center gap-1 font-medium text-indigo-400 hover:text-indigo-300 transition">
+                <a href="{% url 'crm:company_detail' company.id %}" class="inline-flex items-center gap-1 font-medium text-indigo-400 hover:text-indigo-300 transition">
                     Voir
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />

@@ -64,7 +64,12 @@ def create_folder_htmx(request):
             response['HX-Trigger'] = 'closeModal'
             return response
     else:
-        form = InspectionFolderForm()
+        initial_data = {}
+        company_id = request.GET.get('company')
+        if company_id:
+            initial_data['company'] = company_id
+
+        form = InspectionFolderForm(initial=initial_data)
         
     return render(request, 'inspections/partials/folder_form_modal.html', {'form': form})
 

@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.contrib.auth.decorators import login_required
 from .models import Company
 from django.db.models import Q, Count
@@ -31,3 +31,12 @@ def company_list_view(request):
         return render(request, 'crm/partials/company_grid.html', {'companies': companies})
 
     return render(request, 'crm/company.html', {'companies': companies})
+
+@login_required
+def company_detail_view(request, pk):
+
+    company = get_object_or_404(
+        Company.objects.prefetch_related('inspection_folders'), 
+        pk=pk
+    )
+    return render(request, 'crm/company_detail.html', {'company': company})
