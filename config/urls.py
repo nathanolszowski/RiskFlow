@@ -23,4 +23,5 @@ urlpatterns = [
     path('auth/', include('accounts.urls', namespace='accounts')),
     path('home/', include('core.urls', namespace='core')),
     path('', include('inspections.urls', namespace='inspections')),
+    path('', include('crm.urls', namespace='crm')),
 ]
