@@ -1,0 +1,125 @@
+<div id="create-company-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+    <div class="flex max-h-[90vh] w-full max-w-3xl flex-col rounded-xl border border-gray-800 bg-gray-900 shadow-2xl">
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between border-b border-gray-800 px-6 py-4">
+            <h3 class="text-lg font-semibold text-gray-100">Nouvelle Société</h3>
+            <button type="button" 
+                    onclick="document.getElementById('create-company-modal').remove()" 
+                    class="text-gray-400 hover:text-gray-200">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Form -->
+        <form hx-post="{% url 'crm:create_company_htmx' %}" 
+              hx-target="#company-list-container" 
+              hx-swap="innerHTML"
+              class="flex flex-col overflow-hidden">
+            {% csrf_token %}
+
+            <div class="space-y-6 overflow-y-auto p-6 max-h-[70vh]">
+                
+                <!-- Section 1 : Identity -->
+                <div>
+                    <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-indigo-400">Identité & Legal</h4>
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div class="sm:col-span-2">
+                            <label class="mb-1 block text-xs font-medium text-gray-400">Nom / Raison Sociale *</label>
+                            {{ form.name }}
+                            {% if form.name.errors %}<p class="mt-1 text-xs text-rose-500">{{ form.name.errors.0 }}</p>{% endif %}
+                        </div>
+
+                        <div>
+                            <label class="mb-1 block text-xs font-medium text-gray-400">SIREN *</label>
+                            {{ form.siren }}
+                            {% if form.siren.errors %}<p class="mt-1 text-xs text-rose-500">{{ form.siren.errors.0 }}</p>{% endif %}
+                        </div>
+
+                        <div>
+                            <label class="mb-1 block text-xs font-medium text-gray-400">SIRET *</label>
+                            {{ form.siret }}
+                            {% if form.siret.errors %}<p class="mt-1 text-xs text-rose-500">{{ form.siret.errors.0 }}</p>{% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2 : Details -->
+                <div class="border-t border-gray-800 pt-4">
+                    <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-indigo-400">Profil & Activité</h4>
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div>
+                            <label class="mb-1 block text-xs font-medium text-gray-400">Secteur d'activité</label>
+                            {{ form.business_line }}
+                            {% if form.business_line.errors %}<p class="mt-1 text-xs text-rose-500">{{ form.business_line.errors.0 }}</p>{% endif %}
+                        </div>
+
+                        <div>
+                            <label class="mb-1 block text-xs font-medium text-gray-400">Catégorie de Taille</label>
+                            {{ form.company_size_category }}
+                            {% if form.company_size_category.errors %}<p class="mt-1 text-xs text-rose-500">{{ form.company_size_category.errors.0 }}</p>{% endif %}
+                        </div>
+
+                        <div>
+                            <label class="mb-1 block text-xs font-medium text-gray-400">Nombre d'employés</label>
+                            {{ form.nb_employees }}
+                            {% if form.nb_employees.errors %}<p class="mt-1 text-xs text-rose-500">{{ form.nb_employees.errors.0 }}</p>{% endif %}
+                        </div>
+
+                        <div>
+                            <label class="mb-1 block text-xs font-medium text-gray-400">Date de création</label>
+                            {{ form.creation_date }}
+                            {% if form.creation_date.errors %}<p class="mt-1 text-xs text-rose-500">{{ form.creation_date.errors.0 }}</p>{% endif %}
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <label class="mb-1 block text-xs font-medium text-gray-400">Site Web</label>
+                            {{ form.website }}
+                            {% if form.website.errors %}<p class="mt-1 text-xs text-rose-500">{{ form.website.errors.0 }}</p>{% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 3 : Optionals -->
+                <div class="border-t border-gray-800 pt-4">
+                    <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-indigo-400">Coordonnées & Gouvernance</h4>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="mb-1 block text-xs font-medium text-gray-400">Adresse Siège Social</label>
+                            {{ form.address }}
+                            {% if form.address.errors %}<p class="mt-1 text-xs text-rose-500">{{ form.address.errors.0 }}</p>{% endif %}
+                        </div>
+
+                        <div>
+                            <label class="mb-1 block text-xs font-medium text-gray-400">Certifications & Labels</label>
+                            {{ form.labels }}
+                            {% if form.labels.errors %}<p class="mt-1 text-xs text-rose-500">{{ form.labels.errors.0 }}</p>{% endif %}
+                        </div>
+
+                        <div>
+                            <label class="mb-1 block text-xs font-medium text-gray-400">Conseil d'Administration / Dirigeants</label>
+                            {{ form.executive_board }}
+                            {% if form.executive_board.errors %}<p class="mt-1 text-xs text-rose-500">{{ form.executive_board.errors.0 }}</p>{% endif %}
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer Actions -->
+            <div class="flex justify-end space-x-3 border-t border-gray-800 bg-gray-900/50 px-6 py-4">
+                <button type="button" 
+                        onclick="document.getElementById('create-company-modal').remove()" 
+                        class="rounded-lg border border-gray-700 px-4 py-2 text-xs font-medium text-gray-300 hover:bg-gray-800 transition-colors">
+                    Annuler
+                </button>
+                <button type="submit" 
+                        class="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-medium text-white hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-colors">
+                    Créer la société
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

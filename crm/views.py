@@ -1,5 +1,7 @@
 from django.shortcuts import get_object_or_404, render
 from django.contrib.auth.decorators import login_required
+
+from .forms import CompanyForm
 from .models import Company
 from django.db.models import Q, Count
 
@@ -40,3 +42,22 @@ def company_detail_view(request, pk):
         pk=pk
     )
     return render(request, 'crm/company_detail.html', {'company': company})
+
+@login_required
+def create_company_htmx(request):
+    """HTMX view for creating a new company via modal."""
+    if request.method == 'POST':
+        form = CompanyForm(request.POST)
+        if form.is_valid():
+            form.save()
+            
+            companies = Company.objects.all().order_by('-id')
+            response = render(request, 'crm/partials/company_list.html', {'companies': companies})
+            response['HX-Trigger'] = 'closeModal'
+            return response
+        else:
+            return render(request, 'crm/partials/company_form_modal.html', {'form': form}, status=422)
+    else:
+        form = CompanyForm()
+
+    return render(request, 'crm/partials/company_form_modal.html', {'form': form})
