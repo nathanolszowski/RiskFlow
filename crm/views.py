@@ -1,11 +1,12 @@
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 
 from crm.services.company import INSEEApiClient
 
 from .forms import CompanyForm
-from .models import Company
+from .models import Company, Contact
 from django.db.models import Q, Count
 
 @login_required
@@ -85,3 +86,56 @@ def search_siret_api(request):
         context = {"found": False, "query": siret_query}
 
     return render(request, "crm/partials/siret_search_result.html", context)
+
+@login_required
+def contact_list(request):
+    companies = Company.objects.all().order_by("name")
+    contacts = Contact.objects.select_related("company").order_by("-id")
+
+    # Pagination
+    paginator = Paginator(contacts, 15)
+    page_obj = paginator.get_page(1)
+
+    return render(
+        request,
+        "crm/contact.html",
+        {
+            "contacts": page_obj,
+            "page_obj": page_obj,
+            "companies": companies,
+        },
+    )
+
+
+@login_required
+def contact_list_partial(request):
+    query = request.GET.get("q", "").strip()
+    company_id = request.GET.get("company", "").strip()
+
+    contacts = Contact.objects.select_related("company").all()
+
+    if query:
+        contacts = contacts.filter(
+            Q(first_name__icontains=query)
+            | Q(last_name__icontains=query)
+            | Q(email__icontains=query)
+            | Q(company__name__icontains=query)
+        )
+
+    if company_id and company_id.isdigit():
+        contacts = contacts.filter(company_id=company_id)
+
+    contacts = contacts.order_by("-id")
+
+    paginator = Paginator(contacts, 15)
+    page_number = request.GET.get("page", 1)
+    page_obj = paginator.get_page(page_number)
+
+    return render(
+        request,
+        "crm/partials/contact_grid.html",
+        {
+            "contacts": page_obj,
+            "page_obj": page_obj,
+        },
+    )

@@ -14,7 +14,7 @@
               <a href="{% url 'core:dashboard' %}" class="rounded-md {% if request.resolver_match.url_name == 'dashboard' %}bg-gray-950/50 text-white{% else %}text-gray-300 hover:bg-white/5 hover:text-white{% endif %} px-3 py-2 text-sm font-medium" {% if request.resolver_match.url_name == 'dashboard' %}aria-current="page"{% endif %}>Dashboard</a>
               <a href="{% url 'inspections:folders' %}" class="rounded-md {% if request.resolver_match.url_name == 'folders' %}bg-gray-950/50 text-white{% else %}text-gray-300 hover:bg-white/5 hover:text-white{% endif %} px-3 py-2 text-sm font-medium" {% if request.resolver_match.url_name == 'folders' %}aria-current="page"{% endif %}>Dossiers</a>
               <a href="{% url 'crm:company_list' %}" class="rounded-md {% if request.resolver_match.url_name == 'company_list' %}bg-gray-950/50 text-white{% else %}text-gray-300 hover:bg-white/5 hover:text-white{% endif %} px-3 py-2 text-sm font-medium" {% if request.resolver_match.url_name == 'company_list' %}aria-current="page"{% endif %}>Clients</a>
-              <a href="#" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white">Calendrier</a>
+              <a href="{% url 'crm:contact_list' %}" class="rounded-md {% if request.resolver_match.url_name == 'contact_list' %}bg-gray-950/50 text-white{% else %}text-gray-300 hover:bg-white/5 hover:text-white{% endif %} px-3 py-2 text-sm font-medium" {% if request.resolver_match.url_name == 'contact_list' %}aria-current="page"{% endif %}>Contacts</a>
               <a href="#" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white">Rapports</a>
             </div>
           </div>
