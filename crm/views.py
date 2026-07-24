@@ -1,5 +1,8 @@
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.contrib.auth.decorators import login_required
+
+from crm.services.company import INSEEApiClient
 
 from .forms import CompanyForm
 from .models import Company
@@ -61,3 +64,24 @@ def create_company_htmx(request):
         form = CompanyForm()
 
     return render(request, 'crm/partials/company_form_modal.html', {'form': form})
+
+@login_required
+def search_siret_api(request):
+    siret_query = (
+        request.GET.get("siret_search", "")
+        .strip()
+        .replace(" ", "")
+        .replace("-", "")
+    )
+
+    if not siret_query or len(siret_query) != 14 or not siret_query.isdigit():
+        return HttpResponse("")
+
+    company_data = INSEEApiClient.fetch_by_siret(siret_query)
+
+    if company_data:
+        context = {"found": True, **company_data}
+    else:
+        context = {"found": False, "query": siret_query}
+
+    return render(request, "crm/partials/siret_search_result.html", context)
