@@ -27,27 +27,26 @@ class Company(TrackingModel):
         return f"{self.name}"
 
     def save(self, *args, **kwargs):
-            # Auto-generate the reference if it's not provided
-            if not self.reference:
-                current_year = timezone.now().year
-                prefix = f"SOC-{current_year}-"
-                last_company = (
-                    Company.objects.filter(reference__startswith=prefix)
-                    .order_by("-id")
-                    .first()
-                )
-                if last_company and last_company.reference:
-                    try:
-                        last_number = int(last_company.reference.split("-")[-1])
-                        new_number = last_number + 1
-                    except ValueError:
-                        new_number = 1
-                else:
+        if not self.reference:
+            current_year = timezone.now().year
+            prefix = f"SOC-{current_year}-"
+            last_company = (
+                Company.objects.filter(reference__startswith=prefix)
+                .order_by("-id")
+                .first()
+            )
+            if last_company and last_company.reference:
+                try:
+                    last_number = int(last_company.reference.split("-")[-1])
+                    new_number = last_number + 1
+                except ValueError:
                     new_number = 1
+            else:
+                new_number = 1
 
-                self.reference = f"{prefix}{new_number:04d}"
+            self.reference = f"{prefix}{new_number:04d}"
 
-            super().save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
 class Contact(TrackingModel):
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='contacts', verbose_name="Société")

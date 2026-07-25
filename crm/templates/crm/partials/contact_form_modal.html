@@ -7,17 +7,19 @@
                 {% if form.instance.pk %}Modifier le contact{% else %}Nouveau contact{% endif %}
             </h2>
             <button type="button" 
-                    onclick="this.closest('.fixed').remove()"
-                    class="text-gray-400 hover:text-gray-200">
+                    onclick="document.getElementById('modal-container').innerHTML = ''"
+                    class="text-gray-400 hover:text-gray-200 transition">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
             </button>
         </div>
 
-        <!-- Form -->
+        <!-- Form HTMX -->
         <form hx-post="{% url 'crm:create_contact' %}" 
               hx-target="#contact-cards-container"
+              hx-swap="innerHTML"
+              hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
               class="space-y-4">
             {% csrf_token %}
 
@@ -103,12 +105,12 @@
             <!-- Actions -->
             <div class="flex items-center justify-end gap-3 border-t border-gray-800 pt-4 mt-6">
                 <button type="button" 
-                        onclick="this.closest('.fixed').remove()"
-                        class="rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-xs font-medium text-gray-300 hover:bg-gray-700">
+                        onclick="document.getElementById('modal-container').innerHTML = ''"
+                        class="rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-xs font-medium text-gray-300 hover:bg-gray-700 transition">
                     Annuler
                 </button>
                 <button type="submit" 
-                        class="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-medium text-white hover:bg-indigo-500">
+                        class="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-medium text-white hover:bg-indigo-500 transition">
                     Enregistrer
                 </button>
             </div>
@@ -116,3 +118,12 @@
 
     </div>
 </div>
+
+<script>
+    document.body.addEventListener("closeModal", function() {
+        const container = document.getElementById("modal-container");
+        if (container) {
+            container.innerHTML = "";
+        }
+    }, { once: true });
+</script>

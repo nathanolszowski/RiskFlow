@@ -52,11 +52,11 @@ def company_list_paginated(request, page=1):
     )
 
 @login_required
-def company_detail(request, ref):
+def company_detail(request, pk):
     """Render the detail view for a company"""
     company = get_object_or_404(
         Company.objects.prefetch_related('inspection_folders'), 
-        ref=ref
+        pk=pk
     )
     return render(request, 'crm/company_detail.html', {'company': company})
 
@@ -67,7 +67,9 @@ def create_company(request):
     if request.method == "POST":
             form = CompanyForm(request.POST)
             if form.is_valid():
-                form.save()
+                company = form.save(commit=False)
+                company.created_by = request.user
+                company.save()
 
                 companies = get_filtered_companies(request)
                 from django.core.paginator import Paginator
@@ -159,11 +161,11 @@ def contact_list_paginated(request, page=1):
     )
 
 @login_required
-def contact_detail(request, ref):
+def contact_detail(request, pk):
     """Render the detail view for a company"""
     contact = get_object_or_404(
         Contact.objects.select_related("company"),
-        ref=ref
+        pk=pk
     )
     return render(request, 'crm/contact_detail.html', {'contact': contact})
 
@@ -173,8 +175,11 @@ def create_contact(request):
     if request.method == "POST":
             form = ContactForm(request.POST)
             if form.is_valid():
-                form.save()
-
+                contact = form.save(commit=False)
+                contact.created_by = request.user
+                contact.save()
+                
+                # Recharge de la liste pour HTMX...
                 contacts = get_filtered_contacts(request)
                 from django.core.paginator import Paginator
                 paginator = Paginator(contacts, 15)
