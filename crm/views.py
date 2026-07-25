@@ -3,71 +3,99 @@ from django.shortcuts import get_object_or_404, render
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 
-from crm.services.company import INSEEApiClient
+from crm.services.company import INSEEApiClient, get_filtered_companies
+from crm.services.contact import get_filtered_contacts
 
-from .forms import CompanyForm
+from .forms import CompanyForm, ContactForm
 from .models import Company, Contact
-from django.db.models import Q, Count
+from django.db.models import Count
+
+
+"""
+
+==== COMPANY SECTION ====
+
+"""
 
 @login_required
-def company_list_view(request):
-    companies = Company.objects.annotate(
-        inspection_folders_count=Count('inspection_folders')
+def company_list(request):
+    """Render companies list view"""
+    companies = get_filtered_companies(request)
+
+    paginator = Paginator(companies, 15)
+    page_obj = paginator.get_page(1)
+
+    return render(
+        request,
+        "crm/company.html",
+        {
+            "companies": page_obj,
+            "page_obj": page_obj,
+        },
     )
-    q = request.GET.get('q', '').strip()
-    if q:
-        companies = companies.filter(
-            Q(name__icontains=q) | 
-            Q(siren__icontains=q) | 
-            Q(siret__icontains=q) | 
-            Q(reference__icontains=q)
-        )
-    status = request.GET.get('status', 'active').strip()
-    if status == 'active':
-        companies = companies.filter(is_active=True)
-    elif status == 'archived':
-        companies = companies.filter(is_active=False)
-
-    sort_by = request.GET.get('sort', 'name')
-    allowed_sorts = ['name', '-created_at', '-inspection_folders_count']
-    if sort_by in allowed_sorts:
-        companies = companies.order_by(sort_by)
-
-    if request.headers.get('HX-Request'):
-        return render(request, 'crm/partials/company_grid.html', {'companies': companies})
-
-    return render(request, 'crm/company.html', {'companies': companies})
 
 @login_required
-def company_detail_view(request, pk):
+def company_list_paginated(request, page=1):
+    """Render companies list view with update page"""
+    companies = get_filtered_companies(request)
 
+    paginator = Paginator(companies, 15)
+    page_obj = paginator.get_page(page)
+
+    return render(
+        request,
+        "crm/partials/company_grid.html",
+        {
+            "companies": page_obj,
+            "page_obj": page_obj,
+        },
+    )
+
+@login_required
+def company_detail(request, ref):
+    """Render the detail view for a company"""
     company = get_object_or_404(
         Company.objects.prefetch_related('inspection_folders'), 
-        pk=pk
+        ref=ref
     )
     return render(request, 'crm/company_detail.html', {'company': company})
 
-@login_required
-def create_company_htmx(request):
-    """HTMX view for creating a new company via modal."""
-    if request.method == 'POST':
-        form = CompanyForm(request.POST)
-        if form.is_valid():
-            form.save()
-            
-            companies = Company.objects.all().order_by('-id')
-            response = render(request, 'crm/partials/company_list.html', {'companies': companies})
-            response['HX-Trigger'] = 'closeModal'
-            return response
-        else:
-            return render(request, 'crm/partials/company_form_modal.html', {'form': form}, status=422)
-    else:
-        form = CompanyForm()
 
-    return render(request, 'crm/partials/company_form_modal.html', {'form': form})
+@login_required
+def create_company(request):
+    """HTMX view to render the creation window for companies"""
+    if request.method == "POST":
+            form = CompanyForm(request.POST)
+            if form.is_valid():
+                form.save()
+
+                companies = get_filtered_companies(request)
+                from django.core.paginator import Paginator
+                paginator = Paginator(companies, 15)
+                page_obj = paginator.get_page(1)
+
+                response = render(
+                    request,
+                    "crm/partials/company_grid.html",
+                    {"companies": page_obj, "page_obj": page_obj},
+                )
+                response["HX-Trigger"] = "closeModal"
+                return response
+            else:
+                return render(
+                    request,
+                    "crm/partials/company_form_modal.html",
+                    {"form": form},
+                    status=422,
+                )
+
+    form = CompanyForm()
+    return render(request, "crm/partials/company_form_modal.html", {"form": form})
+
 
 @login_required
 def search_siret_api(request):
+    """Request data from INSEE API and auto-complete the company creation form"""
     siret_query = (
         request.GET.get("siret_search", "")
         .strip()
@@ -87,12 +115,18 @@ def search_siret_api(request):
 
     return render(request, "crm/partials/siret_search_result.html", context)
 
+"""
+
+==== CONTACT SECTION ====
+
+"""
+
 @login_required
 def contact_list(request):
+    """Render contacts list view"""
     companies = Company.objects.all().order_by("name")
-    contacts = Contact.objects.select_related("company").order_by("-id")
+    contacts = get_filtered_contacts(request)
 
-    # Pagination
     paginator = Paginator(contacts, 15)
     page_obj = paginator.get_page(1)
 
@@ -108,28 +142,12 @@ def contact_list(request):
 
 
 @login_required
-def contact_list_partial(request):
-    query = request.GET.get("q", "").strip()
-    company_id = request.GET.get("company", "").strip()
-
-    contacts = Contact.objects.select_related("company").all()
-
-    if query:
-        contacts = contacts.filter(
-            Q(first_name__icontains=query)
-            | Q(last_name__icontains=query)
-            | Q(email__icontains=query)
-            | Q(company__name__icontains=query)
-        )
-
-    if company_id and company_id.isdigit():
-        contacts = contacts.filter(company_id=company_id)
-
-    contacts = contacts.order_by("-id")
+def contact_list_paginated(request, page=1):
+    """Render companies list view with update page"""
+    contacts = get_filtered_contacts(request)
 
     paginator = Paginator(contacts, 15)
-    page_number = request.GET.get("page", 1)
-    page_obj = paginator.get_page(page_number)
+    page_obj = paginator.get_page(page)
 
     return render(
         request,
@@ -139,3 +157,43 @@ def contact_list_partial(request):
             "page_obj": page_obj,
         },
     )
+
+@login_required
+def contact_detail(request, ref):
+    """Render the detail view for a company"""
+    contact = get_object_or_404(
+        Contact.objects.select_related("company"),
+        ref=ref
+    )
+    return render(request, 'crm/contact_detail.html', {'contact': contact})
+
+@login_required
+def create_contact(request):
+    """HTMX view to render the creation window for contacts"""
+    if request.method == "POST":
+            form = ContactForm(request.POST)
+            if form.is_valid():
+                form.save()
+
+                contacts = get_filtered_contacts(request)
+                from django.core.paginator import Paginator
+                paginator = Paginator(contacts, 15)
+                page_obj = paginator.get_page(1)
+
+                response = render(
+                    request,
+                    "crm/partials/contact_grid.html",
+                    {"contacts": page_obj, "page_obj": page_obj},
+                )
+                response["HX-Trigger"] = "closeModal"
+                return response
+            else:
+                return render(
+                    request,
+                    "crm/partials/contact_form_modal.html",
+                    {"form": form},
+                    status=422,
+                )
+
+    form = ContactForm()
+    return render(request, "crm/partials/contact_form_modal.html", {"form": form})

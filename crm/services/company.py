@@ -1,6 +1,8 @@
 import os
 import requests
 from django.conf import settings
+from django.db.models import Q, Count
+from crm.models import Company
 
 
 class INSEEApiClient:
@@ -92,3 +94,37 @@ class INSEEApiClient:
             "creation_date": etab.get("dateCreationEtablissement")
             or unit.get("dateCreationUniteLegale", ""),
         }
+
+def get_filtered_companies(request):
+    """Extrait les paramètres GET et renvoie le QuerySet de sociétés filtré et trié."""
+    companies = Company.objects.annotate(
+        inspection_folders_count=Count('inspection_folders')
+    )
+    
+    # Recherche textuelle
+    q = request.GET.get('q', '').strip()
+    if q:
+        companies = companies.filter(
+            Q(name__icontains=q) | 
+            Q(siren__icontains=q) | 
+            Q(siret__icontains=q) | 
+            Q(reference__icontains=q)
+        )
+        
+    # Filtre par statut
+    status = request.GET.get('status', 'active').strip()
+    if status == 'active':
+        companies = companies.filter(is_active=True)
+    elif status == 'archived':
+        companies = companies.filter(is_active=False)
+
+    # Tri sécurisé
+    sort_by = request.GET.get('sort', 'name')
+    allowed_sorts = ['name', '-created_at', '-inspection_folders_count']
+    
+    if sort_by in allowed_sorts:
+        companies = companies.order_by(sort_by)
+    else:
+        companies = companies.order_by('name') # Fallback par défaut
+
+    return companies

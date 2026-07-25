@@ -1,0 +1,137 @@
+{% extends "core/app_layout.html" %}
+
+{% block page_title %}{{ contact.first_name }} — Détails{% endblock page_title %}
+
+{% block app_content %}
+<div class="max-w-5xl mx-auto px-4 py-8">
+    
+    <!-- Header -->
+    <div class="mb-8">
+        <a href="{% url 'crm:contact_list' %}" class="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 mb-2 transition">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            Retour aux contacts
+        </a>
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+            {{ contact.first_name }} {{ contact.last_name }}
+        </h1>
+        {% if contact.job_title %}
+            <p class="text-gray-500 dark:text-gray-400 text-lg">{{ contact.job_title }}</p>
+        {% endif %}
+    </div>
+
+    <!-- Contact card -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <!-- Left column : Main infos -->
+        <div class="md:col-span-2 space-y-6">
+            
+            <!-- Contact -->
+            <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 border border-gray-100 dark:border-gray-700">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 border-b border-gray-100 dark:border-gray-700 pb-2">
+                    Coordonnées
+                </h2>
+                
+                <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Email</dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white font-medium">
+                            {% if contact.email %}
+                                <a href="mailto:{{ contact.email }}" class="text-indigo-600 hover:underline dark:text-indigo-400">
+                                    {{ contact.email }}
+                                </a>
+                            {% else %}
+                                <span class="text-gray-400 italic">Non renseigné</span>
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                    <div>
+                        <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Téléphone</dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white font-medium">
+                            {% if contact.phone %}
+                                <a href="tel:{{ contact.phone }}" class="hover:underline">
+                                    {{ contact.phone }}
+                                </a>
+                            {% else %}
+                                <span class="text-gray-400 italic">Non renseigné</span>
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                    <div>
+                        <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Poste / Fonction</dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">
+                            {{ contact.job_title|default:"-" }}
+                        </dd>
+                    </div>
+
+                    <div>
+                        <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Ajouté le</dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">
+                            {{ contact.created_at|date:"d/m/Y" }}
+                        </dd>
+                    </div>
+                </dl>
+            </div>
+
+            <!-- Notes -->
+            <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 border border-gray-100 dark:border-gray-700">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-3 border-b border-gray-100 dark:border-gray-700 pb-2">
+                    Notes & Remarques
+                </h2>
+                <div class="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line">
+                    {% if contact.notes %}
+                        {{ contact.notes }}
+                    {% else %}
+                        <p class="text-gray-400 italic">Aucune note pour ce contact.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Column : Related company -->
+        <div class="space-y-6">
+            <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 border border-gray-100 dark:border-gray-700">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 border-b border-gray-100 dark:border-gray-700 pb-2">
+                    Entreprise
+                </h2>
+
+                {% if contact.company %}
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-base font-medium text-gray-900 dark:text-white">
+                                {{ contact.company.name }}
+                            </span>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if contact.company.is_active %}bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400{% else %}bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300{% endif %}">
+                                {% if contact.company.is_active %}Active{% else %}Archivée{% endif %}
+                            </span>
+                        </div>
+
+                        {% if contact.company.siren %}
+                            <p class="text-xs text-gray-500">SIREN : {{ contact.company.siren }}</p>
+                        {% endif %}
+
+                        <div class="pt-2">
+                            <a href="{% url 'crm:company_detail' contact.company.ref %}" 
+                               class="inline-flex items-center w-full justify-center px-3 py-2 text-xs font-medium text-indigo-600 bg-indigo-50 dark:bg-indigo-950/50 dark:text-indigo-400 rounded-lg hover:bg-indigo-100 transition">
+                                Voir la fiche entreprise
+                                <svg class="w-3.5 h-3.5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <p class="text-sm text-gray-400 italic">Aucune entreprise rattachée.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock app_content %}

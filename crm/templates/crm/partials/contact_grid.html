@@ -103,7 +103,7 @@
         </div>
         <div class="flex items-center space-x-1">
             {% if page_obj.has_previous %}
-                <button hx-get="{% url 'crm:contact_list_partial' %}?page={{ page_obj.previous_page_number }}"
+                <button hx-get="{% url 'crm:contact_list_paginated' %}?page={{ page_obj.previous_page_number }}"
                         hx-target="#contact-cards-container"
                         hx-include="[name='q'], [name='company']"
                         class="rounded border border-gray-700 bg-gray-800 px-2.5 py-1 text-gray-300 hover:bg-gray-700">
@@ -114,7 +114,7 @@
             <span class="px-2">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
 
             {% if page_obj.has_next %}
-                <button hx-get="{% url 'crm:contact_list_partial' %}?page={{ page_obj.next_page_number }}"
+                <button hx-get="{% url 'crm:contact_list_paginated' %}?page={{ page_obj.next_page_number }}"
                         hx-target="#contact-cards-container"
                         hx-include="[name='q'], [name='company']"
                         class="rounded border border-gray-700 bg-gray-800 px-2.5 py-1 text-gray-300 hover:bg-gray-700">
