@@ -62,3 +62,8 @@ def hard_delete_instance(instance):
     Delete permanently any model instance. Use with caution, as this action is irreversible.
     """
     instance.delete()
+
+def theme_processor(request):
+    return {
+        'current_theme': request.session.get('theme', 'dark')
+    }
