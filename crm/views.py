@@ -234,7 +234,10 @@ def contact_detail(request, pk):
 @login_required
 @require_http_methods(["GET", "POST"])
 def create_contact(request):
-    """HTMX view to render the creation window for contacts"""
+    """HTMX view to render and process the creation form for contacts."""
+    # Retrieve company_id from query parameters (GET) or form submission (POST)
+    company_id = request.GET.get("company") or request.POST.get("company")
+
     if request.method == "POST":
         form = ContactForm(request.POST)
         if form.is_valid():
@@ -242,6 +245,12 @@ def create_contact(request):
             contact.created_by = request.user
             contact.save()
 
+            # If created from a company detail page, refresh the page to show the new contact
+            if company_id:
+                response = HttpResponse(status=204)
+                response["HX-Refresh"] = "true"
+                return response
+            # Default behavior for global contact list view
             contacts = get_filtered_contacts(request)
             paginator = Paginator(contacts, 15)
             page_obj = paginator.get_page(1)
@@ -260,8 +269,12 @@ def create_contact(request):
                 {"form": form},
                 status=422,
             )
+    # Pre-fill company initial data for GET request
+    initial_data = {}
+    if company_id:
+        initial_data["company"] = company_id
 
-    form = ContactForm()
+    form = ContactForm(initial=initial_data)
     return render(
         request, "crm/partials/contact_form_modal.html", {"form": form}
     )

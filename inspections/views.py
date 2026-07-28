@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
 from crm.models import Company
 from inspections.forms import InspectionFolderForm
 from core.services import create_tracked_instance
@@ -53,25 +54,39 @@ def folders_view(request):
 @login_required
 def create_folder_htmx(request):
     """HTMX view to create a new inspection folder."""
+    company_id = request.GET.get('company') or request.POST.get('company')
+
     if request.method == 'POST':
         form = InspectionFolderForm(request.POST)
         if form.is_valid():
-            create_tracked_instance(form, request.user)
-            
+            folder = create_tracked_instance(form, request.user)
+
+            # Request come from company or folder
+            if company_id:
+                # Option A : Redirect to company view
+                response = HttpResponse(status=204)
+                response['HX-Refresh'] = 'true'
+                return response
+
+            # Option B : From folder list
             folders = _filter_and_sort_folders(request)
-            
-            response = render(request, 'inspections/partials/folder_grid.html', {'folders': folders})
+            response = render(
+                request,
+                'inspections/partials/folder_grid.html',
+                {'folders': folders},
+            )
             response['HX-Trigger'] = 'closeModal'
             return response
     else:
         initial_data = {}
-        company_id = request.GET.get('company')
         if company_id:
             initial_data['company'] = company_id
 
         form = InspectionFolderForm(initial=initial_data)
-        
-    return render(request, 'inspections/partials/folder_form_modal.html', {'form': form})
+
+    return render(
+        request, 'inspections/partials/folder_form_modal.html', {'form': form}
+    )
 
 @login_required
 def folder_detail_view(request, folder_id):

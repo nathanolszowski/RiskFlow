@@ -15,11 +15,14 @@
             </button>
         </div>
 
-        <!-- Form HTMX -->
-        <form hx-post="{% url 'crm:create_contact' %}" 
+        <!-- Form HTMX (Dynamique Création / Édition) -->
+        <form {% if form.instance.pk %}
+                  hx-post="{% url 'crm:update_contact' form.instance.pk %}"
+              {% else %}
+                  hx-post="{% url 'crm:create_contact' %}"
+              {% endif %}
               hx-target="#contact-cards-container"
               hx-swap="innerHTML"
-              hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
               class="space-y-4">
             {% csrf_token %}
 
@@ -70,7 +73,7 @@
 
                 <div>
                     <label class="block text-xs font-medium text-gray-400 mb-1">
-                        {{ form.position.label }}
+                        {{ form.position.label }} <span class="text-red-500">*</span>
                     </label>
                     {{ form.position }}
                     {% if form.position.errors %}
@@ -83,7 +86,7 @@
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                     <label class="block text-xs font-medium text-gray-400 mb-1">
-                        {{ form.phone_number_fix.label }}
+                        {{ form.phone_number_fix.label }} <span class="text-red-500">*</span>
                     </label>
                     {{ form.phone_number_fix }}
                     {% if form.phone_number_fix.errors %}
@@ -93,7 +96,7 @@
 
                 <div>
                     <label class="block text-xs font-medium text-gray-400 mb-1">
-                        {{ form.phone_number_mobile.label }}
+                        {{ form.phone_number_mobile.label }} <span class="text-red-500">*</span>
                     </label>
                     {{ form.phone_number_mobile }}
                     {% if form.phone_number_mobile.errors %}
@@ -111,7 +114,7 @@
                 </button>
                 <button type="submit" 
                         class="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-medium text-white hover:bg-indigo-500 transition">
-                    Enregistrer
+                    {% if form.instance.pk %}Enregistrer les modifications{% else %}Créer le contact{% endif %}
                 </button>
             </div>
         </form>
