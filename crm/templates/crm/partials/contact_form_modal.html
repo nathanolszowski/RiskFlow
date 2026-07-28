@@ -1,119 +1,112 @@
-<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-    <div class="w-full max-w-xl rounded-xl border border-gray-800 bg-gray-900 p-6 shadow-xl">
-        
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+    <div class="w-full max-w-xl rounded-xl border border-border-default bg-surface-primary p-6 shadow-xl">
+
         <!-- Header -->
-        <div class="flex items-center justify-between border-b border-gray-800 pb-4 mb-4">
-            <h2 class="text-lg font-semibold text-gray-100">
+        <div class="flex items-center justify-between border-b border-border-default pb-4 mb-4">
+            <h2 class="text-lg font-semibold text-text-main">
                 {% if form.instance.pk %}Modifier le contact{% else %}Nouveau contact{% endif %}
             </h2>
-            <button type="button" 
-                    onclick="document.getElementById('modal-container').innerHTML = ''"
-                    class="text-gray-400 hover:text-gray-200 transition">
+            <button type="button" onclick="document.getElementById('modal-container').innerHTML = ''"
+                class="text-text-subtle hover:text-text-main transition-colors cursor-pointer">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
         </div>
 
-        <!-- Form HTMX (Dynamique Création / Édition) -->
-        <form {% if form.instance.pk %}
-                  hx-post="{% url 'crm:update_contact' form.instance.pk %}"
-              {% else %}
-                  hx-post="{% url 'crm:create_contact' %}"
-              {% endif %}
-              hx-target="#contact-cards-container"
-              hx-swap="innerHTML"
-              class="space-y-4">
+        <!-- HTMX Form -->
+        <form {% if form.instance.pk %} hx-post="{% url 'crm:update_contact' form.instance.pk %}" {% else %}
+            hx-post="{% url 'crm:create_contact' %}" {% endif %} hx-target="#contact-cards-container"
+            hx-swap="innerHTML" class="space-y-4">
             {% csrf_token %}
 
             <!-- Company -->
             <div>
-                <label class="block text-xs font-medium text-gray-400 mb-1">
-                    {{ form.company.label }} <span class="text-red-500">*</span>
+                <label class="block text-xs font-medium text-text-subtle mb-1">
+                    {{ form.company.label }} <span class="text-rose-500">*</span>
                 </label>
                 {{ form.company }}
                 {% if form.company.errors %}
-                    <p class="mt-1 text-xs text-red-400">{{ form.company.errors.0 }}</p>
+                <p class="mt-1 text-xs text-rose-400">{{ form.company.errors.0 }}</p>
                 {% endif %}
             </div>
 
-            <!-- Identity -->
+            <!-- Contact identity -->
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                    <label class="block text-xs font-medium text-gray-400 mb-1">
-                        {{ form.first_name.label }} <span class="text-red-500">*</span>
+                    <label class="block text-xs font-medium text-text-subtle mb-1">
+                        {{ form.first_name.label }} <span class="text-rose-500">*</span>
                     </label>
                     {{ form.first_name }}
                     {% if form.first_name.errors %}
-                        <p class="mt-1 text-xs text-red-400">{{ form.first_name.errors.0 }}</p>
+                    <p class="mt-1 text-xs text-rose-400">{{ form.first_name.errors.0 }}</p>
                     {% endif %}
                 </div>
 
                 <div>
-                    <label class="block text-xs font-medium text-gray-400 mb-1">
-                        {{ form.last_name.label }} <span class="text-red-500">*</span>
+                    <label class="block text-xs font-medium text-text-subtle mb-1">
+                        {{ form.last_name.label }} <span class="text-rose-500">*</span>
                     </label>
                     {{ form.last_name }}
                     {% if form.last_name.errors %}
-                        <p class="mt-1 text-xs text-red-400">{{ form.last_name.errors.0 }}</p>
+                    <p class="mt-1 text-xs text-rose-400">{{ form.last_name.errors.0 }}</p>
                     {% endif %}
                 </div>
             </div>
 
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                    <label class="block text-xs font-medium text-gray-400 mb-1">
-                        {{ form.email.label }} <span class="text-red-500">*</span>
+                    <label class="block text-xs font-medium text-text-subtle mb-1">
+                        {{ form.email.label }} <span class="text-rose-500">*</span>
                     </label>
                     {{ form.email }}
                     {% if form.email.errors %}
-                        <p class="mt-1 text-xs text-red-400">{{ form.email.errors.0 }}</p>
+                    <p class="mt-1 text-xs text-rose-400">{{ form.email.errors.0 }}</p>
                     {% endif %}
                 </div>
 
                 <div>
-                    <label class="block text-xs font-medium text-gray-400 mb-1">
-                        {{ form.position.label }} <span class="text-red-500">*</span>
+                    <label class="block text-xs font-medium text-text-subtle mb-1">
+                        {{ form.position.label }} <span class="text-rose-500">*</span>
                     </label>
                     {{ form.position }}
                     {% if form.position.errors %}
-                        <p class="mt-1 text-xs text-red-400">{{ form.position.errors.0 }}</p>
+                    <p class="mt-1 text-xs text-rose-400">{{ form.position.errors.0 }}</p>
                     {% endif %}
                 </div>
             </div>
 
-            <!-- Phones -->
+            <!-- Contact Phones + Email -->
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                    <label class="block text-xs font-medium text-gray-400 mb-1">
-                        {{ form.phone_number_fix.label }} <span class="text-red-500">*</span>
+                    <label class="block text-xs font-medium text-text-subtle mb-1">
+                        {{ form.phone_number_fix.label }} <span class="text-rose-500">*</span>
                     </label>
                     {{ form.phone_number_fix }}
                     {% if form.phone_number_fix.errors %}
-                        <p class="mt-1 text-xs text-red-400">{{ form.phone_number_fix.errors.0 }}</p>
+                    <p class="mt-1 text-xs text-rose-400">{{ form.phone_number_fix.errors.0 }}</p>
                     {% endif %}
                 </div>
 
                 <div>
-                    <label class="block text-xs font-medium text-gray-400 mb-1">
-                        {{ form.phone_number_mobile.label }} <span class="text-red-500">*</span>
+                    <label class="block text-xs font-medium text-text-subtle mb-1">
+                        {{ form.phone_number_mobile.label }} <span class="text-rose-500">*</span>
                     </label>
                     {{ form.phone_number_mobile }}
                     {% if form.phone_number_mobile.errors %}
-                        <p class="mt-1 text-xs text-red-400">{{ form.phone_number_mobile.errors.0 }}</p>
+                    <p class="mt-1 text-xs text-rose-400">{{ form.phone_number_mobile.errors.0 }}</p>
                     {% endif %}
                 </div>
             </div>
 
             <!-- Actions -->
-            <div class="flex items-center justify-end gap-3 border-t border-gray-800 pt-4 mt-6">
-                <button type="button" 
-                        onclick="document.getElementById('modal-container').innerHTML = ''"
-                        class="rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-xs font-medium text-gray-300 hover:bg-gray-700 transition">
+            <div class="flex items-center justify-end gap-3 border-t border-border-default pt-4 mt-6">
+                <button type="button" onclick="document.getElementById('modal-container').innerHTML = ''"
+                    class="rounded-lg border border-border-default bg-surface-tertiary px-4 py-2 text-xs font-medium text-text-body hover:bg-surface-secondary transition-colors cursor-pointer">
                     Annuler
                 </button>
-                <button type="submit" 
-                        class="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-medium text-white hover:bg-indigo-500 transition">
+                <button type="submit"
+                    class="rounded-lg bg-brand-primary hover:bg-brand-hover px-4 py-2 text-xs font-medium text-white transition-colors cursor-pointer">
                     {% if form.instance.pk %}Enregistrer les modifications{% else %}Créer le contact{% endif %}
                 </button>
             </div>
@@ -123,7 +116,7 @@
 </div>
 
 <script>
-    document.body.addEventListener("closeModal", function() {
+    document.body.addEventListener("closeModal", function () {
         const container = document.getElementById("modal-container");
         if (container) {
             container.innerHTML = "";

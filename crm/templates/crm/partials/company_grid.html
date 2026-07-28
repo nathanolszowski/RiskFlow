@@ -1,84 +1,95 @@
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {% for company in companies %}
-        <div class="group relative bg-gray-900/50 hover:bg-gray-900/80 border border-gray-800 hover:border-gray-700/80 rounded-2xl p-5 backdrop-blur-xs transition-all duration-200 flex flex-col justify-between shadow-lg hover:shadow-indigo-500/5">
-            
-            <!-- Top of card : Initial + Name + Status Badge -->
-            <div class="space-y-4">
-                <div class="flex items-start justify-between gap-3 min-w-0">
-                    
-                    <!-- Flex container -->
-                    <div class="flex items-center gap-3 min-w-0 flex-1">
-                        <!-- Avatar -->
-                        <div class="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold flex items-center justify-center shrink-0 uppercase text-sm">
-                            {{ company.name|slice:":2" }}
-                        </div>
-                        
-                        <div class="min-w-0 flex-1">
-                            <h3 class="text-base font-semibold text-white truncate group-hover:text-indigo-300 transition" title="{{ company.name }}">
-                                {{ company.name }}
-                            </h3>
-                            {% if company.reference %}
-                                <p class="text-xs text-gray-500 font-mono mt-0.5 truncate" title="{{ company.reference }}">Ref: {{ company.reference }}</p>
-                            {% endif %}
-                        </div>
+    <div
+        class="group relative bg-surface-primary/50 hover:bg-surface-primary/80 border border-border-default hover:border-border-default/80 rounded-2xl p-5 backdrop-blur-xs transition-all duration-200 flex flex-col justify-between shadow-lg hover:shadow-brand-primary/5">
+
+        <!-- Top of card : Initial + Name + Status Badge -->
+        <div class="space-y-4">
+            <div class="flex items-start justify-between gap-3 min-w-0">
+
+                <!-- Flex container -->
+                <div class="flex items-center gap-3 min-w-0 flex-1">
+                    <!-- Avatar -->
+                    <div
+                        class="w-10 h-10 rounded-xl bg-brand-primary/10 border border-brand-primary/20 text-brand-primary font-bold flex items-center justify-center shrink-0 uppercase text-sm">
+                        {{ company.name|slice:":2" }}
                     </div>
 
-                    <!-- Status badge -->
-                    <div class="shrink-0">
-                        {% if company.is_active %}
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                Actif
-                            </span>
-                        {% else %}
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-800 text-gray-400 border border-gray-700">
-                                Archivé
-                            </span>
+                    <div class="min-w-0 flex-1">
+                        <h3 class="text-base font-semibold text-text-main truncate group-hover:text-brand-primary transition-colors"
+                            title="{{ company.name }}">
+                            {{ company.name }}
+                        </h3>
+                        {% if company.reference %}
+                        <p class="text-xs text-text-faded font-mono mt-0.5 truncate" title="{{ company.reference }}">
+                            Ref: {{ company.reference }}</p>
                         {% endif %}
                     </div>
                 </div>
 
-                <!-- Metadatas -->
-                <div class="grid grid-cols-2 gap-2 text-xs py-2 border-y border-gray-800/60 min-w-0">
-                    <div class="min-w-0">
-                        <span class="text-gray-500 block">SIREN / SIRET</span>
-                        <span class="text-gray-300 font-mono truncate block">{{ company.siren|default:company.siret|default:"—" }}</span>
-                    </div>
-                    <div class="min-w-0">
-                        <span class="text-gray-500 block">Secteur / Forme</span>
-                        <span class="text-gray-300 truncate block" title="{{ company.legal_structure|default:company.business_line|default:'—' }}">{{ company.legal_structure|default:company.business_line|default:"—" }}</span>
-                    </div>
+                <!-- Status badge -->
+                <div class="shrink-0">
+                    {% if company.is_active %}
+                    <span
+                        class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        Actif
+                    </span>
+                    {% else %}
+                    <span
+                        class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-surface-tertiary text-text-subtle border border-border-default">
+                        Archivé
+                    </span>
+                    {% endif %}
                 </div>
             </div>
 
-            <!-- Folders -->
-            <div class="mt-5 pt-3 flex items-center justify-between text-xs border-t border-gray-800/40">
-                <div class="flex items-center gap-1.5 text-gray-400">
-                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                    </svg>
-                    <span class="font-medium text-gray-300">
-                        {{ company.inspection_folders.count }}
-                    </span> 
-                    dossier{{ company.inspection_folders.count|pluralize }}
+            <!-- Metadatas -->
+            <div class="grid grid-cols-2 gap-2 text-xs py-2 border-y border-border-default/60 min-w-0">
+                <div class="min-w-0">
+                    <span class="text-text-faded block">SIREN / SIRET</span>
+                    <span class="text-text-body font-mono truncate block">{{ company.siren|default:company.siret|default:"—" }}</span>
                 </div>
-
-                <!-- Company detail view button -->
-                <a href="{% url 'crm:company_detail' company.id %}" class="inline-flex items-center gap-1 font-medium text-indigo-400 hover:text-indigo-300 transition shrink-0">
-                    Voir
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                    </svg>
-                </a>
+                <div class="min-w-0">
+                    <span class="text-text-faded block">Secteur / Forme</span>
+                    <span class="text-text-body truncate block"
+                        title="{{ company.legal_structure|default:company.business_line|default:'—' }}">{{ company.legal_structure|default:company.business_line|default:"—" }}</span>
+                </div>
             </div>
-
         </div>
+
+        <!-- Folders -->
+        <div class="mt-5 pt-3 flex items-center justify-between text-xs border-t border-border-default/40">
+            <div class="flex items-center gap-1.5 text-text-subtle">
+                <svg class="w-4 h-4 text-text-faded" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                </svg>
+                <span class="font-medium text-text-body">
+                    {{ company.inspection_folders.count }}
+                </span>
+                dossier{{ company.inspection_folders.count|pluralize }}
+            </div>
+
+            <!-- Company detail view button -->
+            <a href="{% url 'crm:company_detail' company.id %}"
+                class="inline-flex items-center gap-1 font-medium text-brand-primary hover:text-brand-hover transition-colors shrink-0">
+                Voir
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+            </a>
+        </div>
+
+    </div>
     {% empty %}
-        <div class="col-span-full bg-gray-900/30 border border-gray-800 rounded-2xl p-12 text-center">
-            <svg class="w-12 h-12 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0h5m0 0v-5a2 2 0 012-2h2a2 2 0 012 2v5" />
-            </svg>
-            <h3 class="text-base font-semibold text-gray-300">Aucune société trouvée</h3>
-            <p class="text-sm text-gray-500 mt-1">Essayez de modifier vos critères de recherche ou d'ajouter une nouvelle entreprise.</p>
-        </div>
+    <div class="col-span-full bg-surface-primary/30 border border-border-default rounded-2xl p-12 text-center">
+        <svg class="w-12 h-12 text-text-faded/60 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0h5m0 0v-5a2 2 0 012-2h2a2 2 0 012 2v5" />
+        </svg>
+        <h3 class="text-base font-semibold text-text-body">Aucune société trouvée</h3>
+        <p class="text-sm text-text-faded mt-1">Essayez de modifier vos critères de recherche ou d'ajouter une nouvelle
+            entreprise.</p>
+    </div>
     {% endfor %}
 </div>

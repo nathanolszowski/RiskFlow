@@ -1,37 +1,40 @@
 <div class="space-y-4">
-    <div class="flex justify-between items-center border-b border-gray-800 pb-3">
-        <h3 class="text-lg font-bold text-white">🚨 Liste des Recommandations</h3>
-        <span class="text-xs text-gray-500 font-mono">{{ recommandations|length }} Actives</span>
+    <div class="flex justify-between items-center border-b border-border-default pb-3">
+        <h3 class="text-lg font-bold text-text-main">🚨 Liste des Recommandations</h3>
+        <span class="text-xs text-text-muted font-mono">{{ recommandations|length }} Actives</span>
     </div>
 
     <div class="space-y-3">
         {% for rec in recommandations %}
-            <div class="p-4 rounded-xl border border-gray-800 bg-gray-900/20 flex justify-between items-center">
-                <div class="space-y-1">
-                    <div class="flex items-center gap-2 text-xs">
-                        <span class="font-mono text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20">
-                            {{ rec.code|default:"REC" }}
-                        </span>
-                        <span class="text-gray-500">•</span>
-                        <span class="text-gray-400">Créé le {{ rec.created_at|date:"d/m/Y" }}</span>
-                    </div>
-                    <p class="text-sm font-semibold text-white">{{ rec.title }}</p>
-                    {% if rec.due_date %}
-                        <p class="text-xs text-gray-500">📅 Échéance : {{ rec.due_date|date:"d/m/Y" }}</p>
-                    {% endif %}
-                </div>
-
-                <div class="flex flex-col items-end gap-2">
-                    <span class="inline-flex items-center rounded-md bg-yellow-400/10 px-2 py-0.5 text-xs font-medium text-yellow-500 ring-1 ring-inset ring-yellow-400/20">
-                        {{ rec.get_priority_display|default:"Priorité" }}
+        <div
+            class="p-4 rounded-xl border border-border-default bg-surface-primary flex justify-between items-center transition-colors">
+            <div class="space-y-1">
+                <div class="flex items-center gap-2 text-xs">
+                    <span
+                        class="font-mono text-brand-light bg-brand-bg px-1.5 py-0.5 rounded border border-brand-border">
+                        {{ rec.code|default:"REC" }}
                     </span>
-                    <span class="text-[10px] uppercase font-bold tracking-wider text-green-400">
-                        {{ rec.get_current_status_display|default:"Ouvert" }}
-                    </span>
+                    <span class="text-text-faded">•</span>
+                    <span class="text-text-subtle">Créé le {{ rec.created_at|date:"d/m/Y" }}</span>
                 </div>
+                <p class="text-sm font-semibold text-text-main">{{ rec.title }}</p>
+                {% if rec.due_date %}
+                <p class="text-xs text-text-muted">📅 Échéance : {{ rec.due_date|date:"d/m/Y" }}</p>
+                {% endif %}
             </div>
+
+            <div class="flex flex-col items-end gap-2">
+                <span
+                    class="inline-flex items-center rounded-md bg-status-warning-bg px-2 py-0.5 text-xs font-medium text-status-warning border border-status-warning-border">
+                    {{ rec.get_priority_display|default:"Priorité" }}
+                </span>
+                <span class="text-[10px] uppercase font-bold tracking-wider text-status-success">
+                    {{ rec.get_current_status_display|default:"Ouvert" }}
+                </span>
+            </div>
+        </div>
         {% empty %}
-            <p class="text-sm text-gray-500 italic text-center py-4">Aucune recommandation émise pour le moment.</p>
+        <p class="text-sm text-text-muted italic text-center py-4">Aucune recommandation émise pour le moment.</p>
         {% endfor %}
     </div>
 </div>

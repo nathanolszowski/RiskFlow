@@ -1,33 +1,34 @@
 {% if found %}
 <!-- Visual confirmation -->
 <div class="rounded-lg border border-emerald-500/30 bg-emerald-950/20 p-3 text-xs text-emerald-400">
-    ✓ Données de <strong>{{ name }}</strong> récupérées et injectées dans le formulaire !
+       ✓ Données de <strong>{{ name }}</strong> récupérées et injectées dans le formulaire !
 </div>
 
-<!-- 2. Swaps HTMX Out-Of-Band (hx-swap-oob="true") : Replace the content of the inputs by their ID -->
+<!-- Swaps HTMX Out-Of-Band (hx-swap-oob="true") : Replace the content of the inputs by their ID -->
 <input type="text" id="id_name" name="name" value="{{ name }}" hx-swap-oob="true"
-       class="w-full rounded-lg border border-gray-700 bg-gray-800 p-2.5 text-sm text-gray-100 focus:border-indigo-500 focus:ring-indigo-500">
+       class="w-full rounded-lg border border-border-default bg-surface-tertiary p-2.5 text-sm text-text-main focus:border-brand-primary focus:ring-brand-primary">
 
 <input type="text" id="id_siren" name="siren" value="{{ siren }}" hx-swap-oob="true"
-       class="w-full rounded-lg border border-gray-700 bg-gray-800 p-2.5 text-sm text-gray-100 focus:border-indigo-500 focus:ring-indigo-500">
+       class="w-full rounded-lg border border-border-default bg-surface-tertiary p-2.5 text-sm text-text-main focus:border-brand-primary focus:ring-brand-primary">
 
 <input type="text" id="id_siret" name="siret" value="{{ siret }}" hx-swap-oob="true"
-       class="w-full rounded-lg border border-gray-700 bg-gray-800 p-2.5 text-sm text-gray-100 focus:border-indigo-500 focus:ring-indigo-500">
+       class="w-full rounded-lg border border-border-default bg-surface-tertiary p-2.5 text-sm text-text-main focus:border-brand-primary focus:ring-brand-primary">
 
 <input type="text" id="id_business_line" name="business_line" value="{{ business_line }}" hx-swap-oob="true"
-       class="w-full rounded-lg border border-gray-700 bg-gray-800 p-2.5 text-sm text-gray-100 focus:border-indigo-500 focus:ring-indigo-500">
+       class="w-full rounded-lg border border-border-default bg-surface-tertiary p-2.5 text-sm text-text-main focus:border-brand-primary focus:ring-brand-primary">
 
-<input type="text" id="id_company_size_category" name="company_size_category" value="{{ company_size_category }}" hx-swap-oob="true"
-       class="w-full rounded-lg border border-gray-700 bg-gray-800 p-2.5 text-sm text-gray-100 focus:border-indigo-500 focus:ring-indigo-500">
+<input type="text" id="id_company_size_category" name="company_size_category" value="{{ company_size_category }}"
+       hx-swap-oob="true"
+       class="w-full rounded-lg border border-border-default bg-surface-tertiary p-2.5 text-sm text-text-main focus:border-brand-primary focus:ring-brand-primary">
 
 <input type="text" id="id_creation_date" name="creation_date" value="{{ creation_date }}" hx-swap-oob="true"
-       class="w-full rounded-lg border border-gray-700 bg-gray-800 p-2.5 text-sm text-gray-100 focus:border-indigo-500 focus:ring-indigo-500">
+       class="w-full rounded-lg border border-border-default bg-surface-tertiary p-2.5 text-sm text-text-main focus:border-brand-primary focus:ring-brand-primary">
 
 <textarea id="id_address" name="address" hx-swap-oob="true"
-          class="w-full rounded-lg border border-gray-700 bg-gray-800 p-2.5 text-sm text-gray-100 focus:border-indigo-500 focus:ring-indigo-500">{{ address }}</textarea>
+       class="w-full rounded-lg border border-border-default bg-surface-tertiary p-2.5 text-sm text-text-main focus:border-brand-primary focus:ring-brand-primary">{{ address }}</textarea>
 
 {% elif query %}
 <div class="rounded-lg border border-amber-500/30 bg-amber-950/20 p-2.5 text-xs text-amber-400">
-    Aucun établissement trouvé pour le SIRET "{{ query }}".
+       Aucun établissement trouvé pour le SIRET "{{ query }}".
 </div>
 {% endif %}

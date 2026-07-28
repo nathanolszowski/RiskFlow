@@ -1,55 +1,64 @@
 <div>
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {% for contact in contacts %}
-        <div class="group relative flex flex-col justify-between rounded-xl border border-gray-800 bg-gray-900 p-5 shadow-sm hover:border-gray-700 hover:bg-gray-800/60 transition-all">
-            
+        <div
+            class="group relative flex flex-col justify-between rounded-xl border border-border-default bg-surface-primary p-5 shadow-sm hover:border-border-default hover:bg-surface-secondary/60 transition-all">
+
             <div class="space-y-4">
                 <!-- Header -->
                 <div class="flex items-start justify-between gap-3">
                     <div class="flex items-center gap-3">
-                        <div class="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-indigo-500/10 text-sm font-bold text-indigo-400 border border-indigo-500/20">
+                        <div
+                            class="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-brand-primary/10 text-sm font-bold text-brand-primary border border-brand-primary/20">
                             {{ contact.first_name|slice:":1"|upper }}{{ contact.last_name|slice:":1"|upper }}
                         </div>
                         <div>
-                            <a href="{% url 'crm:contact_detail' contact.id %}" class="font-semibold text-gray-100 group-hover:text-indigo-400 transition-colors">
+                            <a href="{% url 'crm:contact_detail' contact.id %}"
+                                class="font-semibold text-text-main group-hover:text-brand-primary transition-colors">
                                 {{ contact.first_name }} {{ contact.last_name }}
                             </a>
-                            <p class="text-xs text-gray-400">
+                            <p class="text-xs text-text-subtle">
                                 {{ contact.position|default:"Poste non renseigné" }}
                             </p>
                         </div>
                     </div>
 
                     {% if contact.is_primary %}
-                        <span class="inline-flex items-center rounded bg-indigo-500/10 px-2 py-0.5 text-[10px] font-medium text-indigo-400 border border-indigo-500/20">
-                            Principal
-                        </span>
+                    <span
+                        class="inline-flex items-center rounded bg-brand-primary/10 px-2 py-0.5 text-[10px] font-medium text-brand-primary border border-brand-primary/20">
+                        Principal
+                    </span>
                     {% endif %}
                 </div>
 
-                <hr class="border-gray-800">
+                <hr class="border-border-default">
 
                 <!-- Details -->
-                <div class="space-y-2.5 text-xs text-gray-300">
+                <div class="space-y-2.5 text-xs text-text-body">
                     <div class="flex items-center gap-2">
-                        <svg class="h-4 w-4 text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0h5m-5 0V9m0 0h5m-5 0H7"/>
+                        <svg class="h-4 w-4 text-text-faded shrink-0" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0h5m-5 0V9m0 0h5m-5 0H7" />
                         </svg>
-                        <span class="truncate font-medium text-gray-200">
+                        <span class="truncate font-medium text-text-body">
                             {% if contact.company %}
-                                {{ contact.company.name }}
+                            {{ contact.company.name }}
                             {% else %}
-                                <span class="text-gray-500 italic">Sans société</span>
+                            <span class="text-text-faded italic">Sans société</span>
                             {% endif %}
                         </span>
                     </div>
 
                     {% if contact.email %}
                     <div class="flex items-center gap-2">
-                        <svg class="h-4 w-4 text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        <svg class="h-4 w-4 text-text-faded shrink-0" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 002-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
-                        <a href="mailto:{{ contact.email }}" class="truncate text-gray-300 hover:text-indigo-400 hover:underline">
+                        <a href="mailto:{{ contact.email }}"
+                            class="truncate text-text-body hover:text-brand-primary hover:underline transition-colors">
                             {{ contact.email }}
                         </a>
                     </div>
@@ -57,10 +66,13 @@
 
                     {% if contact.phone %}
                     <div class="flex items-center gap-2">
-                        <svg class="h-4 w-4 text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                        <svg class="h-4 w-4 text-text-faded shrink-0" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                         </svg>
-                        <a href="tel:{{ contact.phone }}" class="text-gray-400 hover:text-indigo-400 hover:underline">
+                        <a href="tel:{{ contact.phone }}"
+                            class="text-text-subtle hover:text-brand-primary hover:underline transition-colors">
                             {{ contact.phone }}
                         </a>
                     </div>
@@ -68,26 +80,30 @@
                 </div>
             </div>
 
-            <!-- Pied de carte : Statut -->
-            <div class="mt-4 pt-3 border-t border-gray-800/60 flex items-center justify-between text-xs">
-                <span class="text-gray-500">Statut</span>
+            <!-- Footer : Status -->
+            <div class="mt-4 pt-3 border-t border-border-default/60 flex items-center justify-between text-xs">
+                <span class="text-text-faded">Statut</span>
                 {% if contact.is_active %}
-                    <span class="inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-400 ring-1 ring-inset ring-emerald-500/20">
-                        Actif
-                    </span>
+                <span
+                    class="inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-400 ring-1 ring-inset ring-emerald-500/20">
+                    Actif
+                </span>
                 {% else %}
-                    <span class="inline-flex items-center rounded-full bg-gray-500/10 px-2 py-0.5 text-xs font-medium text-gray-400 ring-1 ring-inset ring-gray-500/20">
-                        Inactif
-                    </span>
+                <span
+                    class="inline-flex items-center rounded-full bg-surface-tertiary px-2 py-0.5 text-xs font-medium text-text-muted ring-1 ring-inset ring-border-default">
+                    Inactif
+                </span>
                 {% endif %}
             </div>
 
         </div>
         {% empty %}
-        <div class="col-span-full rounded-xl border border-gray-800 bg-gray-900 p-12 text-center text-sm text-gray-400">
+        <div
+            class="col-span-full rounded-xl border border-border-default bg-surface-primary p-12 text-center text-sm text-text-subtle">
             <div class="flex flex-col items-center justify-center space-y-3">
-                <svg class="h-10 w-10 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                <svg class="h-10 w-10 text-text-faded" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
                 <p>Aucun contact trouvé.</p>
             </div>
@@ -97,29 +113,29 @@
 
     <!-- HTMX Pagination -->
     {% if page_obj.has_other_pages %}
-    <div class="mt-6 flex items-center justify-between rounded-xl border border-gray-800 bg-gray-900 px-6 py-3 text-xs text-gray-400">
+    <div
+        class="mt-6 flex items-center justify-between rounded-xl border border-border-default bg-surface-primary px-6 py-3 text-xs text-text-subtle">
         <div>
-            Affichage de {{ page_obj.start_index }} à {{ page_obj.end_index }} sur {{ page_obj.paginator.count }} contacts
+            Affichage de {{ page_obj.start_index }} à {{ page_obj.end_index }} sur {{ page_obj.paginator.count }}
+            contacts
         </div>
         <div class="flex items-center space-x-1">
             {% if page_obj.has_previous %}
-                <button hx-get="{% url 'crm:contact_list_paginated' %}?page={{ page_obj.previous_page_number }}"
-                        hx-target="#contact-cards-container"
-                        hx-include="[name='q'], [name='company']"
-                        class="rounded border border-gray-700 bg-gray-800 px-2.5 py-1 text-gray-300 hover:bg-gray-700">
-                    Précédent
-                </button>
+            <button hx-get="{% url 'crm:contact_list_paginated' %}?page={{ page_obj.previous_page_number }}"
+                hx-target="#contact-cards-container" hx-include="[name='q'], [name='company']"
+                class="rounded border border-border-default bg-surface-tertiary px-2.5 py-1 text-text-body hover:bg-surface-secondary transition-colors cursor-pointer">
+                Précédent
+            </button>
             {% endif %}
 
             <span class="px-2">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
 
             {% if page_obj.has_next %}
-                <button hx-get="{% url 'crm:contact_list_paginated' %}?page={{ page_obj.next_page_number }}"
-                        hx-target="#contact-cards-container"
-                        hx-include="[name='q'], [name='company']"
-                        class="rounded border border-gray-700 bg-gray-800 px-2.5 py-1 text-gray-300 hover:bg-gray-700">
-                    Suivant
-                </button>
+            <button hx-get="{% url 'crm:contact_list_paginated' %}?page={{ page_obj.next_page_number }}"
+                hx-target="#contact-cards-container" hx-include="[name='q'], [name='company']"
+                class="rounded border border-border-default bg-surface-tertiary px-2.5 py-1 text-text-body hover:bg-surface-secondary transition-colors cursor-pointer">
+                Suivant
+            </button>
             {% endif %}
         </div>
     </div>

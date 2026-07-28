@@ -1,52 +1,58 @@
 <div class="space-y-6">
     {% if visit %}
-        <div class="flex justify-between items-center border-b border-gray-800 pb-4">
-            <div>
-                <h3 class="text-lg font-bold text-white">{{ visit.template.name }}</h3>
-                <p class="text-xs text-gray-500 mt-0.5">Statut : {{ visit.get_current_status_display }}</p>
-            </div>
-            {% if visit.due_date %}
-                <span class="text-xs font-mono text-gray-400 bg-gray-900/60 border border-gray-800 px-3 py-1 rounded-md">
-                    📅 {{ visit.due_date|date:"d/m/Y" }}
-                </span>
-            {% endif %}
+    <div class="flex justify-between items-center border-b border-border-default pb-4">
+        <div>
+            <h3 class="text-lg font-bold text-text-main">{{ visit.template.name }}</h3>
+            <p class="text-xs text-text-muted mt-0.5">Statut : {{ visit.get_current_status_display }}</p>
         </div>
+        {% if visit.due_date %}
+        <span
+            class="text-xs font-mono text-text-subtle bg-surface-secondary border border-border-default px-3 py-1 rounded-md">
+            📅 {{ visit.due_date|date:"d/m/Y" }}
+        </span>
+        {% endif %}
+    </div>
 
-        <div class="space-y-6">
-            {% for section in sections %}
-                <div class="rounded-2xl border border-gray-800 bg-gray-900/40 p-6 backdrop-blur-xs space-y-4">
-                    <h4 class="text-sm font-bold uppercase tracking-wider text-indigo-400 border-b border-gray-800/50 pb-2">
-                        {{ section.title }}
-                    </h4>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {% for field in section.fields %}
-                            <div class="space-y-1">
-                                <label class="block text-xs font-medium text-gray-400">
-                                    {{ field.label }}
-                                    {% if field.required %}<span class="text-red-500">*</span>{% endif %}
-                                </label>
-                                
-                                <div class="w-full rounded-md border border-gray-800 bg-gray-950/50 px-3 py-2 text-sm text-gray-300 font-mono">
-                                    <span class="text-xs text-gray-600 italic">Format attendu : {{ field.type }}</span>
-                                </div>
-                            </div>
-                        {% endfor %}
+    <div class="space-y-6">
+        {% for section in sections %}
+        <div
+            class="rounded-2xl border border-border-default bg-surface-primary p-6 backdrop-blur-xs space-y-4 transition-colors">
+            <h4 class="text-sm font-bold uppercase tracking-wider text-brand-light border-b border-border-default pb-2">
+                {{ section.title }}
+            </h4>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for field in section.fields %}
+                <div class="space-y-1">
+                    <label class="block text-xs font-medium text-text-subtle">
+                        {{ field.label }}
+                        {% if field.required %}<span class="text-status-danger">*</span>{% endif %}
+                    </label>
+
+                    <div
+                        class="w-full rounded-md border border-border-default bg-surface-secondary px-3 py-2 text-sm text-text-body font-mono">
+                        <span class="text-xs text-text-faded italic">Format attendu : {{ field.type }}</span>
                     </div>
                 </div>
-            {% empty %}
-                <div class="text-center py-8 border border-dashed border-gray-800 rounded-xl bg-gray-900/10">
-                    <p class="text-sm text-gray-500">Le modèle de visite associé est vide (aucune section).</p>
-                </div>
-            {% endfor %}
+                {% endfor %}
+            </div>
         </div>
+        {% empty %}
+        <div class="text-center py-8 border border-dashed border-border-default rounded-xl bg-surface-primary">
+            <p class="text-sm text-text-muted">Le modèle de visite associé est vide (aucune section).</p>
+        </div>
+        {% endfor %}
+    </div>
     {% else %}
-        <div class="text-center py-16 border border-dashed border-gray-800 rounded-2xl bg-gray-900/10">
-            <svg class="mx-auto h-12 w-12 text-gray-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-            </svg>
-            <p class="mt-4 text-sm font-semibold text-gray-400">Aucune inspection planifiée</p>
-            <p class="mt-1 text-xs text-gray-500">Générez ou planifiez une instance de visite pour commencer à saisir les données.</p>
-        </div>
+    <div class="text-center py-16 border border-dashed border-border-default rounded-2xl bg-surface-primary">
+        <svg class="mx-auto h-12 w-12 text-text-faded" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+        </svg>
+        <p class="mt-4 text-sm font-semibold text-text-subtle">Aucune inspection planifiée</p>
+        <p class="mt-1 text-xs text-text-muted">Générez ou planifiez une instance de visite pour commencer à saisir les
+            données.</p>
+    </div>
     {% endif %}
 </div>

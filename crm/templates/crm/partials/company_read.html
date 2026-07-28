@@ -1,42 +1,42 @@
 <div id="company-left-column" class="space-y-6">
 
   <!-- Card General infos -->
-  <div class="bg-gray-900/40 border border-gray-800 rounded-2xl p-5 backdrop-blur-xs space-y-4">
-    <div class="flex items-center justify-between border-b border-gray-800/80 pb-3">
-      <h2 class="text-base font-bold text-white tracking-tight">Informations Générales</h2>
+  <div class="bg-surface-primary/40 border border-border-default rounded-2xl p-5 backdrop-blur-xs space-y-4 shadow-sm">
+    <div class="flex items-center justify-between border-b border-border-default pb-3">
+      <h2 class="text-base font-bold text-text-main tracking-tight">Informations Générales</h2>
     </div>
 
     <dl class="space-y-3 text-sm">
       <div>
-        <dt class="text-xs text-gray-500">Raison sociale</dt>
-        <dd class="text-gray-200 font-medium">{{ company.name }}</dd>
+        <dt class="text-xs text-text-faded">Raison sociale</dt>
+        <dd class="text-text-body font-medium">{{ company.name }}</dd>
       </div>
 
       <div class="grid grid-cols-2 gap-2">
         <div>
-          <dt class="text-xs text-gray-500">SIREN</dt>
-          <dd class="text-gray-200 font-mono text-xs">{{ company.siren|default:"—" }}</dd>
+          <dt class="text-xs text-text-faded">SIREN</dt>
+          <dd class="text-text-body font-mono text-xs">{{ company.siren|default:"—" }}</dd>
         </div>
         <div>
-          <dt class="text-xs text-gray-500">SIRET</dt>
-          <dd class="text-gray-200 font-mono text-xs">{{ company.siret|default:"—" }}</dd>
+          <dt class="text-xs text-text-faded">SIRET</dt>
+          <dd class="text-text-body font-mono text-xs">{{ company.siret|default:"—" }}</dd>
         </div>
       </div>
 
       <div class="grid grid-cols-2 gap-2">
         <div>
-          <dt class="text-xs text-gray-500">N° TVA</dt>
-          <dd class="text-gray-200 font-mono text-xs">{{ company.vat_number|default:"—" }}</dd>
+          <dt class="text-xs text-text-faded">N° TVA</dt>
+          <dd class="text-text-body font-mono text-xs">{{ company.vat_number|default:"—" }}</dd>
         </div>
         <div>
-          <dt class="text-xs text-gray-500">Date de création</dt>
-          <dd class="text-gray-200 text-xs">{{ company.creation_date|date:"d/m/Y"|default:"—" }}</dd>
+          <dt class="text-xs text-text-faded">Date de création</dt>
+          <dd class="text-text-body text-xs">{{ company.creation_date|date:"d/m/Y"|default:"—" }}</dd>
         </div>
       </div>
 
       <div>
-        <dt class="text-xs text-gray-500">Structure & Secteur</dt>
-        <dd class="text-gray-200">
+        <dt class="text-xs text-text-faded">Structure & Secteur</dt>
+        <dd class="text-text-body">
           {{ company.legal_structure|default:"" }}
           {% if company.business_line %}— {{ company.business_line }}{% endif %}
           {% if not company.legal_structure and not company.business_line %}Non spécifié{% endif %}
@@ -45,56 +45,56 @@
 
       <div class="grid grid-cols-2 gap-2">
         <div>
-          <dt class="text-xs text-gray-500">Taille de société</dt>
-          <dd class="text-gray-200 text-xs">{{ company.company_size_category|default:"—" }}</dd>
+          <dt class="text-xs text-text-faded">Taille de société</dt>
+          <dd class="text-text-body text-xs">{{ company.company_size_category|default:"—" }}</dd>
         </div>
         <div>
-          <dt class="text-xs text-gray-500">Effectifs</dt>
-          <dd class="text-gray-200 text-xs">{{ company.nb_employees|default:"—" }} salariés</dd>
+          <dt class="text-xs text-text-faded">Effectifs</dt>
+          <dd class="text-text-body text-xs">{{ company.nb_employees|default:"—" }} salariés</dd>
         </div>
       </div>
 
       {% if company.website %}
-        <div>
-          <dt class="text-xs text-gray-500">Site Web</dt>
-          <dd class="text-indigo-400 hover:underline text-xs truncate">
-            <a href="{{ company.website }}" target="_blank" rel="noopener noreferrer">{{ company.website }}</a>
-          </dd>
-        </div>
+      <div>
+        <dt class="text-xs text-text-faded">Site Web</dt>
+        <dd class="text-brand-primary hover:underline text-xs truncate">
+          <a href="{{ company.website }}" target="_blank" rel="noopener noreferrer">{{ company.website }}</a>
+        </dd>
+      </div>
       {% endif %}
 
       {% if company.address %}
-        <div>
-          <dt class="text-xs text-gray-500">Adresse</dt>
-          <dd class="text-gray-300 text-xs leading-relaxed whitespace-pre-line">{{ company.address }}</dd>
-        </div>
+      <div>
+        <dt class="text-xs text-text-faded">Adresse</dt>
+        <dd class="text-text-subtle text-xs leading-relaxed whitespace-pre-line">{{ company.address }}</dd>
+      </div>
       {% endif %}
     </dl>
   </div>
 
-  <!-- Labels & Gouvernance -->
+  <!-- Labels & Governance -->
   {% if company.labels or company.executive_board %}
-    <div class="bg-gray-900/40 border border-gray-800 rounded-2xl p-5 backdrop-blur-xs space-y-4">
-      <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider border-b border-gray-800/80 pb-3">
-        Gouvernance & Qualité
-      </h2>
+  <div class="bg-surface-primary/40 border border-border-default rounded-2xl p-5 backdrop-blur-xs space-y-4 shadow-sm">
+    <h2 class="text-xs font-semibold text-text-subtle uppercase tracking-wider border-b border-border-default pb-3">
+      Gouvernance & Qualité
+    </h2>
 
-      <dl class="space-y-3 text-sm">
-        {% if company.labels %}
-          <div>
-            <dt class="text-xs text-gray-500">Certifications et labels</dt>
-            <dd class="text-gray-300 text-xs leading-relaxed whitespace-pre-line">{{ company.labels }}</dd>
-          </div>
-        {% endif %}
+    <dl class="space-y-3 text-sm">
+      {% if company.labels %}
+      <div>
+        <dt class="text-xs text-text-faded">Certifications et labels</dt>
+        <dd class="text-text-subtle text-xs leading-relaxed whitespace-pre-line">{{ company.labels }}</dd>
+      </div>
+      {% endif %}
 
-        {% if company.executive_board %}
-          <div>
-            <dt class="text-xs text-gray-500">Conseil d'administration / Dirigeants</dt>
-            <dd class="text-gray-300 text-xs leading-relaxed whitespace-pre-line">{{ company.executive_board }}</dd>
-          </div>
-        {% endif %}
-      </dl>
-    </div>
+      {% if company.executive_board %}
+      <div>
+        <dt class="text-xs text-text-faded">Conseil d'administration / Dirigeants</dt>
+        <dd class="text-text-subtle text-xs leading-relaxed whitespace-pre-line">{{ company.executive_board }}</dd>
+      </div>
+      {% endif %}
+    </dl>
+  </div>
   {% endif %}
 
 </div>
