@@ -19,6 +19,7 @@
   --bg-app: #030712;                   /* gray-950 */
   --bg-surface-primary: rgba(17, 24, 39, 0.4); /* gray-900/40 */
   --bg-surface-secondary: rgba(3, 7, 18, 0.5); /* gray-950/50 */
+  --bg-surface-tertiary: rgba(17, 24, 39, 0.6);/* gray-900/60 */
   --bg-surface-hover: rgba(3, 7, 18, 0.8);     /* gray-950/80 */
   --bg-surface-muted: rgba(17, 24, 39, 0.2);   /* gray-900/20 */
   --bg-surface-modal: #111827;                 /* gray-900 solid pour modale */
@@ -54,7 +55,7 @@
   --color-success-bg: rgba(16, 185, 129, 0.1);
   --color-success-border: rgba(16, 185, 129, 0.2);
 
-  /* Danger / Errors (Rose & Red) - MANQUANT PRÉCÉDEMMENT */
+  /* Danger / Errors (Rose & Red) */
   --color-danger: #f87171;             /* red-400 */
   --color-danger-hover: #ef4444;       /* red-500 */
   --color-danger-bg: rgba(239, 68, 68, 0.1);
@@ -74,6 +75,7 @@
   --bg-app: #f8fafc;                   /* slate-50 */
   --bg-surface-primary: #ffffff;       /* pure white */
   --bg-surface-secondary: #f1f5f9;     /* slate-100 */
+  --bg-surface-tertiary: #e2e8f0;      /* slate-200 */
   --bg-surface-hover: #e2e8f0;         /* slate-200 */
   --bg-surface-muted: #f8fafc;         /* slate-50 */
   --bg-surface-modal: #ffffff;
@@ -109,7 +111,7 @@
   --color-success-bg: rgba(5, 150, 105, 0.1);
   --color-success-border: rgba(5, 150, 105, 0.2);
 
-  /* Danger / Errors (Rose & Red) - MANQUANT PRÉCÉDEMMENT */
+  /* Danger / Errors (Rose & Red) */
   --color-danger: #dc2626;             /* red-600 */
   --color-danger-hover: #b91c1c;       /* red-700 */
   --color-danger-bg: rgba(220, 38, 38, 0.08);
@@ -132,6 +134,7 @@
   --color-app-bg: var(--bg-app);
   --color-surface-primary: var(--bg-surface-primary);
   --color-surface-secondary: var(--bg-surface-secondary);
+  --color-surface-tertiary: var(--bg-surface-tertiary);
   --color-surface-hover: var(--bg-surface-hover);
   --color-surface-muted: var(--bg-surface-muted);
   --color-surface-modal: var(--bg-surface-modal);
@@ -181,4 +184,23 @@ body {
   color: var(--text-body);
   font-family: var(--font-sans);
   transition: var(--transition-theme);
+}
+
+/* ------------------------------------------------------------------------------
+ * FORM COMPONENTS
+ * ------------------------------------------------------------------------------ */
+@layer components {
+  /* Input standard / Select / Textarea */
+  .form-input {
+    /* Remplacer placeholder-text-faded par placeholder:text-text-faded */
+    @apply w-full rounded-lg border border-border-default bg-surface-secondary p-2.5 
+           text-sm text-text-main placeholder:text-text-faded 
+           focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary 
+           transition cursor-pointer;
+  }
+
+  .form-input-readonly {
+    @apply w-full rounded-lg border border-border-default bg-surface-tertiary p-2.5 
+           text-sm text-text-muted opacity-60 cursor-not-allowed focus:outline-none transition;
+  }
 }

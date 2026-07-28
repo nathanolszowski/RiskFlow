@@ -65,46 +65,53 @@
                     </h4>
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div class="sm:col-span-2">
-                            <label class="mb-1 block text-xs font-medium text-text-subtle">Nom / Raison Sociale <span
-                                    class="text-rose-500">*</span></label>
-                            <input type="text" id="id_name" name="name" value="{{ form.name.value|default:'' }}"
-                                class="w-full rounded-lg border border-border-default bg-surface-secondary p-2.5 text-sm text-text-main focus:border-brand-primary focus:ring-brand-primary">
-                            {% if form.name.errors %}<p class="mt-1 text-xs text-rose-400">{{ form.name.errors.0 }}</p>
+                            <label class="mb-1 block text-xs font-medium text-text-subtle">
+                                {{ form.name.label }} <span class="text-rose-500">*</span>
+                            </label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <p class="mt-1 text-xs text-rose-400">{{ form.name.errors.0 }}</p>
                             {% endif %}
                         </div>
 
                         <div>
-                            <label class="mb-1 block text-xs font-medium text-text-subtle">SIREN <span
-                                    class="text-rose-500">*</span></label>
-                            <input type="text" id="id_siren" name="siren" value="{{ form.siren.value|default:'' }}"
-                                class="w-full rounded-lg border border-border-default bg-surface-secondary p-2.5 text-sm text-text-main focus:border-brand-primary focus:ring-brand-primary">
-                            {% if form.siren.errors %}<p class="mt-1 text-xs text-rose-400">{{ form.siren.errors.0 }}
-                            </p>{% endif %}
+                            <label class="mb-1 block text-xs font-medium text-text-subtle">
+                                {{ form.siren.label }} <span class="text-rose-500">*</span>
+                            </label>
+                            {{ form.siren }}
+                            {% if form.siren.errors %}
+                                <p class="mt-1 text-xs text-rose-400">{{ form.siren.errors.0 }}</p>
+                            {% endif %}
                         </div>
 
                         <div>
-                            <label class="mb-1 block text-xs font-medium text-text-subtle">SIRET <span
-                                    class="text-rose-500">*</span></label>
-                            <input type="text" id="id_siret" name="siret" value="{{ form.siret.value|default:'' }}"
-                                class="w-full rounded-lg border border-border-default bg-surface-secondary p-2.5 text-sm text-text-main focus:border-brand-primary focus:ring-brand-primary">
-                            {% if form.siret.errors %}<p class="mt-1 text-xs text-rose-400">{{ form.siret.errors.0 }}
-                            </p>{% endif %}
+                            <label class="mb-1 block text-xs font-medium text-text-subtle">
+                                {{ form.siret.label }} <span class="text-rose-500">*</span>
+                            </label>
+                            {{ form.siret }}
+                            {% if form.siret.errors %}
+                                <p class="mt-1 text-xs text-rose-400">{{ form.siret.errors.0 }}</p>
+                            {% endif %}
                         </div>
 
                         <div>
-                            <label class="mb-1 block text-xs font-medium text-text-subtle">Numéro de TVA</label>
-                            <input type="text" id="id_vat_number" name="vat_number"
-                                value="{{ form.vat_number.value|default:'' }}"
-                                class="w-full rounded-lg border border-border-default bg-surface-secondary p-2.5 text-sm text-text-main focus:border-brand-primary focus:ring-brand-primary">
-                            {% if form.vat_number.errors %}<p class="mt-1 text-xs text-rose-400">{{ form.vat_number.errors.0 }}</p>{% endif %}
+                            <label class="mb-1 block text-xs font-medium text-text-subtle">
+                                {{ form.vat_number.label }}
+                            </label>
+                            {{ form.vat_number }}
+                            {% if form.vat_number.errors %}
+                                <p class="mt-1 text-xs text-rose-400">{{ form.vat_number.errors.0 }}</p>
+                            {% endif %}
                         </div>
 
                         <div>
-                            <label class="mb-1 block text-xs font-medium text-text-subtle">Structure juridique</label>
-                            <input type="text" id="id_legal_structure" name="legal_structure"
-                                value="{{ form.legal_structure.value|default:'' }}"
-                                class="w-full rounded-lg border border-border-default bg-surface-secondary p-2.5 text-sm text-text-main focus:border-brand-primary focus:ring-brand-primary">
-                            {% if form.legal_structure.errors %}<p class="mt-1 text-xs text-rose-400">{{ form.legal_structure.errors.0 }}</p>{% endif %}
+                            <label class="mb-1 block text-xs font-medium text-text-subtle">
+                                {{ form.legal_structure.label }}
+                            </label>
+                            {{ form.legal_structure }}
+                            {% if form.legal_structure.errors %}
+                                <p class="mt-1 text-xs text-rose-400">{{ form.legal_structure.errors.0 }}</p>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -115,42 +122,53 @@
                     </h4>
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
-                            <label class="mb-1 block text-xs font-medium text-text-subtle">Secteur d'activité</label>
-                            <input type="text" id="id_business_line" name="business_line"
-                                value="{{ form.business_line.value|default:'' }}"
-                                class="w-full rounded-lg border border-border-default bg-surface-secondary p-2.5 text-sm text-text-main focus:border-brand-primary focus:ring-brand-primary">
-                            {% if form.business_line.errors %}<p class="mt-1 text-xs text-rose-400">{{ form.business_line.errors.0 }}</p>{% endif %}
+                            <label class="mb-1 block text-xs font-medium text-text-subtle">
+                                {{ form.business_line.label }}
+                            </label>
+                            {{ form.business_line }}
+                            {% if form.business_line.errors %}
+                                <p class="mt-1 text-xs text-rose-400">{{ form.business_line.errors.0 }}</p>
+                            {% endif %}
                         </div>
 
                         <div>
-                            <label class="mb-1 block text-xs font-medium text-text-subtle">Catégorie de Taille</label>
-                            <input type="text" id="id_company_size_category" name="company_size_category"
-                                value="{{ form.company_size_category.value|default:'' }}"
-                                class="w-full rounded-lg border border-border-default bg-surface-secondary p-2.5 text-sm text-text-main focus:border-brand-primary focus:ring-brand-primary">
-                            {% if form.company_size_category.errors %}<p class="mt-1 text-xs text-rose-400">{{ form.company_size_category.errors.0 }}</p>{% endif %}
+                            <label class="mb-1 block text-xs font-medium text-text-subtle">
+                                {{ form.company_size_category.label }}
+                            </label>
+                            {{ form.company_size_category }}
+                            {% if form.company_size_category.errors %}
+                                <p class="mt-1 text-xs text-rose-400">{{ form.company_size_category.errors.0 }}</p>
+                            {% endif %}
                         </div>
 
                         <div>
-                            <label class="mb-1 block text-xs font-medium text-text-subtle">Nombre d'employés</label>
-                            <input type="number" id="id_nb_employees" name="nb_employees"
-                                value="{{ form.nb_employees.value|default:'' }}"
-                                class="w-full rounded-lg border border-border-default bg-surface-secondary p-2.5 text-sm text-text-main focus:border-brand-primary focus:ring-brand-primary">
-                            {% if form.nb_employees.errors %}<p class="mt-1 text-xs text-rose-400">{{ form.nb_employees.errors.0 }}</p>{% endif %}
+                            <label class="mb-1 block text-xs font-medium text-text-subtle">
+                                {{ form.nb_employees.label }}
+                            </label>
+                            {{ form.nb_employees }}
+                            {% if form.nb_employees.errors %}
+                                <p class="mt-1 text-xs text-rose-400">{{ form.nb_employees.errors.0 }}</p>
+                            {% endif %}
                         </div>
 
                         <div>
-                            <label class="mb-1 block text-xs font-medium text-text-subtle">Date de création</label>
-                            <input type="text" id="id_creation_date" name="creation_date"
-                                value="{{ form.creation_date.value|default:'' }}"
-                                class="w-full rounded-lg border border-border-default bg-surface-secondary p-2.5 text-sm text-text-main focus:border-brand-primary focus:ring-brand-primary">
-                            {% if form.creation_date.errors %}<p class="mt-1 text-xs text-rose-400">{{ form.creation_date.errors.0 }}</p>{% endif %}
+                            <label class="mb-1 block text-xs font-medium text-text-subtle">
+                                {{ form.creation_date.label }}
+                            </label>
+                            {{ form.creation_date }}
+                            {% if form.creation_date.errors %}
+                                <p class="mt-1 text-xs text-rose-400">{{ form.creation_date.errors.0 }}</p>
+                            {% endif %}
                         </div>
 
                         <div class="sm:col-span-2">
-                            <label class="mb-1 block text-xs font-medium text-text-subtle">Site Web</label>
-                            <input type="url" id="id_website" name="website" value="{{ form.website.value|default:'' }}"
-                                class="w-full rounded-lg border border-border-default bg-surface-secondary p-2.5 text-sm text-text-main focus:border-brand-primary focus:ring-brand-primary">
-                            {% if form.website.errors %}<p class="mt-1 text-xs text-rose-400">{{ form.website.errors.0}}</p>{% endif %}
+                            <label class="mb-1 block text-xs font-medium text-text-subtle">
+                                {{ form.website.label }}
+                            </label>
+                            {{ form.website }}
+                            {% if form.website.errors %}
+                                <p class="mt-1 text-xs text-rose-400">{{ form.website.errors.0 }}</p>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -161,28 +179,33 @@
                         Gouvernance</h4>
                     <div class="space-y-4">
                         <div>
-                            <label class="mb-1 block text-xs font-medium text-text-subtle">Adresse Siège Social</label>
-                            <textarea id="id_address" name="address" rows="2"
-                                class="w-full rounded-lg border border-border-default bg-surface-secondary p-2.5 text-sm text-text-main focus:border-brand-primary focus:ring-brand-primary">{{ form.address.value|default:'' }}</textarea>
-                            {% if form.address.errors %}<p class="mt-1 text-xs text-rose-400">{{ form.address.errors.0}}</p>{% endif %}
+                            <label class="mb-1 block text-xs font-medium text-text-subtle">
+                                {{ form.address.label }}
+                            </label>
+                            {{ form.address }}
+                            {% if form.address.errors %}
+                                <p class="mt-1 text-xs text-rose-400">{{ form.address.errors.0 }}</p>
+                            {% endif %}
                         </div>
 
                         <div>
-                            <label class="mb-1 block text-xs font-medium text-text-subtle">Certifications &
-                                Labels</label>
-                            <input type="text" id="id_labels" name="labels" value="{{ form.labels.value|default:'' }}"
-                                class="w-full rounded-lg border border-border-default bg-surface-secondary p-2.5 text-sm text-text-main focus:border-brand-primary focus:ring-brand-primary">
-                            {% if form.labels.errors %}<p class="mt-1 text-xs text-rose-400">{{ form.labels.errors.0 }}
-                            </p>{% endif %}
+                            <label class="mb-1 block text-xs font-medium text-text-subtle">
+                                {{ form.labels.label }}
+                            </label>
+                            {{ form.labels }}
+                            {% if form.labels.errors %}
+                                <p class="mt-1 text-xs text-rose-400">{{ form.labels.errors.0 }}</p>
+                            {% endif %}
                         </div>
 
                         <div>
-                            <label class="mb-1 block text-xs font-medium text-text-subtle">Conseil d'Administration /
-                                Dirigeants</label>
-                            <input type="text" id="id_executive_board" name="executive_board"
-                                value="{{ form.executive_board.value|default:'' }}"
-                                class="w-full rounded-lg border border-border-default bg-surface-secondary p-2.5 text-sm text-text-main focus:border-brand-primary focus:ring-brand-primary">
-                            {% if form.executive_board.errors %}<p class="mt-1 text-xs text-rose-400">{{form.executive_board.errors.0 }}</p>{% endif %}
+                            <label class="mb-1 block text-xs font-medium text-text-subtle">
+                                {{ form.executive_board.label }}
+                            </label>
+                            {{ form.executive_board }}
+                            {% if form.executive_board.errors %}
+                                <p class="mt-1 text-xs text-rose-400">{{ form.executive_board.errors.0 }}</p>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -197,7 +220,7 @@
                 </button>
                 <button type="submit"
                     class="rounded-lg bg-brand-primary hover:bg-brand-hover px-4 py-2 text-xs font-medium text-white transition-colors cursor-pointer">
-                    Créer la société
+                    {% if form.instance.pk %}Enregistrer{% else %}Créer la société{% endif %}
                 </button>
             </div>
         </form>
