@@ -1,125 +1,159 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_GET, require_http_methods
+from django.core.paginator import Paginator
 from django.http import HttpResponse
+from .forms import InspectionFolderForm
+from .models import InspectionFolder
 from crm.models import Company
-from inspections.forms import InspectionFolderForm
-from core.services import create_tracked_instance
-from inspections.models import InspectionFolder
-from .services.inspectionfolder import get_inspection_folders_by_user, get_inspection_folder_by_id
+from inspections.services.inspectionfolder import get_filtered_folders, get_inspection_folder_by_id, create_tracked_instance
 
 
+# ==========================================
+# ==== INSPECTION FOLDER SECTION ===========
+# ==========================================
 
-def _filter_and_sort_folders(request):
-    """Utility function to filter and sort inspection folders based on request parameters."""
-    folders = get_inspection_folders_by_user(request.user)
+@login_required
+@require_GET
+def folder_list(request):
+    """Render inspection folders list view (initial page load)."""
+    companies = (
+        Company.objects.filter(inspection_folders__isnull=False)
+        .distinct()
+        .order_by("name")
+    )
+    folders = get_filtered_folders(request)
 
-    phase = request.GET.get('phase') or request.POST.get('phase', '').strip()
-    if phase:
-        folders = folders.filter(current_phase=phase)
+    paginator = Paginator(folders, 15)
+    page_obj = paginator.get_page(1)
 
-    status = request.GET.get('status') or request.POST.get('status', '').strip()
-    if status == 'active':
-        folders = folders.filter(is_active=True)
-    elif status == 'archived':
-        folders = folders.filter(is_active=False)
-
-    company_id = request.GET.get('company') or request.POST.get('company', '').strip()
-    if company_id:
-        folders = folders.filter(company_id=company_id)
-
-    sort_by = request.GET.get('sort') or request.POST.get('sort', '-updated_at')
-    allowed_sorts = ['-updated_at', '-created_at', 'reference', 'company__name']
-    if sort_by not in allowed_sorts:
-        sort_by = '-updated_at'
-
-    return folders.order_by(sort_by)
+    return render(
+        request,
+        "inspections/folders.html",
+        {
+            "folders": page_obj,
+            "page_obj": page_obj,
+            "companies": companies,
+            "phase_choices": InspectionFolder.Phase.choices,
+        },
+    )
 
 
 @login_required
-def folders_view(request):
-    folders = _filter_and_sort_folders(request)
-    
-    companies = Company.objects.filter(
-        inspection_folders__in=get_inspection_folders_by_user(request.user)
-    ).distinct()
-    
+@require_GET
+def folder_list_paginated(request, page=1):
+    """Render inspection folders list view with updated page / filters (HTMX)."""
+    folders = get_filtered_folders(request)
+
+    paginator = Paginator(folders, 15)
+    page_obj = paginator.get_page(page)
+
+    return render(
+        request,
+        "inspections/partials/folder_grid.html",
+        {
+            "folders": page_obj,
+            "page_obj": page_obj,
+        },
+    )
+
+
+@login_required
+@require_GET
+def folder_detail(request, pk):
+    """Render main view for inspection folder detail data."""
+    folder = get_inspection_folder_by_id(pk, request.user)
+
     context = {
-        'folders': folders,
-        'companies': companies,
-        'selected_companies': request.GET.getlist('companies'),
-        'phase_choices': InspectionFolder.Phase.choices,
+        "folder": folder,
     }
-    return render(request, 'inspections/folders.html', context)
+    return render(request, "inspections/folder_detail.html", context)
+
 
 @login_required
-def create_folder_htmx(request):
-    """HTMX view to create a new inspection folder."""
-    company_id = request.GET.get('company') or request.POST.get('company')
+@require_http_methods(["GET", "POST"])
+def create_folder(request):
+    """HTMX view to render and process the creation form for inspection folders."""
+    company_id = request.GET.get("company") or request.POST.get("company")
 
-    if request.method == 'POST':
+    if request.method == "POST":
         form = InspectionFolderForm(request.POST)
         if form.is_valid():
             folder = create_tracked_instance(form, request.user)
 
-            # Request come from company or folder
             if company_id:
-                # Option A : Redirect to company view
                 response = HttpResponse(status=204)
-                response['HX-Refresh'] = 'true'
+                response["HX-Refresh"] = "true"
                 return response
 
-            # Option B : From folder list
-            folders = _filter_and_sort_folders(request)
+            folders = get_filtered_folders(request)
+            paginator = Paginator(folders, 15)
+            page_obj = paginator.get_page(1)
+
             response = render(
                 request,
-                'inspections/partials/folder_grid.html',
-                {'folders': folders},
+                "inspections/partials/folder_grid.html",
+                {"folders": page_obj, "page_obj": page_obj},
             )
-            response['HX-Trigger'] = 'closeModal'
+            response["HX-Trigger"] = "closeModal"
             return response
-    else:
-        initial_data = {}
-        if company_id:
-            initial_data['company'] = company_id
+        else:
+            return render(
+                request,
+                "inspections/partials/folder_form_modal.html",
+                {"form": form},
+                status=422,
+            )
 
-        form = InspectionFolderForm(initial=initial_data)
+    initial_data = {}
+    if company_id:
+        initial_data["company"] = company_id
 
+    form = InspectionFolderForm(initial=initial_data)
     return render(
-        request, 'inspections/partials/folder_form_modal.html', {'form': form}
+        request, "inspections/partials/folder_form_modal.html", {"form": form}
     )
 
-@login_required
-def folder_detail_view(request, folder_id):
-    """Show the default details of a specific inspection folder."""
-    folder = get_inspection_folder_by_id(folder_id, request.user)
-    return render(request, 'inspections/folder_detail.html', {'folder': folder})
+
+# ==========================================
+# ==== FOLDER TABS SECTION =================
+# ==========================================
 
 @login_required
-def folder_tab_overview(request, folder_id):
+@require_GET
+def folder_tab_overview(request, pk):
     """Show only the content of the overview tab."""
-    folder = get_inspection_folder_by_id(folder_id, request.user)
-    
-    return render(request, 'inspections/partials/tab_overview.html', {'folder': folder,})
+    folder = get_inspection_folder_by_id(pk, request.user)
+    return render(
+        request,
+        "inspections/partials/tab_overview.html",
+        {"folder": folder},
+    )
+
 
 @login_required
-def folder_tab_visit(request, folder_id):
-    """
-    Open the content of the visit tab, including the latest visit and its sections.
-    """
-    folder = get_inspection_folder_by_id(folder_id, request.user)
-    latest_visit = folder.get_latest_visit  
+@require_GET
+def folder_tab_visit(request, pk):
+    """Open the content of the visit tab, including the latest visit and its sections."""
+    folder = get_inspection_folder_by_id(pk, request.user)
+    latest_visit = folder.get_latest_visit
     context = {
-        'folder': folder,
-        'visit': latest_visit,
-        'sections': []
+        "folder": folder,
+        "visit": latest_visit,
+        "sections": [],
     }
     if latest_visit and latest_visit.template and latest_visit.template.schema:
-        context['sections'] = latest_visit.template.schema.get('sections', [])
-        
-    return render(request, 'inspections/partials/tab_visit.html', context)
+        context["sections"] = latest_visit.template.schema.get("sections", [])
+
+    return render(request, "inspections/partials/tab_visit.html", context)
+
 
 @login_required
-def folder_tab_recommandations(request, folder_id):
+@require_GET
+def folder_tab_recommandations(request, pk):
     """Show only the content of the recommendations tab."""
-    folder = get_inspection_folder_by_id(folder_id, request.user)
-    return render(request, 'inspections/partials/tab_recommandations.html', {'recommandations': folder.recommandations.all()})
+    folder = get_inspection_folder_by_id(pk, request.user)
+    return render(
+        request,
+        "inspections/partials/tab_recommandations.html",
+        {"recommandations": folder.recommandations.all()},)

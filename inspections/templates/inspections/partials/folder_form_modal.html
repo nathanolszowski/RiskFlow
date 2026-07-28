@@ -12,7 +12,7 @@
         <h3 class="text-lg font-semibold text-text-main">Créer un dossier d'inspection</h3>
       </div>
 
-      <form hx-post="{% url 'inspections:create_folder_htmx' %}" {% if not form.initial.company %}hx-target="#folder-grid-container" {% endif %}
+      <form hx-post="{% url 'inspections:create_folder' %}" {% if not form.initial.company %}hx-target="#folder-grid-container" {% endif %}
         hx-on::after-request="if(event.detail.successful) document.getElementById('create-folder-modal').remove()"
         class="space-y-4">
         {% csrf_token %}
