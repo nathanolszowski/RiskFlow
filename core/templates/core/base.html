@@ -1,23 +1,27 @@
 {% load tailwind_tags %}
 <!DOCTYPE html>
 <html lang="fr" data-theme="{{ current_theme|default:'dark' }}" class="h-full">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}RiskFlow{% endblock %}</title>
 
-    <!-- Balise native de django-tailwind pour charger les CSS compilés -->
     {% tailwind_css %}
 
     <!-- HTMX -->
-    <script src="https://unpkg.com/htmx.org@1.9.10" integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"
+        integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC"
+        crossorigin="anonymous"></script>
 
     {% block extra_head %}{% endblock %}
 </head>
-<body class="h-full bg-[var(--bg-app)] text-[var(--text-body)] antialiased">
+
+<body class="h-full bg-app text-body antialiased selection:bg-brand-bg selection:text-brand-light">
 
     {% block content %}{% endblock %}
 
     {% block extra_js %}{% endblock %}
 </body>
+
 </html>
