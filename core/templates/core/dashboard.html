@@ -49,26 +49,5 @@
     </div>
   </div>
 
-  <!-- Profil -->
-  <div class="rounded-2xl bg-surface-primary p-6 border border-border-default shadow-xs space-y-4 transition-colors">
-    <h3 class="text-base font-semibold text-text-main border-b border-border-default pb-3">
-      Profil Utilisateur
-    </h3>
-    <dl class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-      <div class="flex justify-between sm:flex-col sm:justify-start gap-1">
-        <dt class="text-text-subtle">Nom d'utilisateur</dt>
-        <dd class="font-medium text-text-main">{{ user.username }}</dd>
-      </div>
-      <div class="flex justify-between sm:flex-col sm:justify-start gap-1">
-        <dt class="text-text-subtle">Adresse Email</dt>
-        <dd class="font-medium text-text-body truncate">{{ user.email|default:"Non renseigné" }}</dd>
-      </div>
-      <div class="flex justify-between sm:flex-col sm:justify-start gap-1">
-        <dt class="text-text-subtle">Téléphone</dt>
-        <dd class="font-medium text-text-body">{{ user.phone_number|default:"Non renseigné" }}</dd>
-      </div>
-    </dl>
-  </div>
-
 </div>
 {% endblock app_content %}

@@ -22,8 +22,6 @@
                 class="rounded-md {% if request.resolver_match.url_name == 'company_list' %}bg-surface-secondary text-text-main{% else %}text-text-muted hover:bg-surface-hover hover:text-text-main{% endif %} px-3 py-2 text-sm font-medium transition">Clients</a>
               <a href="{% url 'crm:contact_list' %}"
                 class="rounded-md {% if request.resolver_match.url_name == 'contact_list' %}bg-surface-secondary text-text-main{% else %}text-text-muted hover:bg-surface-hover hover:text-text-main{% endif %} px-3 py-2 text-sm font-medium transition">Contacts</a>
-              <a href="#"
-                class="rounded-md px-3 py-2 text-sm font-medium text-text-muted hover:bg-surface-hover hover:text-text-main transition">Rapports</a>
             </div>
           </div>
         </div>
@@ -156,6 +154,9 @@
       <h1 class="text-3xl font-bold tracking-tight text-text-main">
         {% block page_title %}Tableau de bord{% endblock page_title %}
       </h1>
+      <p class="mt-1 text-sm text-text-muted">
+        {% block page_subtitle %}Vue d'ensemble des activités et gestion du portefeuille.{% endblock page_subtitle %}
+      </p>
     </div>
   </header>
 
