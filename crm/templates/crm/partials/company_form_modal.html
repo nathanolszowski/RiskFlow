@@ -1,15 +1,21 @@
 <div id="create-company-modal"
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4">
-    <div
-        class="flex max-h-[90vh] w-full max-w-3xl flex-col rounded-xl border border-border-default bg-surface-primary shadow-2xl">
+     class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-black/70 backdrop-blur-xs transition-opacity"
+         onclick="document.getElementById('create-company-modal').remove()"></div>
+
+    <!-- Modal Content -->
+    <div class="relative flex max-h-[90vh] w-full max-w-3xl flex-col rounded-xl border border-border-default bg-surface-primary shadow-2xl transition-all">
 
         <!-- Header -->
         <div class="flex items-center justify-between border-b border-border-default px-6 py-4">
             <h3 class="text-lg font-semibold text-text-main">
                 {% if form.instance.pk %}Modifier la Société{% else %}Nouvelle Société{% endif %}
             </h3>
-            <button type="button" onclick="document.getElementById('create-company-modal').remove()"
-                class="text-text-subtle hover:text-text-main transition-colors cursor-pointer">
+            <button type="button" 
+                    onclick="document.getElementById('create-company-modal').remove()"
+                    class="text-text-subtle hover:text-text-main transition-colors cursor-pointer">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -17,13 +23,16 @@
         </div>
 
         <!-- Main Form -->
-        <form hx-post="{% url 'crm:create_company' %}" hx-target="#company-grid-container" hx-swap="innerHTML"
-            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' class="flex flex-col overflow-hidden">
+        <form hx-post="{% url 'crm:create_company' %}" 
+              hx-target="#company-grid-container" 
+              hx-swap="innerHTML"
+              hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' 
+              class="flex flex-col overflow-hidden">
             {% csrf_token %}
 
             <div class="space-y-6 overflow-y-auto p-6 max-h-[70vh]">
 
-                <!-- INSEE search -->
+                <!-- Search INSEE SIRET -->
                 <div class="rounded-xl border border-brand-primary/20 bg-brand-primary/10 p-4 space-y-3">
                     <div class="flex items-center justify-between">
                         <label class="block text-xs font-semibold uppercase tracking-wider text-brand-primary">
@@ -33,25 +42,25 @@
                     </div>
 
                     <div class="relative">
-                        <input type="text" name="siret_search" placeholder="Ex: 77565212602114" maxlength="14"
-                            hx-get="{% url 'crm:search_siret_api' %}" hx-target="#siret-search-result"
-                            hx-trigger="keyup changed delay:500ms, search" hx-indicator="#siret-spinner"
-                            onkeydown="if (event.key === 'Enter') { event.preventDefault(); }"
-                            class="w-full rounded-lg border border-border-default bg-surface-secondary p-2.5 pl-9 text-sm text-text-main placeholder-text-faded focus:border-brand-primary focus:ring-brand-primary">
+                        <input type="text" 
+                               name="siret_search" 
+                               placeholder="Ex: 77565212602114" 
+                               maxlength="14"
+                               hx-get="{% url 'crm:search_siret_api' %}" 
+                               hx-target="#siret-search-result"
+                               hx-trigger="keyup changed delay:500ms, search" 
+                               hx-indicator="#siret-spinner"
+                               onkeydown="if (event.key === 'Enter') { event.preventDefault(); }"
+                               class="w-full rounded-lg border border-border-default bg-surface-secondary p-2.5 pl-9 text-sm text-text-main placeholder-text-faded focus:border-brand-primary focus:ring-brand-primary">
 
-                        <svg class="absolute left-3 top-3 h-4 w-4 text-text-subtle" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        <svg class="absolute left-3 top-3 h-4 w-4 text-text-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
 
                         <div id="siret-spinner" class="htmx-indicator absolute right-3 top-3">
                             <svg class="h-4 w-4 animate-spin text-brand-primary" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                    stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                </path>
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
                         </div>
                     </div>
@@ -59,152 +68,155 @@
                     <div id="siret-search-result"></div>
                 </div>
 
-                <!-- Identity & Legal -->
+                <!-- Identity -->
                 <div>
-                    <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-primary">Identité & Légal
+                    <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-primary">
+                        Identité & Légal
                     </h4>
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div class="sm:col-span-2">
                             <label class="mb-1 block text-xs font-medium text-text-subtle">
-                                {{ form.name.label }} <span class="text-rose-500">*</span>
+                                {{ form.name.label }} <span class="text-status-danger">*</span>
                             </label>
                             {{ form.name }}
                             {% if form.name.errors %}
-                                <p class="mt-1 text-xs text-rose-400">{{ form.name.errors.0 }}</p>
+                                <p class="mt-1 text-xs text-status-danger">{{ form.name.errors.0 }}</p>
                             {% endif %}
                         </div>
 
                         <div>
                             <label class="mb-1 block text-xs font-medium text-text-subtle">
-                                {{ form.siren.label }} <span class="text-rose-500">*</span>
+                                {{ form.siren.label }} <span class="text-status-danger">*</span>
                             </label>
                             {{ form.siren }}
                             {% if form.siren.errors %}
-                                <p class="mt-1 text-xs text-rose-400">{{ form.siren.errors.0 }}</p>
+                                <p class="mt-1 text-xs text-status-danger">{{ form.siren.errors.0 }}</p>
                             {% endif %}
                         </div>
 
                         <div>
                             <label class="mb-1 block text-xs font-medium text-text-subtle">
-                                {{ form.siret.label }} <span class="text-rose-500">*</span>
+                                {{ form.siret.label }} <span class="text-status-danger">*</span>
                             </label>
                             {{ form.siret }}
                             {% if form.siret.errors %}
-                                <p class="mt-1 text-xs text-rose-400">{{ form.siret.errors.0 }}</p>
+                                <p class="mt-1 text-xs text-status-danger">{{ form.siret.errors.0 }}</p>
                             {% endif %}
                         </div>
 
                         <div>
                             <label class="mb-1 block text-xs font-medium text-text-subtle">
-                                {{ form.vat_number.label }}
+                                {{ form.vat_number.label }} <span class="text-[10px] text-text-faded font-normal">(optionnel)</span>
                             </label>
                             {{ form.vat_number }}
                             {% if form.vat_number.errors %}
-                                <p class="mt-1 text-xs text-rose-400">{{ form.vat_number.errors.0 }}</p>
+                                <p class="mt-1 text-xs text-status-danger">{{ form.vat_number.errors.0 }}</p>
                             {% endif %}
                         </div>
 
                         <div>
                             <label class="mb-1 block text-xs font-medium text-text-subtle">
-                                {{ form.legal_structure.label }}
+                                {{ form.legal_structure.label }} <span class="text-[10px] text-text-faded font-normal">(optionnel)</span>
                             </label>
                             {{ form.legal_structure }}
                             {% if form.legal_structure.errors %}
-                                <p class="mt-1 text-xs text-rose-400">{{ form.legal_structure.errors.0 }}</p>
+                                <p class="mt-1 text-xs text-status-danger">{{ form.legal_structure.errors.0 }}</p>
                             {% endif %}
                         </div>
                     </div>
                 </div>
 
-                <!-- Details -->
+                <!-- Profil -->
                 <div class="border-t border-border-default pt-4">
-                    <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-primary">Profil & Activité
+                    <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-primary">
+                        Profil & Activité
                     </h4>
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
                             <label class="mb-1 block text-xs font-medium text-text-subtle">
-                                {{ form.business_line.label }}
+                                {{ form.business_line.label }} <span class="text-[10px] text-text-faded font-normal">(optionnel)</span>
                             </label>
                             {{ form.business_line }}
                             {% if form.business_line.errors %}
-                                <p class="mt-1 text-xs text-rose-400">{{ form.business_line.errors.0 }}</p>
+                                <p class="mt-1 text-xs text-status-danger">{{ form.business_line.errors.0 }}</p>
                             {% endif %}
                         </div>
 
                         <div>
                             <label class="mb-1 block text-xs font-medium text-text-subtle">
-                                {{ form.company_size_category.label }}
+                                {{ form.company_size_category.label }} <span class="text-[10px] text-text-faded font-normal">(optionnel)</span>
                             </label>
                             {{ form.company_size_category }}
                             {% if form.company_size_category.errors %}
-                                <p class="mt-1 text-xs text-rose-400">{{ form.company_size_category.errors.0 }}</p>
+                                <p class="mt-1 text-xs text-status-danger">{{ form.company_size_category.errors.0 }}</p>
                             {% endif %}
                         </div>
 
                         <div>
                             <label class="mb-1 block text-xs font-medium text-text-subtle">
-                                {{ form.nb_employees.label }}
+                                {{ form.nb_employees.label }} <span class="text-[10px] text-text-faded font-normal">(optionnel)</span>
                             </label>
                             {{ form.nb_employees }}
                             {% if form.nb_employees.errors %}
-                                <p class="mt-1 text-xs text-rose-400">{{ form.nb_employees.errors.0 }}</p>
+                                <p class="mt-1 text-xs text-status-danger">{{ form.nb_employees.errors.0 }}</p>
                             {% endif %}
                         </div>
 
                         <div>
                             <label class="mb-1 block text-xs font-medium text-text-subtle">
-                                {{ form.creation_date.label }}
+                                {{ form.creation_date.label }} <span class="text-[10px] text-text-faded font-normal">(optionnel)</span>
                             </label>
                             {{ form.creation_date }}
                             {% if form.creation_date.errors %}
-                                <p class="mt-1 text-xs text-rose-400">{{ form.creation_date.errors.0 }}</p>
+                                <p class="mt-1 text-xs text-status-danger">{{ form.creation_date.errors.0 }}</p>
                             {% endif %}
                         </div>
 
                         <div class="sm:col-span-2">
                             <label class="mb-1 block text-xs font-medium text-text-subtle">
-                                {{ form.website.label }}
+                                {{ form.website.label }} <span class="text-[10px] text-text-faded font-normal">(optionnel)</span>
                             </label>
                             {{ form.website }}
                             {% if form.website.errors %}
-                                <p class="mt-1 text-xs text-rose-400">{{ form.website.errors.0 }}</p>
+                                <p class="mt-1 text-xs text-status-danger">{{ form.website.errors.0 }}</p>
                             {% endif %}
                         </div>
                     </div>
                 </div>
 
-                <!-- Address -->
+                <!-- Governance -->
                 <div class="border-t border-border-default pt-4">
-                    <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-primary">Coordonnées &
-                        Gouvernance</h4>
+                    <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-primary">
+                        Coordonnées & Gouvernance
+                    </h4>
                     <div class="space-y-4">
                         <div>
                             <label class="mb-1 block text-xs font-medium text-text-subtle">
-                                {{ form.address.label }}
+                                {{ form.address.label }} <span class="text-[10px] text-text-faded font-normal">(optionnel)</span>
                             </label>
                             {{ form.address }}
                             {% if form.address.errors %}
-                                <p class="mt-1 text-xs text-rose-400">{{ form.address.errors.0 }}</p>
+                                <p class="mt-1 text-xs text-status-danger">{{ form.address.errors.0 }}</p>
                             {% endif %}
                         </div>
 
                         <div>
                             <label class="mb-1 block text-xs font-medium text-text-subtle">
-                                {{ form.labels.label }}
+                                {{ form.labels.label }} <span class="text-[10px] text-text-faded font-normal">(optionnel)</span>
                             </label>
                             {{ form.labels }}
                             {% if form.labels.errors %}
-                                <p class="mt-1 text-xs text-rose-400">{{ form.labels.errors.0 }}</p>
+                                <p class="mt-1 text-xs text-status-danger">{{ form.labels.errors.0 }}</p>
                             {% endif %}
                         </div>
 
                         <div>
                             <label class="mb-1 block text-xs font-medium text-text-subtle">
-                                {{ form.executive_board.label }}
+                                {{ form.executive_board.label }} <span class="text-[10px] text-text-faded font-normal">(optionnel)</span>
                             </label>
                             {{ form.executive_board }}
                             {% if form.executive_board.errors %}
-                                <p class="mt-1 text-xs text-rose-400">{{ form.executive_board.errors.0 }}</p>
+                                <p class="mt-1 text-xs text-status-danger">{{ form.executive_board.errors.0 }}</p>
                             {% endif %}
                         </div>
                     </div>
@@ -214,13 +226,14 @@
 
             <!-- Footer Actions -->
             <div class="flex justify-end space-x-3 border-t border-border-default bg-surface-primary/50 px-6 py-4">
-                <button type="button" onclick="document.getElementById('create-company-modal').remove()"
-                    class="rounded-lg border border-border-default bg-surface-tertiary px-4 py-2 text-xs font-medium text-text-body hover:bg-surface-secondary transition-colors cursor-pointer">
+                <button type="button" 
+                        onclick="document.getElementById('create-company-modal').remove()"
+                        class="rounded-lg border border-border-default bg-surface-tertiary px-4 py-2 text-xs font-medium text-text-body hover:bg-surface-secondary transition-colors cursor-pointer">
                     Annuler
                 </button>
                 <button type="submit"
-                    class="rounded-lg bg-brand-primary hover:bg-brand-hover px-4 py-2 text-xs font-medium text-white transition-colors cursor-pointer">
-                    {% if form.instance.pk %}Enregistrer{% else %}Créer la société{% endif %}
+                        class="rounded-lg bg-brand-primary hover:bg-brand-hover px-4 py-2 text-xs font-medium text-white transition-colors cursor-pointer shadow-xs">
+                    {% if form.instance.pk %}Enregistrer les modifications{% else %}Créer la société{% endif %}
                 </button>
             </div>
         </form>

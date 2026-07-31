@@ -57,7 +57,7 @@
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                     <label class="block text-xs font-medium text-text-subtle mb-1">
-                        {{ form.email.label }} <span class="text-rose-500">*</span>
+                        {{ form.email.label }} <span class="text-[10px] text-text-faded font-normal">(optionnel)</span>
                     </label>
                     {{ form.email }}
                     {% if form.email.errors %}
@@ -76,11 +76,11 @@
                 </div>
             </div>
 
-            <!-- Contact Phones + Email -->
+            <!-- Contact Phones -->
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                     <label class="block text-xs font-medium text-text-subtle mb-1">
-                        {{ form.phone_number_fix.label }} <span class="text-rose-500">*</span>
+                        {{ form.phone_number_fix.label }} <span class="text-[10px] text-text-faded font-normal">(optionnel)</span>
                     </label>
                     {{ form.phone_number_fix }}
                     {% if form.phone_number_fix.errors %}
@@ -90,7 +90,7 @@
 
                 <div>
                     <label class="block text-xs font-medium text-text-subtle mb-1">
-                        {{ form.phone_number_mobile.label }} <span class="text-rose-500">*</span>
+                        {{ form.phone_number_mobile.label }} <span class="text-[10px] text-text-faded font-normal">(optionnel)</span>
                     </label>
                     {{ form.phone_number_mobile }}
                     {% if form.phone_number_mobile.errors %}

@@ -19,7 +19,7 @@ class InspectionFolder(TrackingModel):
         COMPLETED = 'COMPLETED', 'Terminé / Clôturé'
         ARCHIVED = 'ARCHIVED', 'Archivé'
 
-    reference = models.CharField(max_length=100, unique=True, blank=True, verbose_name="Référence du dossier")
+    reference = models.CharField(max_length=100, unique=True, verbose_name="Référence du dossier")
     current_phase = models.CharField(max_length=20, choices=Phase.choices, default=Phase.CREATION, verbose_name="Phase actuelle")
     notes = models.TextField(blank=True, verbose_name="Notes internes")
     inspection_site_address = models.TextField(blank=True, verbose_name="Adresse du site d'inspection")
@@ -30,6 +30,15 @@ class InspectionFolder(TrackingModel):
         on_delete=models.PROTECT,
         related_name='inspection_folders',
         verbose_name="Société"
+    )
+    # --- CONTACT RELATIONSHIP ---
+    contact = models.ForeignKey(
+        'crm.Contact',
+        on_delete=models.SET_NULL, 
+        null=True,
+        blank=True,
+        related_name='inspection_folders',
+        verbose_name="Contact référent"
     )
 
     class Meta(TrackingModel.Meta):
@@ -159,6 +168,10 @@ class VisitInstance(TrackingModel):
     data = models.JSONField(blank=True, default=dict, verbose_name="Données saisies (JSON)")
     current_status = models.CharField(max_length=20, choices=Status.choices, default=Status.SCHEDULED, verbose_name="Statut de la visite")
     due_date = models.DateField(null=True, blank=True, verbose_name="Date de visite")
+    notes = models.TextField(
+        blank=True,
+        verbose_name="Notes sur la visite"
+    )
 
     class Meta(TrackingModel.Meta):
         verbose_name = "Instance de visite"
@@ -184,7 +197,6 @@ class VisitInstance(TrackingModel):
                     "title": section.get("title", ""),
                     "fields": []
                 }
-                # Pour chaque champ du template, on prépare une clé 'value' vide
                 for field in section.get("fields", []):
                     section_data["fields"].append({
                         "label": field.get("label", ""),
@@ -256,6 +268,10 @@ class Recommandation(TrackingModel):
         max_length=255,
         blank=True,
         verbose_name="Sujet de la recommandation"
+    )
+    notes = models.TextField(
+        blank=True,
+        verbose_name="Notes sur la recommandation"
     )
 
     class Meta(TrackingModel.Meta):

@@ -2,6 +2,12 @@ from django import forms
 from .models import Company, Contact
 
 class CompanyForm(forms.ModelForm):
+    vat_number = forms.CharField(required=False)
+    legal_structure = forms.CharField(required=False)
+    nb_employees = forms.IntegerField(required=False)
+    labels = forms.CharField(widget=forms.Textarea(attrs={'rows': 2}), required=False)
+    executive_board = forms.CharField(widget=forms.Textarea(attrs={'rows': 2}), required=False)
+    website = forms.URLField(required=False)
     class Meta:
         model = Company
         fields = [
@@ -57,6 +63,10 @@ class CompanyForm(forms.ModelForm):
 
 
 class ContactForm(forms.ModelForm):
+    email = forms.EmailField(required=False)
+    phone_number_fix = forms.CharField(required=False)
+    phone_number_mobile = forms.CharField(required=False)
+
     class Meta:
         model = Contact
         fields = [

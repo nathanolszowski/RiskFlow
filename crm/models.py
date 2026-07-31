@@ -9,14 +9,14 @@ class Company(TrackingModel):
     siret = models.CharField(max_length=14, unique=True, verbose_name="Numéro SIRET")
     business_line = models.CharField(max_length=100, verbose_name="Secteur d'activité")
     siren = models.CharField(max_length=9, verbose_name="Numéro SIREN")
-    vat_number = models.CharField(max_length=20, verbose_name="Numéro de TVA")
+    vat_number = models.CharField(max_length=20, blank=True, verbose_name="Numéro de TVA")
     company_size_category = models.CharField(max_length=100, verbose_name="Catégorie taille de société")
-    legal_structure = models.CharField(max_length=100, verbose_name="Structure juridique")
-    nb_employees = models.IntegerField(verbose_name="Nombre d'employés")
+    legal_structure = models.CharField(max_length=100, blank=True, verbose_name="Structure juridique")
+    nb_employees = models.IntegerField(blank=True, verbose_name="Nombre d'employés")
     creation_date = models.DateField(verbose_name="Date de création")
-    labels = models.TextField(verbose_name="Certifications et labels")
-    executive_board = models.TextField(verbose_name="Conseil d'administration")
-    website = models.URLField(verbose_name="Site web")
+    labels = models.TextField(blank=True, verbose_name="Certifications et labels")
+    executive_board = models.TextField(blank=True, verbose_name="Conseil d'administration")
+    website = models.URLField(blank=True, verbose_name="Site web")
 
     class Meta(TrackingModel.Meta):
         verbose_name = "Société"
@@ -52,9 +52,9 @@ class Contact(TrackingModel):
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='contacts', verbose_name="Société")
     first_name = models.CharField(max_length=100, verbose_name="Prénom")
     last_name = models.CharField(max_length=100, verbose_name="Nom")
-    email = models.EmailField(verbose_name="Email")
-    phone_number_fix = models.CharField(max_length=20, verbose_name="Numéro de téléphone fixe")
-    phone_number_mobile = models.CharField(max_length=20, verbose_name="Numéro de téléphone mobile")
+    email = models.EmailField(max_length=60, blank=True, verbose_name="Email")
+    phone_number_fix = models.CharField(max_length=20, blank=True, verbose_name="Numéro de téléphone fixe")
+    phone_number_mobile = models.CharField(max_length=20, blank=True, verbose_name="Numéro de téléphone mobile")
     position = models.CharField(max_length=100, verbose_name="Poste")
 
     class Meta(TrackingModel.Meta):

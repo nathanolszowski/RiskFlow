@@ -12,9 +12,12 @@
     </div>
     <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
       <button type="button" hx-get="{% url 'crm:create_company' %}" hx-target="#modal-container" hx-swap="innerHTML"
-        class="block rounded-md bg-brand-primary px-3.5 py-2 text-center text-sm font-semibold text-white hover:bg-brand-hover cursor-pointer transition-colors">
+            class="inline-flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover transition-colors shadow-lg cursor-pointer">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
         Nouveau client
-      </button>
+    </button>
     </div>
   </div>
 

@@ -5,7 +5,7 @@ from django.core.paginator import Paginator
 from django.http import HttpResponse
 from .forms import InspectionFolderForm
 from .models import InspectionFolder
-from crm.models import Company
+from crm.models import Company, Contact
 from inspections.services.inspectionfolder import get_filtered_folders, get_inspection_folder_by_id, create_tracked_instance
 
 
@@ -73,21 +73,27 @@ def folder_detail(request, pk):
 @login_required
 @require_http_methods(["GET", "POST"])
 def create_folder(request):
-    """Vue HTMX pour afficher et traiter la création d'un dossier d'inspection."""
+    """Vue HTMX pour créer un dossier d'inspection (depuis la liste ou la fiche Société)."""
     company_id = request.GET.get("company") or request.POST.get("company")
+    selected_company = Company.objects.filter(pk=company_id).first() if company_id else None
 
     if request.method == "POST":
         form = InspectionFolderForm(request.POST)
+
+        # Si une entreprise est sélectionnée, on filtre les contacts pour ne proposer que les siens
+        if selected_company:
+            form.fields['contact'].queryset = Contact.objects.filter(company=selected_company)
+
         if form.is_valid():
             folder = create_tracked_instance(form, request.user)
 
-            # Created from company view
-            if company_id:
+            # From company
+            if selected_company:
                 response = HttpResponse(status=204)
                 response["HX-Refresh"] = "true"
                 return response
 
-            # Created from folder view
+            # From folders list
             folders = get_filtered_folders(request)
             paginator = Paginator(folders, 15)
             page_obj = paginator.get_page(1)
@@ -99,22 +105,29 @@ def create_folder(request):
             )
             response["HX-Trigger"] = "closeModal"
             return response
+
         else:
             return render(
                 request,
                 "inspections/partials/folder_form_modal.html",
-                {"form": form, "company_id": company_id},
+                {"form": form, "selected_company": selected_company},
                 status=422,
             )
+
     initial_data = {}
-    if company_id:
-        initial_data["company"] = company_id
+    if selected_company:
+        initial_data["company"] = selected_company
 
     form = InspectionFolderForm(initial=initial_data)
+
+    # Filtre les contacts dans la liste déroulante si l'entreprise est connue
+    if selected_company:
+        form.fields['contact'].queryset = Contact.objects.filter(company=selected_company)
+
     return render(
         request, 
         "inspections/partials/folder_form_modal.html", 
-        {"form": form, "company_id": company_id}
+        {"form": form, "selected_company": selected_company}
     )
 
 
