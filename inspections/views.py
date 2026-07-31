@@ -73,7 +73,7 @@ def folder_detail(request, pk):
 @login_required
 @require_http_methods(["GET", "POST"])
 def create_folder(request):
-    """HTMX view to render and process the creation form for inspection folders."""
+    """Vue HTMX pour afficher et traiter la création d'un dossier d'inspection."""
     company_id = request.GET.get("company") or request.POST.get("company")
 
     if request.method == "POST":
@@ -81,11 +81,13 @@ def create_folder(request):
         if form.is_valid():
             folder = create_tracked_instance(form, request.user)
 
+            # Created from company view
             if company_id:
                 response = HttpResponse(status=204)
                 response["HX-Refresh"] = "true"
                 return response
 
+            # Created from folder view
             folders = get_filtered_folders(request)
             paginator = Paginator(folders, 15)
             page_obj = paginator.get_page(1)
@@ -101,17 +103,18 @@ def create_folder(request):
             return render(
                 request,
                 "inspections/partials/folder_form_modal.html",
-                {"form": form},
+                {"form": form, "company_id": company_id},
                 status=422,
             )
-
     initial_data = {}
     if company_id:
         initial_data["company"] = company_id
 
     form = InspectionFolderForm(initial=initial_data)
     return render(
-        request, "inspections/partials/folder_form_modal.html", {"form": form}
+        request, 
+        "inspections/partials/folder_form_modal.html", 
+        {"form": form, "company_id": company_id}
     )
 
 

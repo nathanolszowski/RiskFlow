@@ -2,8 +2,9 @@ from django.db import models
 from core.models import TrackingModel
 from django.core.exceptions import ValidationError
 from pydantic import ValidationError as PydanticValidationError
-from .validators import VisitTemplateSchema, get_default_template_structure, reference_validator
+from .validators import VisitTemplateSchema, get_default_template_structure
 from django.utils import timezone
+import uuid
 """
 
 ==== INSPECTION FOLDER SECTION ====
@@ -18,7 +19,7 @@ class InspectionFolder(TrackingModel):
         COMPLETED = 'COMPLETED', 'Terminé / Clôturé'
         ARCHIVED = 'ARCHIVED', 'Archivé'
 
-    reference = models.CharField(max_length=100, unique=True, validators=[reference_validator], verbose_name="Référence du dossier")
+    reference = models.CharField(max_length=100, unique=True, blank=True, verbose_name="Référence du dossier")
     current_phase = models.CharField(max_length=20, choices=Phase.choices, default=Phase.CREATION, verbose_name="Phase actuelle")
     notes = models.TextField(blank=True, verbose_name="Notes internes")
     inspection_site_address = models.TextField(blank=True, verbose_name="Adresse du site d'inspection")
@@ -52,6 +53,26 @@ class InspectionFolder(TrackingModel):
             update_data['updated_by'] = user
 
         self.recommandations.update(**update_data)
+
+    def generate_unique_reference(self):
+        """
+        Génère un format métier type DOS-ANNEE-HEXALÉATOIRE (ex: DOS-2026-A8F3B2).
+        Garantit l'unicité via une boucle de vérification.
+        """
+        year = timezone.now().year
+        while True:
+            # Code aléatoire de 6 caractères hexadécimaux
+            random_code = uuid.uuid4().hex[:6].upper()
+            ref = f"DOS-{year}-{random_code}"
+            
+            # On vérifie si la référence existe déjà en BDD
+            if not InspectionFolder.objects.filter(reference=ref).exists():
+                return ref
+            
+    def save(self, *args, **kwargs):
+        if not self.reference:
+            self.reference = self.generate_unique_reference()
+        super().save(*args, **kwargs)
 
     @property
     def count_all_recommandations(self):

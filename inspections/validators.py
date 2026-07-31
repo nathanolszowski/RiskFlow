@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 from typing import List, Optional, Literal
-from django.core.validators import RegexValidator
 
 # FieldSchema, SectionSchema, and VisitTemplateSchema are Pydantic models that define the structure of a visit template.
 class FieldSchema(BaseModel):
@@ -45,10 +44,3 @@ def get_default_template_structure():
             }
         ]
     }
-
-# reference_validator is a REGEX validator that checks if the reference follows the format 'RF-YYYY-0000'.
-reference_validator = RegexValidator(
-    regex=r'^RF-\d{4}-\d{4}$',
-    message="La référence doit respecter le format 'RF-YYYY-0000' (ex: RF-2026-0412).",
-    code='invalid_reference_structure'
-)
