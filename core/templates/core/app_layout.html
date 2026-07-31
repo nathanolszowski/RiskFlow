@@ -1,56 +1,79 @@
 {% extends "core/base.html" %}
 
 {% block content %}
-<div class="min-h-full">
+<div class="flex flex-col min-h-screen bg-surface-primary transition-colors">
   <!-- Horizontal NavBar -->
   <nav class="bg-surface-primary border-b border-border-default transition-colors">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-      <div class="flex h-16 items-center justify-between">
-        <div class="flex items-center">
+      <div class="flex h-16 items-center justify-between gap-4">
+        
+        <!-- Logo and NavBar -->
+        <div class="flex items-center space-x-6">
           <div class="shrink-0">
-            <img src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500" alt="RiskFlow"
-              class="size-8" />
+            <img src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500" alt="RiskFlow" class="size-8" />
           </div>
           <div class="hidden md:block">
-            <div class="ml-10 flex items-baseline space-x-4">
+            <div class="flex items-baseline space-x-2 lg:space-x-4">
               <a href="{% url 'core:dashboard' %}"
-                class="rounded-md {% if request.resolver_match.url_name == 'dashboard' %}bg-surface-secondary text-text-main{% else %}text-text-muted hover:bg-surface-hover hover:text-text-main{% endif %} px-3 py-2 text-sm font-medium transition"
-                {% if request.resolver_match.url_name == 'dashboard' %}aria-current="page" {% endif %}>Dashboard</a>
+                class="rounded-md {% if request.resolver_match.url_name == 'dashboard' %}bg-surface-secondary text-text-main{% else %}text-text-muted hover:bg-surface-hover hover:text-text-main{% endif %} px-3 py-2 text-sm font-medium transition">Dashboard</a>
               <a href="{% url 'inspections:folder_list' %}"
-                class="rounded-md {% if request.resolver_match.url_name == 'folders' %}bg-surface-secondary text-text-main{% else %}text-text-muted hover:bg-surface-hover hover:text-text-main{% endif %} px-3 py-2 text-sm font-medium transition"
-                {% if request.resolver_match.url_name == 'folders' %}aria-current="page" {% endif %}>Dossiers</a>
+                class="rounded-md {% if request.resolver_match.url_name == 'folders' %}bg-surface-secondary text-text-main{% else %}text-text-muted hover:bg-surface-hover hover:text-text-main{% endif %} px-3 py-2 text-sm font-medium transition">Dossiers</a>
               <a href="{% url 'crm:company_list' %}"
-                class="rounded-md {% if request.resolver_match.url_name == 'company_list' %}bg-surface-secondary text-text-main{% else %}text-text-muted hover:bg-surface-hover hover:text-text-main{% endif %} px-3 py-2 text-sm font-medium transition"
-                {% if request.resolver_match.url_name == 'company_list' %}aria-current="page" {% endif %}>Clients</a>
+                class="rounded-md {% if request.resolver_match.url_name == 'company_list' %}bg-surface-secondary text-text-main{% else %}text-text-muted hover:bg-surface-hover hover:text-text-main{% endif %} px-3 py-2 text-sm font-medium transition">Clients</a>
               <a href="{% url 'crm:contact_list' %}"
-                class="rounded-md {% if request.resolver_match.url_name == 'contact_list' %}bg-surface-secondary text-text-main{% else %}text-text-muted hover:bg-surface-hover hover:text-text-main{% endif %} px-3 py-2 text-sm font-medium transition"
-                {% if request.resolver_match.url_name == 'contact_list' %}aria-current="page" {% endif %}>Contacts</a>
+                class="rounded-md {% if request.resolver_match.url_name == 'contact_list' %}bg-surface-secondary text-text-main{% else %}text-text-muted hover:bg-surface-hover hover:text-text-main{% endif %} px-3 py-2 text-sm font-medium transition">Contacts</a>
               <a href="#"
                 class="rounded-md px-3 py-2 text-sm font-medium text-text-muted hover:bg-surface-hover hover:text-text-main transition">Rapports</a>
             </div>
           </div>
         </div>
+
+        <!-- Global search bar HTMX -->
+        <div class="relative flex-1 max-w-xs lg:max-w-md hidden sm:block">
+          <div class="relative">
+            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <svg class="h-4 w-4 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input type="search"
+              name="q"
+              placeholder="Rechercher dossier, client, contact..."
+              autocomplete="off"
+              hx-get="{% url 'core:global_search' %}"
+              hx-trigger="keyup changed delay:300ms, search"
+              hx-target="#search-results"
+              hx-swap="innerHTML"
+              onclick="event.stopPropagation()"
+              onfocus="document.getElementById('search-results').classList.remove('hidden')"
+              class="w-full rounded-lg border border-border-default bg-surface-secondary py-1.5 pl-9 pr-3 text-xs text-text-main placeholder-text-muted focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition" />
+          </div>
+
+          <!-- Results menu -->
+          <div id="search-results"
+            onclick="event.stopPropagation()"
+            class="hidden absolute left-0 right-0 z-50 mt-1 max-h-96 overflow-y-auto rounded-lg border border-border-default bg-surface-primary p-2 shadow-xl">
+          </div>
+        </div>
+
+        <!-- Profil-->
         <div class="hidden md:block">
-          <div class="ml-4 flex items-center md:ml-6 space-x-4">
-            <!-- Toggle Theme HTMX (Desktop) -->
+          <div class="flex items-center space-x-4">
+            <!-- Toggle Theme HTMX -->
             <button hx-post="{% url 'core:toggle_theme' %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
               type="button" aria-label="Changer de thème"
               class="p-2 rounded-md bg-surface-secondary text-text-muted hover:text-text-main border border-border-default transition cursor-pointer">
               {% if current_theme == 'dark' %}
-              <!-- Sun Icon -->
               <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
               </svg>
               {% else %}
-              <!-- Moon icon -->
               <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
               </svg>
               {% endif %}
             </button>
-            <span class="text-sm font-medium text-text-muted">Connecté en tant que : <strong class="text-text-main">{{user.username }}</strong></span>
+            <span class="text-sm font-medium text-text-muted whitespace-nowrap">Connecté : <strong class="text-text-main">{{ user.username }}</strong></span>
             <form action="{% url 'accounts:logout' %}" method="POST" class="inline">
               {% csrf_token %}
               <button type="submit"
@@ -60,20 +83,19 @@
             </form>
           </div>
         </div>
+
+        <!-- Menu Mobile Button -->
         <div class="-mr-2 flex items-center md:hidden gap-2">
-          <!-- Toggle Theme HTMX (Mobile) -->
           <button hx-post="{% url 'core:toggle_theme' %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' type="button"
             aria-label="Changer de thème"
             class="p-2 rounded-md bg-surface-secondary text-text-muted hover:text-text-main border border-border-default transition">
             {% if current_theme == 'dark' %}
             <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
             </svg>
             {% else %}
             <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
             </svg>
             {% endif %}
           </button>
@@ -86,32 +108,48 @@
         </div>
       </div>
     </div>
-    <!-- Menu Modile -->
+
+    <!-- Menu Mobile -->
     <div id="mobile-menu" class="hidden md:hidden border-t border-border-default bg-surface-primary">
+      <div class="p-3">
+        <input type="search"
+          name="q"
+          placeholder="Rechercher dossier, client, contact..."
+          autocomplete="off"
+          hx-get="{% url 'core:global_search' %}"
+          hx-trigger="keyup changed delay:300ms, search"
+          hx-target="#search-results-mobile"
+          hx-swap="innerHTML"
+          onfocus="document.getElementById('search-results-mobile').classList.remove('hidden')"
+          class="w-full rounded-lg border border-border-default bg-surface-secondary py-1.5 px-3 text-xs text-text-main placeholder-text-muted focus:outline-none" />
+        <div id="search-results-mobile" class="hidden mt-2 max-h-60 overflow-y-auto rounded-lg border border-border-default bg-surface-primary p-2"></div>
+      </div>
       <div class="space-y-1 px-2 pt-2 pb-3 sm:px-3">
-        <a href="{% url 'core:dashboard' %}"
-          class="block rounded-md {% if request.resolver_match.url_name == 'dashboard' %}bg-surface-secondary text-text-main{% else %}text-text-muted hover:bg-surface-hover hover:text-text-main{% endif %} px-3 py-2 text-base font-medium">Dashboard</a>
-        <a href="{% url 'inspections:folder_list' %}"
-          class="block rounded-md {% if request.resolver_match.url_name == 'folders' %}bg-surface-secondary text-text-main{% else %}text-text-muted hover:bg-surface-hover hover:text-text-main{% endif %} px-3 py-2 text-base font-medium">Dossiers</a>
-        <a href="{% url 'crm:company_list' %}"
-          class="block rounded-md {% if request.resolver_match.url_name == 'company_list' %}bg-surface-secondary text-text-main{% else %}text-text-muted hover:bg-surface-hover hover:text-text-main{% endif %} px-3 py-2 text-base font-medium">Clients</a>
-        <a href="{% url 'crm:contact_list' %}"
-          class="block rounded-md {% if request.resolver_match.url_name == 'contact_list' %}bg-surface-secondary text-text-main{% else %}text-text-muted hover:bg-surface-hover hover:text-text-main{% endif %} px-3 py-2 text-base font-medium">Contacts</a>
-        <a href="#"
-          class="block rounded-md px-3 py-2 text-base font-medium text-text-muted hover:bg-surface-hover hover:text-text-main">Rapports</a>
+        <a href="{% url 'core:dashboard' %}" class="block rounded-md px-3 py-2 text-base font-medium text-text-muted hover:bg-surface-hover hover:text-text-main">Dashboard</a>
+        <a href="{% url 'inspections:folder_list' %}" class="block rounded-md px-3 py-2 text-base font-medium text-text-muted hover:bg-surface-hover hover:text-text-main">Dossiers</a>
+        <a href="{% url 'crm:company_list' %}" class="block rounded-md px-3 py-2 text-base font-medium text-text-muted hover:bg-surface-hover hover:text-text-main">Clients</a>
+        <a href="{% url 'crm:contact_list' %}" class="block rounded-md px-3 py-2 text-base font-medium text-text-muted hover:bg-surface-hover hover:text-text-main">Contacts</a>
       </div>
       <div class="border-t border-border-default pt-4 pb-3 px-5 flex items-center justify-between">
         <div class="text-sm font-medium text-text-subtle">{{ user.username }}</div>
         <form action="{% url 'accounts:logout' %}" method="POST">
           {% csrf_token %}
-          <button type="submit"
-            class="block rounded-md bg-status-danger-bg border border-status-danger-border px-3 py-1.5 text-sm font-medium text-status-danger hover:bg-status-danger-hover/20 transition">
-            Déconnexion
-          </button>
+          <button type="submit" class="block rounded-md bg-status-danger-bg border border-status-danger-border px-3 py-1.5 text-sm font-medium text-status-danger">Déconnexion</button>
         </form>
       </div>
     </div>
   </nav>
+
+  <!-- Closed search window -->
+  <script>
+    document.addEventListener('click', function(e) {
+      const resultsDesk = document.getElementById('search-results');
+      const resultsMob = document.getElementById('search-results-mobile');
+      if (resultsDesk) resultsDesk.classList.add('hidden');
+      if (resultsMob) resultsMob.classList.add('hidden');
+    });
+  </script>
+
   <!-- Sub-Header -->
   <header class="bg-surface-primary border-b border-border-default transition-colors">
     <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
@@ -120,12 +158,22 @@
       </h1>
     </div>
   </header>
+
   <!-- Main content -->
-  <main class="flex flex-col items-center px-4 pt-6 pb-12 sm:px-6 lg:px-8" style="min-height: calc(100vh - 160px);">
+  <main class="flex-grow flex flex-col items-center px-4 pt-6 pb-12 sm:px-6 lg:px-8">
     <div class="w-full max-w-7xl">
       {% block app_content %}
       {% endblock app_content %}
     </div>
   </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-border-default bg-surface-primary transition-colors py-4">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex items-center justify-center">
+      <p class="text-xs text-text-muted transition-colors">
+        &copy; {% now "Y" %} <span class="font-medium text-text-subtle">RiskFlow</span>. Tous droits réservés.
+      </p>
+    </div>
+  </footer>
 </div>
 {% endblock content %}

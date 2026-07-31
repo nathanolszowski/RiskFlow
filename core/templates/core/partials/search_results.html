@@ -1,0 +1,65 @@
+{% if query %}
+  {% if folders or companies or contacts %}
+    <div class="space-y-3">
+      
+      <!-- Dossiers -->
+      {% if folders %}
+      <div>
+        <div class="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">Dossiers</div>
+        {% for folder in folders %}
+          <a href="{% url 'inspections:folder_detail' folder.pk %}"
+            class="flex items-center justify-between rounded-md p-2 hover:bg-surface-hover transition group">
+            <div>
+              <div class="text-xs font-medium text-text-main group-hover:text-brand-primary">
+                {{ folder.reference }}
+              </div>
+              <div class="text-[11px] text-text-subtle">{{ folder.company.name }}</div>
+            </div>
+            <span class="text-[10px] rounded px-1.5 py-0.5 bg-surface-secondary text-text-muted">{{ folder.get_current_phase_display }}</span>
+          </a>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Clients / Entreprises -->
+      {% if companies %}
+      <div>
+        <div class="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">Clients</div>
+        {% for company in companies %}
+          <a href="{% url 'crm:company_detail' company.pk %}"
+            class="flex items-center justify-between rounded-md p-2 hover:bg-surface-hover transition group">
+            <div class="text-xs font-medium text-text-main group-hover:text-brand-primary">
+              {{ company.name }}
+            </div>
+            <span class="text-[10px] text-text-muted">{{ company.city }}</span>
+          </a>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Contacts -->
+      {% if contacts %}
+      <div>
+        <div class="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">Contacts</div>
+        {% for contact in contacts %}
+          <a href="{% url 'crm:contact_detail' contact.pk %}"
+            class="flex items-center justify-between rounded-md p-2 hover:bg-surface-hover transition group">
+            <div>
+              <div class="text-xs font-medium text-text-main group-hover:text-brand-primary">
+                {{ contact.first_name }} {{ contact.last_name }}
+              </div>
+              <div class="text-[11px] text-text-subtle">{{ contact.company.name }}</div>
+            </div>
+            <span class="text-[10px] text-text-muted">{{ contact.position }}</span>
+          </a>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+    </div>
+  {% else %}
+    <div class="p-3 text-center text-xs text-text-muted">
+      Aucun résultat pour "<span class="font-medium text-text-main">{{ query }}</span>"
+    </div>
+  {% endif %}
+{% endif %}
