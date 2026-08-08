@@ -1,5 +1,5 @@
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import (
     require_GET,
@@ -151,6 +151,42 @@ def company_inline_read(request, pk):
         {"company": company},
     )
 
+@require_POST
+def company_archive(request, pk):
+    company = get_object_or_404(Company, pk=pk)
+    company.is_active = False
+    
+    # Si vous suivez la traçabilité de l'utilisateur
+    if hasattr(company, 'updated_by'):
+        company.updated_by = request.user
+        
+    company.save()
+
+    if request.headers.get("HX-Request"):
+        response = HttpResponse(status=200)
+        response["HX-Redirect"] = request.META.get("HTTP_REFERER", f"/crm/companies/{company.pk}/")
+        return response
+
+    return redirect("crm:company_detail", pk=company.pk)
+
+
+@require_POST
+def company_unarchive(request, pk):
+    company = get_object_or_404(Company, pk=pk)
+    company.is_active = True
+    
+    # Si vous suivez la traçabilité de l'utilisateur
+    if hasattr(company, 'updated_by'):
+        company.updated_by = request.user
+        
+    company.save()
+
+    if request.headers.get("HX-Request"):
+        response = HttpResponse(status=200)
+        response["HX-Redirect"] = request.META.get("HTTP_REFERER", f"/crm/companies/{company.pk}/")
+        return response
+
+    return redirect("crm:company_detail", pk=company.pk)
 
 @login_required
 @require_GET
