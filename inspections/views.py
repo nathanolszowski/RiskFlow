@@ -1,6 +1,7 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_GET, require_http_methods
+from django.urls import reverse
+from django.views.decorators.http import require_GET, require_POST, require_http_methods
 from django.core.paginator import Paginator
 from django.http import HttpResponse
 from .forms import InspectionFolderForm
@@ -80,7 +81,6 @@ def create_folder(request):
     if request.method == "POST":
         form = InspectionFolderForm(request.POST)
 
-        # Si une entreprise est sélectionnée, on filtre les contacts pour ne proposer que les siens
         if selected_company:
             form.fields['contact'].queryset = Contact.objects.filter(company=selected_company)
 
@@ -120,7 +120,6 @@ def create_folder(request):
 
     form = InspectionFolderForm(initial=initial_data)
 
-    # Filtre les contacts dans la liste déroulante si l'entreprise est connue
     if selected_company:
         form.fields['contact'].queryset = Contact.objects.filter(company=selected_company)
 
@@ -130,6 +129,34 @@ def create_folder(request):
         {"form": form, "selected_company": selected_company}
     )
 
+@login_required
+@require_POST
+def folder_archive(request, folder_id):
+    folder = get_object_or_404(InspectionFolder, id=folder_id)
+    folder.is_active = False
+    folder.save()
+
+    if request.headers.get("HX-Request"):
+        response = HttpResponse()
+        response["HX-Refresh"] = "true"
+        return response
+
+    return redirect("inspections:folder_detail", pk=folder.id)
+
+
+@login_required
+@require_POST
+def folder_unarchive(request, folder_id):
+    folder = get_object_or_404(InspectionFolder, id=folder_id)
+    folder.is_active = True
+    folder.save()
+
+    if request.headers.get("HX-Request"):
+        response = HttpResponse()
+        response["HX-Refresh"] = "true"
+        return response
+
+    return redirect("inspections:folder_detail", pk=folder.id)
 
 # ==========================================
 # ==== FOLDER TABS SECTION =================

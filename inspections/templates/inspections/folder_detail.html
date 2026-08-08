@@ -3,19 +3,64 @@
 {% block page_title %}Dossier {{ folder.reference }}{% endblock page_title %}
 
 {% block app_content %}
-<!-- Mobile dropdown navigation -->
-<div class="sm:hidden mb-4">
-  <label for="tabs" class="sr-only">Sélectionner un onglet</label>
-  <select id="tabs" name="tabs"
-    class="block w-full rounded-lg border-border-default bg-surface-secondary py-2 pl-3 pr-10 text-base text-text-main focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary sm:text-sm"
-    onchange="htmx.ajax('GET', this.value, {target: '#tab-content'})">
-    <option value="{% url 'inspections:folder_tab_overview' folder.id %}">Vue d'ensemble</option>
-    <option value="{% url 'inspections:folder_tab_visit' folder.id %}">Formulaire de visite</option>
-    <option value="{% url 'inspections:folder_tab_recommandations' folder.id %}">Recommandations</option>
-  </select>
+<!-- Navigation / Bouton Retour -->
+<div class="mb-4">
+  <div class="mt-4 sm:mt-0 flex items-center gap-2.5">
+    <a href="{% url 'inspections:folder_list' %}"
+      class="inline-flex items-center gap-1.5 rounded-lg bg-surface-tertiary hover:bg-surface-secondary border border-border-default px-3.5 py-2 text-xs font-medium text-text-body transition-colors">
+      ← Retour à la liste
+    </a>
+  </div>
 </div>
 
-<!-- Desktop Tab Bar -->
+<!-- Mobile dropdown navigation & Status/Action -->
+<div class="sm:hidden mb-4 flex items-center justify-between gap-3">
+  <div class="flex-1">
+    <label for="tabs" class="sr-only">Sélectionner un onglet</label>
+    <select id="tabs" name="tabs"
+      class="block w-full rounded-lg border-border-default bg-surface-secondary py-2 pl-3 pr-10 text-base text-text-main focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary sm:text-sm"
+      onchange="if(this.value) htmx.ajax('GET', this.value, {target: '#tab-content'})">
+      <option value="{% url 'inspections:folder_tab_overview' folder.id %}">Vue d'ensemble</option>
+      <option value="{% url 'inspections:folder_tab_visit' folder.id %}">Formulaire de visite</option>
+      <option value="{% url 'inspections:folder_tab_recommandations' folder.id %}">Recommandations</option>
+      <option value="">Médias</option>
+      <option value="">Rapports</option>
+    </select>
+  </div>
+
+  <!-- Mobile Status Badge & Action -->
+  <div id="folder-status-header-mobile" class="flex items-center gap-2 shrink-0">
+    {% if not folder.is_active %}
+      <span class="inline-flex items-center rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-400 border border-amber-500/20">
+        Archivé
+      </span>
+      <button hx-post="{% url 'inspections:folder_unarchive' folder.id %}"
+              hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+              hx-confirm="Voulez-vous vraiment désarchiver ce dossier ?"
+              class="inline-flex items-center p-2 rounded-md bg-surface-secondary text-text-main border border-border-default hover:bg-surface-tertiary transition-colors cursor-pointer"
+              title="Désarchiver">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+        </svg>
+      </button>
+    {% else %}
+      <span class="inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-400 border border-emerald-500/20">
+        Actif
+      </span>
+      <button hx-post="{% url 'inspections:folder_archive' folder.id %}"
+              hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+              hx-confirm="Êtes-vous sûr de vouloir archiver ce dossier ?"
+              class="inline-flex items-center p-2 rounded-md bg-surface-tertiary text-text-muted hover:text-red-400 hover:bg-red-500/10 border border-border-default transition-colors cursor-pointer"
+              title="Archiver">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v1a2 2 0 01-2 2M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+        </svg>
+      </button>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Desktop Tab Bar with Right-aligned Status & Action -->
 <div class="hidden sm:block mb-6" hx-on:click="
         let currentTab = event.target.closest('.tab-btn');
         if (currentTab) {
@@ -33,7 +78,7 @@
             if(ab) ab.className = 'tab-badge ml-3 rounded-full bg-brand-bg px-2.5 py-0.5 text-xs font-semibold text-brand-light border border-brand-border';
         }
      ">
-  <div class="border-b border-border-default">
+  <div class="border-b border-border-default flex items-center justify-between">
     <nav class="-mb-px flex space-x-8" aria-label="Tabs" hx-target="#tab-content" hx-swap="innerHTML">
 
       <!-- Overview-->
@@ -78,7 +123,60 @@
         </span>
       </button>
 
+      <!-- Médias -->
+      <button hx-get=""
+        class="tab-btn group inline-flex items-center border-b-2 border-transparent px-1 pb-4 text-sm font-medium text-text-subtle hover:border-border-hover hover:text-text-main transition-colors cursor-pointer">
+        <svg class="mr-2 h-5 w-5 text-text-faded transition-colors" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+        </svg>
+        <span>Médias</span>
+      </button>
+
+      <!-- Rapports -->
+      <button hx-get=""
+        class="tab-btn group inline-flex items-center border-b-2 border-transparent px-1 pb-4 text-sm font-medium text-text-subtle hover:border-border-hover hover:text-text-main transition-colors cursor-pointer">
+        <svg class="mr-2 h-5 w-5 text-text-faded transition-colors" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+        </svg>
+        <span>Rapports</span>
+      </button>
+
     </nav>
+
+    <!-- Desktop Status Badge & Action -->
+    <div id="folder-status-header" class="flex items-center gap-3 pb-3">
+      {% if not folder.is_active %}
+        <span class="inline-flex items-center rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-400 border border-amber-500/20">
+          Archivé
+        </span>
+        <button hx-post="{% url 'inspections:folder_unarchive' folder.id %}"
+                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                hx-confirm="Voulez-vous vraiment désarchiver ce dossier ?"
+                class="inline-flex items-center gap-1.5 rounded-md bg-surface-secondary px-3 py-1 text-xs font-semibold text-text-main hover:bg-surface-tertiary border border-border-default transition-colors cursor-pointer shrink-0">
+          <svg class="w-3.5 h-3.5 text-text-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+          </svg>
+          Désarchiver
+        </button>
+      {% else %}
+        <span class="inline-flex items-center rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-400 border border-emerald-500/20">
+          Actif
+        </span>
+        <button hx-post="{% url 'inspections:folder_archive' folder.id %}"
+                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                hx-confirm="Êtes-vous sûr de vouloir archiver ce dossier ?"
+                class="inline-flex items-center gap-1.5 rounded-md bg-surface-tertiary px-3 py-1 text-xs font-semibold text-text-muted hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/20 border border-border-default transition-colors cursor-pointer shrink-0">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v1a2 2 0 01-2 2M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+          </svg>
+          Archiver
+        </button>
+      {% endif %}
+    </div>
   </div>
 </div>
 

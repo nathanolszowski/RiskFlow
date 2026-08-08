@@ -8,6 +8,8 @@ urlpatterns = [
     path("dossiers/page/<int:page>/", views.folder_list_paginated, name="folder_list_paginated"),
     path("dossiers/edition/", views.create_folder, name="create_folder"),
     path("dossier/<int:pk>/", views.folder_detail, name="folder_detail"),
+    path("dossier/<int:folder_id>/archive/", views.folder_archive, name="folder_archive"),
+    path("dossier/<int:folder_id>/desarchive/", views.folder_unarchive, name="folder_unarchive"),
     # Tabs
     path("dossier/<int:pk>/tabs/overview/", views.folder_tab_overview, name="folder_tab_overview"),
     path("dossier/<int:pk>/tabs/visit/", views.folder_tab_visit, name="folder_tab_visit"),
