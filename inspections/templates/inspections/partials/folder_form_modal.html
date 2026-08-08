@@ -11,7 +11,7 @@
         <!-- Header -->
         <div class="flex items-center justify-between border-b border-border-default px-6 py-4">
             <h3 class="text-lg font-semibold text-text-main">
-                {% if form.instance.pk %}Modifier le Dossier{% else %}Nouveau Dossier d'Inspection{% endif %}
+                Nouveau Dossier d'Inspection
             </h3>
             <button type="button" 
                     onclick="document.getElementById('create-folder-modal').remove()"
@@ -119,7 +119,7 @@
                 </button>
                 <button type="submit"
                         class="rounded-lg bg-brand-primary hover:bg-brand-hover px-4 py-2 text-xs font-medium text-white transition-colors cursor-pointer shadow-xs">
-                    {% if form.instance.pk %}Enregistrer les modifications{% else %}Créer le dossier{% endif %}
+                    Créer le dossier
                 </button>
             </div>
         </form>
