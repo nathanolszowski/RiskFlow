@@ -182,7 +182,7 @@ def folder_inline_read(request, pk):
 @login_required
 @require_POST
 def folder_archive(request, folder_id):
-    folder = get_object_or_404(InspectionFolder, id=folder_id)
+    folder = get_inspection_folder_by_id(folder_id, request.user)
     folder.is_active = False
     folder.save()
 
@@ -197,7 +197,7 @@ def folder_archive(request, folder_id):
 @login_required
 @require_POST
 def folder_unarchive(request, folder_id):
-    folder = get_object_or_404(InspectionFolder, id=folder_id)
+    folder = get_inspection_folder_by_id(folder_id, request.user)
     folder.is_active = True
     folder.save()
 
