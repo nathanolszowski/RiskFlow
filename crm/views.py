@@ -262,7 +262,7 @@ def contact_list_paginated(request, page=1):
 def contact_detail(request, pk):
     """Render the detail view for a contact"""
     contact = get_object_or_404(
-        Contact.objects.select_related("company"), pk=pk
+        Contact.objects.select_related("company", "created_by", "updated_by"), pk=pk
     )
     return render(request, "crm/contact_detail.html", {"contact": contact})
 
@@ -326,7 +326,7 @@ def contact_inline_update(request, pk):
              If False -> Render form with errors (contact_update.html).
     """
     contact = get_object_or_404(
-        Contact.objects.select_related("company"), pk=pk
+        Contact.objects.select_related("company", "created_by", "updated_by"), pk=pk
     )
 
     if request.method == "POST":
@@ -338,7 +338,7 @@ def contact_inline_update(request, pk):
             return render(
                 request,
                 "crm/partials/contact_read.html",
-                {"contact": contact},
+                {"contact": contact, "refresh_tracking": True},
             )
     else:
         form = ContactForm(instance=contact)
@@ -358,7 +358,7 @@ def contact_inline_read(request, pk):
     Only fragment (contact_read.html).
     """
     contact = get_object_or_404(
-        Contact.objects.select_related("company"), pk=pk
+        Contact.objects.select_related("company", "created_by", "updated_by"), pk=pk
     )
     return render(
         request,

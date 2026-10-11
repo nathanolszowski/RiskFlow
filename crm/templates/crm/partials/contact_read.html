@@ -59,14 +59,11 @@
                     {{ contact.company.name|default:"-" }}
                 </dd>
             </div>
-
-            <div>
-                <dt class="text-xs font-medium text-text-muted uppercase tracking-wider">Ajouté le</dt>
-                <dd class="mt-1 text-sm text-text-body">
-                    {{ contact.created_at|date:"d/m/Y" }}
-                </dd>
-            </div>
         </dl>
     </div>
 
 </div>
+
+{% if refresh_tracking %}
+{% include "core/partials/tracking_info.html" with object=contact oob=True %}
+{% endif %}
