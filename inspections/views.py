@@ -183,8 +183,7 @@ def folder_inline_read(request, pk):
 @require_POST
 def folder_archive(request, folder_id):
     folder = get_inspection_folder_by_id(folder_id, request.user)
-    folder.is_active = False
-    folder.save()
+    folder.archive(user=request.user)
 
     if request.headers.get("HX-Request"):
         response = HttpResponse()
