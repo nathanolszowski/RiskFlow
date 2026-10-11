@@ -98,3 +98,7 @@
   {% endif %}
 
 </div>
+
+{% if refresh_tracking %}
+{% include "core/partials/tracking_info.html" with object=company oob=True %}
+{% endif %}

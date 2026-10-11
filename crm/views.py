@@ -62,7 +62,9 @@ def company_list_paginated(request, page=1):
 @require_GET
 def company_detail(request, pk):
     """Render main view for company detail data."""
-    company = get_object_or_404(Company, pk=pk)
+    company = get_object_or_404(
+        Company.objects.select_related("created_by", "updated_by"), pk=pk
+    )
 
     context = {
         "company": company,
@@ -121,11 +123,13 @@ def company_inline_update(request, pk):
     if request.method == "POST":
         form = CompanyForm(request.POST, instance=company)
         if form.is_valid():
-            form.save()
+            company = form.save(commit=False)
+            company.updated_by = request.user
+            company.save()
             return render(
                 request,
                 "crm/partials/company_read.html",
-                {"company": company},
+                {"company": company, "refresh_tracking": True},
             )
     else:
         form = CompanyForm(instance=company)
