@@ -57,3 +57,22 @@ class TrackingModel(models.Model):
     def cascade_archive(self, user=None):
         """To be overridden in child classes if needed to propagate the archiving action"""
         pass
+
+    def unarchive(self, user=None):
+        """
+        Method to unarchive the instance. It sets is_active to True, clears the archive metadata and optionally records the user who
+        performed the action. The previous archive date is passed to cascade_unarchive so that only the related records archived
+        together with this instance are restored.
+        """
+        previous_archived_at = self.archived_at
+        self.is_active = True
+        self.archived_at = None
+        self.archived_by = None
+        if user:
+            self.updated_by = user
+        self.save()
+        self.cascade_unarchive(archived_at=previous_archived_at, user=user)
+
+    def cascade_unarchive(self, archived_at=None, user=None):
+        """To be overridden in child classes if needed to propagate the unarchiving action"""
+        pass

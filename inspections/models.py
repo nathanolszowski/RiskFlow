@@ -58,13 +58,32 @@ class InspectionFolder(TrackingModel):
         """
         update_data = {
             'is_active': False,
-            'archived_at': timezone.now(),
+            # Same date as the folder, so that cascade_unarchive can restore only these recommendations
+            'archived_at': self.archived_at or timezone.now(),
         }
         if user:
             update_data['archived_by'] = user
             update_data['updated_by'] = user
 
-        self.recommandations.update(**update_data)
+        self.recommandations.filter(is_active=True).update(**update_data)
+
+    def cascade_unarchive(self, archived_at=None, user=None):
+        """
+        Restore the recommendations archived together with the inspection folder (same archive date). Recommendations archived
+        on their own beforehand stay archived.
+        """
+        if not archived_at:
+            return
+
+        update_data = {
+            'is_active': True,
+            'archived_at': None,
+            'archived_by': None,
+        }
+        if user:
+            update_data['updated_by'] = user
+
+        self.recommandations.filter(is_active=False, archived_at=archived_at).update(**update_data)
 
     def generate_unique_reference(self):
         """

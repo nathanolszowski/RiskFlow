@@ -197,8 +197,7 @@ def folder_archive(request, folder_id):
 @require_POST
 def folder_unarchive(request, folder_id):
     folder = get_inspection_folder_by_id(folder_id, request.user)
-    folder.is_active = True
-    folder.save()
+    folder.unarchive(user=request.user)
 
     if request.headers.get("HX-Request"):
         response = HttpResponse()
