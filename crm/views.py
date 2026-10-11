@@ -314,3 +314,54 @@ def create_contact(request):
     return render(
         request, "crm/partials/contact_form_modal.html", {"form": form}
     )
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def contact_inline_update(request, pk):
+    """
+    HTMX view to edit contact data from detail view.
+    - GET  : Render auto-complete form (contact_update.html).
+    - POST : Update validation.
+             If True -> Render read view with data (contact_read.html).
+             If False -> Render form with errors (contact_update.html).
+    """
+    contact = get_object_or_404(
+        Contact.objects.select_related("company"), pk=pk
+    )
+
+    if request.method == "POST":
+        form = ContactForm(request.POST, instance=contact)
+        if form.is_valid():
+            contact = form.save(commit=False)
+            contact.updated_by = request.user
+            contact.save()
+            return render(
+                request,
+                "crm/partials/contact_read.html",
+                {"contact": contact},
+            )
+    else:
+        form = ContactForm(instance=contact)
+
+    return render(
+        request,
+        "crm/partials/contact_update.html",
+        {"contact": contact, "form": form},
+    )
+
+
+@login_required
+@require_GET
+def contact_inline_read(request, pk):
+    """
+    HTMX view to read only contact view from detail view.
+    Only fragment (contact_read.html).
+    """
+    contact = get_object_or_404(
+        Contact.objects.select_related("company"), pk=pk
+    )
+    return render(
+        request,
+        "crm/partials/contact_read.html",
+        {"contact": contact},
+    )

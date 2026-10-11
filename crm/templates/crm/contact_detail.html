@@ -7,91 +7,38 @@
 
     <!-- Header -->
     <div class="mb-8">
-        <a href="{% url 'crm:contact_list' %}"
-            class="inline-flex items-center text-sm text-text-subtle hover:text-text-main mb-2 transition-colors">
-            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-            </svg>
-            ← Retour aux contacts
-        </a>
+        <div class="flex items-center justify-between gap-4 mb-2">
+            <a href="{% url 'crm:contact_list' %}"
+                class="inline-flex items-center text-sm text-text-subtle hover:text-text-main transition-colors">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                ← Retour aux contacts
+            </a>
+
+            <button type="button" hx-get="{% url 'crm:contact_inline_update' contact.pk %}" hx-target="#contact-main-column"
+                hx-swap="outerHTML"
+                class="inline-flex items-center gap-1.5 rounded-lg bg-brand-primary hover:bg-brand-hover px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition-colors cursor-pointer whitespace-nowrap">
+                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+                Éditer le contact
+            </button>
+        </div>
         <h1 class="text-3xl font-bold text-text-main">
             {{ contact.first_name }} {{ contact.last_name }}
         </h1>
-        {% if contact.job_title %}
-        <p class="text-text-subtle text-lg mt-1">{{ contact.job_title }}</p>
+        {% if contact.position %}
+        <p class="text-text-subtle text-lg mt-1">{{ contact.position }}</p>
         {% endif %}
     </div>
 
     <!-- Contact card -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-        <!-- Left column : Main infos -->
-        <div class="md:col-span-2 space-y-6">
-
-            <!-- Email + phone -->
-            <div class="bg-surface-primary shadow-xs rounded-xl p-6 border border-border-default">
-                <h2 class="text-lg font-semibold text-text-main mb-4 border-b border-border-default pb-2">
-                    Coordonnées
-                </h2>
-
-                <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <dt class="text-xs font-medium text-text-muted uppercase tracking-wider">Email</dt>
-                        <dd class="mt-1 text-sm text-text-main font-medium">
-                            {% if contact.email %}
-                            <a href="mailto:{{ contact.email }}" class="text-brand-light hover:underline">
-                                {{ contact.email }}
-                            </a>
-                            {% else %}
-                            <span class="text-text-faded italic">Non renseigné</span>
-                            {% endif %}
-                        </dd>
-                    </div>
-
-                    <div>
-                        <dt class="text-xs font-medium text-text-muted uppercase tracking-wider">Téléphone</dt>
-                        <dd class="mt-1 text-sm text-text-main font-medium">
-                            {% if contact.phone %}
-                            <a href="tel:{{ contact.phone }}" class="hover:underline">
-                                {{ contact.phone }}
-                            </a>
-                            {% else %}
-                            <span class="text-text-faded italic">Non renseigné</span>
-                            {% endif %}
-                        </dd>
-                    </div>
-
-                    <div>
-                        <dt class="text-xs font-medium text-text-muted uppercase tracking-wider">Poste / Fonction</dt>
-                        <dd class="mt-1 text-sm text-text-body">
-                            {{ contact.job_title|default:"-" }}
-                        </dd>
-                    </div>
-
-                    <div>
-                        <dt class="text-xs font-medium text-text-muted uppercase tracking-wider">Ajouté le</dt>
-                        <dd class="mt-1 text-sm text-text-body">
-                            {{ contact.created_at|date:"d/m/Y" }}
-                        </dd>
-                    </div>
-                </dl>
-            </div>
-
-            <!-- Notes -->
-            <div class="bg-surface-primary shadow-xs rounded-xl p-6 border border-border-default">
-                <h2 class="text-lg font-semibold text-text-main mb-3 border-b border-border-default pb-2">
-                    Notes & Remarques
-                </h2>
-                <div class="text-sm text-text-body whitespace-pre-line">
-                    {% if contact.notes %}
-                    {{ contact.notes }}
-                    {% else %}
-                    <p class="text-text-faded italic">Aucune note pour ce contact.</p>
-                    {% endif %}
-                </div>
-            </div>
-
-        </div>
+        <!-- Left column : Main infos (through HTMX) -->
+        {% include "crm/partials/contact_read.html" %}
 
         <!-- Right Column : Related company -->
         <div class="space-y-6">

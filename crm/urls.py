@@ -19,4 +19,6 @@ urlpatterns = [
     path('contacts/page/<int:page>/', views.contact_list_paginated, name='contact_list_paginated'),
     path('contact/<int:pk>/', views.contact_detail, name='contact_detail'),
     path('contacts/nouveau-contact/', views.create_contact, name='create_contact'),
+    path('contact/<int:pk>/edition/', views.contact_inline_update, name='contact_inline_update'),
+    path('contact/<int:pk>/lecture/', views.contact_inline_read, name='contact_inline_read'),
 ]

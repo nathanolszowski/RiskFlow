@@ -1,0 +1,72 @@
+<div id="contact-main-column" class="md:col-span-2 space-y-6">
+
+    <!-- Email + phone -->
+    <div class="bg-surface-primary shadow-xs rounded-xl p-6 border border-border-default">
+        <h2 class="text-lg font-semibold text-text-main mb-4 border-b border-border-default pb-2">
+            Coordonnées
+        </h2>
+
+        <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <dt class="text-xs font-medium text-text-muted uppercase tracking-wider">Email</dt>
+                <dd class="mt-1 text-sm text-text-main font-medium">
+                    {% if contact.email %}
+                    <a href="mailto:{{ contact.email }}" class="text-brand-light hover:underline">
+                        {{ contact.email }}
+                    </a>
+                    {% else %}
+                    <span class="text-text-faded italic">Non renseigné</span>
+                    {% endif %}
+                </dd>
+            </div>
+
+            <div>
+                <dt class="text-xs font-medium text-text-muted uppercase tracking-wider">Poste / Fonction</dt>
+                <dd class="mt-1 text-sm text-text-body">
+                    {{ contact.position|default:"-" }}
+                </dd>
+            </div>
+
+            <div>
+                <dt class="text-xs font-medium text-text-muted uppercase tracking-wider">Téléphone fixe</dt>
+                <dd class="mt-1 text-sm text-text-main font-medium">
+                    {% if contact.phone_number_fix %}
+                    <a href="tel:{{ contact.phone_number_fix }}" class="hover:underline">
+                        {{ contact.phone_number_fix }}
+                    </a>
+                    {% else %}
+                    <span class="text-text-faded italic">Non renseigné</span>
+                    {% endif %}
+                </dd>
+            </div>
+
+            <div>
+                <dt class="text-xs font-medium text-text-muted uppercase tracking-wider">Téléphone mobile</dt>
+                <dd class="mt-1 text-sm text-text-main font-medium">
+                    {% if contact.phone_number_mobile %}
+                    <a href="tel:{{ contact.phone_number_mobile }}" class="hover:underline">
+                        {{ contact.phone_number_mobile }}
+                    </a>
+                    {% else %}
+                    <span class="text-text-faded italic">Non renseigné</span>
+                    {% endif %}
+                </dd>
+            </div>
+
+            <div>
+                <dt class="text-xs font-medium text-text-muted uppercase tracking-wider">Société</dt>
+                <dd class="mt-1 text-sm text-text-body">
+                    {{ contact.company.name|default:"-" }}
+                </dd>
+            </div>
+
+            <div>
+                <dt class="text-xs font-medium text-text-muted uppercase tracking-wider">Ajouté le</dt>
+                <dd class="mt-1 text-sm text-text-body">
+                    {{ contact.created_at|date:"d/m/Y" }}
+                </dd>
+            </div>
+        </dl>
+    </div>
+
+</div>
