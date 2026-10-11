@@ -51,29 +51,18 @@
               hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
               hx-confirm="Êtes-vous sûr de vouloir archiver ce dossier ?"
               class="inline-flex items-center p-2 rounded-lg bg-surface-tertiary text-text-muted hover:text-red-400 hover:bg-red-500/10 border border-border-default transition-colors cursor-pointer"
-              title="Archiver">
+              title="Archiver le dossier">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v1a2 2 0 01-2 2M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
         </svg>
       </button>
     {% endif %}
-    <button type="button"
-      hx-get="{% url 'inspections:folder_tab_overview' folder.id %}?edition=1" hx-target="#tab-content" hx-swap="innerHTML"
-      hx-on:click="document.getElementById('tabs').selectedIndex = 0"
-      class="inline-flex items-center p-2 rounded-lg bg-brand-primary hover:bg-brand-hover text-white transition-colors cursor-pointer"
-      title="Éditer le dossier">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-      </svg>
-    </button>
   </div>
 </div>
 
 <!-- Desktop Tab Bar with Right-aligned Status & Action -->
 <div class="hidden sm:block mb-6" hx-on:click="
-        let opener = event.target.closest('[data-open-tab]');
-        let currentTab = event.target.closest('.tab-btn') || (opener && document.querySelector(opener.dataset.openTab));
+        let currentTab = event.target.closest('.tab-btn');
         if (currentTab) {
             document.querySelectorAll('.tab-btn').forEach(t => {
                 t.classList.remove('border-brand-primary', 'text-brand-light');
@@ -93,7 +82,7 @@
     <nav class="-mb-px flex space-x-8" aria-label="Tabs" hx-target="#tab-content" hx-swap="innerHTML">
 
       <!-- Overview-->
-      <button id="tab-overview-btn" hx-get="{% url 'inspections:folder_tab_overview' folder.id %}"
+      <button hx-get="{% url 'inspections:folder_tab_overview' folder.id %}"
         class="tab-btn group inline-flex items-center border-b-2 border-brand-primary px-1 pb-4 text-sm font-medium text-brand-light transition-colors cursor-pointer"
         aria-current="page">
         <svg class="mr-2 h-5 w-5 text-brand-light transition-colors" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
@@ -184,19 +173,10 @@
           <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v1a2 2 0 01-2 2M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
           </svg>
-          Archiver
+          Archiver le dossier
         </button>
       {% endif %}
 
-      <button type="button" data-open-tab="#tab-overview-btn"
-        hx-get="{% url 'inspections:folder_tab_overview' folder.id %}?edition=1" hx-target="#tab-content" hx-swap="innerHTML"
-        class="inline-flex items-center gap-1.5 rounded-lg bg-brand-primary hover:bg-brand-hover px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition-colors cursor-pointer whitespace-nowrap shrink-0">
-          <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-          </svg>
-        Éditer le dossier
-      </button>
     </div>
   </div>
 </div>

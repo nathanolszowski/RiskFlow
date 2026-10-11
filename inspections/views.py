@@ -318,15 +318,12 @@ def recommandation_inline_read(request, pk):
 @login_required
 @require_GET
 def folder_tab_overview(request, pk):
-    """Show only the content of the overview tab (with the edit form opened if ?edition=1)."""
+    """Show only the content of the overview tab."""
     folder = get_inspection_folder_by_id(pk, request.user)
-    context = {"folder": folder}
-    if request.GET.get("edition"):
-        context["form"] = InspectionFolderUpdateForm(instance=folder)
     return render(
         request,
         "inspections/partials/tab_overview.html",
-        context,
+        {"folder": folder},
     )
 
 
