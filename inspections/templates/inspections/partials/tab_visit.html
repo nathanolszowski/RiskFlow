@@ -1,17 +1,6 @@
 <div class="space-y-6">
     {% if visit %}
-    <div class="flex justify-between items-center border-b border-border-default pb-4">
-        <div>
-            <h3 class="text-lg font-bold text-text-main">{{ visit.template.name }}</h3>
-            <p class="text-xs text-text-muted mt-0.5">Statut : {{ visit.get_current_status_display }}</p>
-        </div>
-        {% if visit.due_date %}
-        <span
-            class="text-xs font-mono text-text-subtle bg-surface-secondary border border-border-default px-3 py-1 rounded-md">
-            📅 {{ visit.due_date|date:"d/m/Y" }}
-        </span>
-        {% endif %}
-    </div>
+    {% include "inspections/partials/visit_read.html" %}
 
     <div class="space-y-6">
         {% for section in sections %}

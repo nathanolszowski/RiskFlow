@@ -1,0 +1,5 @@
+<!-- Compact traceability line (creation & last update) for list items and cards -->
+<p class="text-[11px] text-text-faded">
+  Créé le {{ object.created_at|date:"d/m/Y" }}{% if object.created_by %} par <span class="text-text-subtle">{{ object.created_by.get_full_name|default:object.created_by.username }}</span>{% endif %}
+  · Mis à jour le {{ object.updated_at|date:"d/m/Y à H:i" }}{% if object.updated_by %} par <span class="text-text-subtle">{{ object.updated_by.get_full_name|default:object.updated_by.username }}</span>{% endif %}
+</p>

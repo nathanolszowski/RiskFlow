@@ -1,5 +1,5 @@
 from django import forms
-from .models import InspectionFolder
+from .models import InspectionFolder, VisitInstance, Recommandation
 
 class InspectionFolderForm(forms.ModelForm):
     class Meta:
@@ -39,3 +39,48 @@ class InspectionFolderUpdateForm(InspectionFolderForm):
         if self.instance.pk and isinstance(contact_field, forms.ModelChoiceField):
             contact_field.queryset = self.instance.company.contacts.order_by("last_name", "first_name")
             contact_field.empty_label = "Aucun contact référent"
+
+
+class VisitInstanceUpdateForm(forms.ModelForm):
+    """Edit form for the planning data of a visit (template and answers are not edited here)."""
+    class Meta:
+        model = VisitInstance
+        fields = [
+                'current_status',
+                'due_date',
+                'notes',
+            ]
+        widgets = {
+            "due_date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+            "notes": forms.Textarea(attrs={"rows": 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        for name, field in self.fields.items():
+            field.widget.attrs.update({"class": "form-input"})
+
+
+class RecommandationUpdateForm(forms.ModelForm):
+    class Meta:
+        model = Recommandation
+        fields = [
+                'topic',
+                'description',
+                'priority',
+                'current_status',
+                'due_date',
+                'notes',
+            ]
+        widgets = {
+            "due_date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+            "description": forms.Textarea(attrs={"rows": 3}),
+            "notes": forms.Textarea(attrs={"rows": 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        for name, field in self.fields.items():
+            field.widget.attrs.update({"class": "form-input"})

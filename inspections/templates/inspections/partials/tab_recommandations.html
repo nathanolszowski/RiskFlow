@@ -6,33 +6,7 @@
 
     <div class="space-y-3">
         {% for rec in recommandations %}
-        <div
-            class="p-4 rounded-xl border border-border-default bg-surface-primary flex justify-between items-center transition-colors">
-            <div class="space-y-1">
-                <div class="flex items-center gap-2 text-xs">
-                    <span
-                        class="font-mono text-brand-light bg-brand-bg px-1.5 py-0.5 rounded border border-brand-border">
-                        {{ rec.code|default:"REC" }}
-                    </span>
-                    <span class="text-text-faded">•</span>
-                    <span class="text-text-subtle">Créé le {{ rec.created_at|date:"d/m/Y" }}</span>
-                </div>
-                <p class="text-sm font-semibold text-text-main">{{ rec.title }}</p>
-                {% if rec.due_date %}
-                <p class="text-xs text-text-muted">📅 Échéance : {{ rec.due_date|date:"d/m/Y" }}</p>
-                {% endif %}
-            </div>
-
-            <div class="flex flex-col items-end gap-2">
-                <span
-                    class="inline-flex items-center rounded-md bg-status-warning-bg px-2 py-0.5 text-xs font-medium text-status-warning border border-status-warning-border">
-                    {{ rec.get_priority_display|default:"Priorité" }}
-                </span>
-                <span class="text-[10px] uppercase font-bold tracking-wider text-status-success">
-                    {{ rec.get_current_status_display|default:"Ouvert" }}
-                </span>
-            </div>
-        </div>
+        {% include "inspections/partials/recommandation_read.html" %}
         {% empty %}
         <p class="text-sm text-text-muted italic text-center py-4">Aucune recommandation émise pour le moment.</p>
         {% endfor %}

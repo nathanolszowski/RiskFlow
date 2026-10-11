@@ -4,10 +4,12 @@ from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 from django.core.paginator import Paginator
 from django.http import HttpResponse
-from .forms import InspectionFolderForm, InspectionFolderUpdateForm
+from .forms import InspectionFolderForm, InspectionFolderUpdateForm, VisitInstanceUpdateForm, RecommandationUpdateForm
 from .models import InspectionFolder
 from crm.models import Company, Contact
 from inspections.services.inspectionfolder import get_filtered_folders, get_inspection_folder_by_id, create_tracked_instance
+from inspections.services.visit import get_visit_by_id
+from inspections.services.recommandation import get_recommandation_by_id
 
 
 # ==========================================
@@ -207,6 +209,109 @@ def folder_unarchive(request, folder_id):
     return redirect("inspections:folder_detail", pk=folder.id)
 
 # ==========================================
+# ==== VISIT SECTION =======================
+# ==========================================
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def visit_inline_update(request, pk):
+    """
+    HTMX view to edit visit planning data from the visit tab.
+    - GET  : Render auto-complete form (visit_update.html).
+    - POST : Update validation.
+             If True -> Render read view with data (visit_read.html).
+             If False -> Render form with errors (visit_update.html).
+    """
+    visit = get_visit_by_id(pk, request.user)
+
+    if request.method == "POST":
+        form = VisitInstanceUpdateForm(request.POST, instance=visit)
+        if form.is_valid():
+            visit = form.save(commit=False)
+            visit.updated_by = request.user
+            visit.save()
+            return render(
+                request,
+                "inspections/partials/visit_read.html",
+                {"visit": visit},
+            )
+    else:
+        form = VisitInstanceUpdateForm(instance=visit)
+
+    return render(
+        request,
+        "inspections/partials/visit_update.html",
+        {"visit": visit, "form": form},
+    )
+
+
+@login_required
+@require_GET
+def visit_inline_read(request, pk):
+    """
+    HTMX view to read only visit planning data from the visit tab.
+    Only fragment (visit_read.html).
+    """
+    visit = get_visit_by_id(pk, request.user)
+    return render(
+        request,
+        "inspections/partials/visit_read.html",
+        {"visit": visit},
+    )
+
+
+# ==========================================
+# ==== RECOMMANDATION SECTION ==============
+# ==========================================
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def recommandation_inline_update(request, pk):
+    """
+    HTMX view to edit a recommendation from the recommendations tab.
+    - GET  : Render auto-complete form (recommandation_update.html).
+    - POST : Update validation.
+             If True -> Render read view with data (recommandation_read.html).
+             If False -> Render form with errors (recommandation_update.html).
+    """
+    rec = get_recommandation_by_id(pk, request.user)
+
+    if request.method == "POST":
+        form = RecommandationUpdateForm(request.POST, instance=rec)
+        if form.is_valid():
+            rec = form.save(commit=False)
+            rec.updated_by = request.user
+            rec.save()
+            return render(
+                request,
+                "inspections/partials/recommandation_read.html",
+                {"rec": rec},
+            )
+    else:
+        form = RecommandationUpdateForm(instance=rec)
+
+    return render(
+        request,
+        "inspections/partials/recommandation_update.html",
+        {"rec": rec, "form": form},
+    )
+
+
+@login_required
+@require_GET
+def recommandation_inline_read(request, pk):
+    """
+    HTMX view to read only a recommendation from the recommendations tab.
+    Only fragment (recommandation_read.html).
+    """
+    rec = get_recommandation_by_id(pk, request.user)
+    return render(
+        request,
+        "inspections/partials/recommandation_read.html",
+        {"rec": rec},
+    )
+
+# ==========================================
 # ==== FOLDER TABS SECTION =================
 # ==========================================
 
@@ -250,4 +355,4 @@ def folder_tab_recommandations(request, pk):
     return render(
         request,
         "inspections/partials/tab_recommandations.html",
-        {"recommandations": folder.recommandations.all()},)
+        {"recommandations": folder.recommandations.select_related("created_by", "updated_by")},)

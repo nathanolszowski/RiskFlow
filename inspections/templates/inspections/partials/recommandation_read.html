@@ -1,0 +1,39 @@
+<div id="rec-{{ rec.pk }}"
+    class="p-4 rounded-xl border border-border-default bg-surface-primary flex justify-between items-start gap-4 transition-colors">
+    <div class="space-y-1 min-w-0">
+        <div class="flex items-center gap-2 text-xs">
+            <span class="font-mono text-brand-light bg-brand-bg px-1.5 py-0.5 rounded border border-brand-border">
+                REC-{{ rec.pk }}
+            </span>
+            {% if rec.due_date %}
+            <span class="text-text-faded">•</span>
+            <span class="text-text-muted">📅 Échéance : {{ rec.due_date|date:"d/m/Y" }}</span>
+            {% endif %}
+        </div>
+        <p class="text-sm font-semibold text-text-main">{{ rec.topic|default:"Sans sujet" }}</p>
+        <p class="text-sm text-text-body whitespace-pre-line">{{ rec.description }}</p>
+        {% if rec.notes %}
+        <p class="text-xs text-text-subtle italic whitespace-pre-line">{{ rec.notes }}</p>
+        {% endif %}
+        {% include "core/partials/tracking_line.html" with object=rec %}
+    </div>
+
+    <div class="flex flex-col items-end gap-2 shrink-0">
+        <span
+            class="inline-flex items-center rounded-md bg-status-warning-bg px-2 py-0.5 text-xs font-medium text-status-warning border border-status-warning-border">
+            {{ rec.get_priority_display }}
+        </span>
+        <span class="text-[10px] uppercase font-bold tracking-wider text-status-success">
+            {{ rec.get_current_status_display }}
+        </span>
+        <button type="button" hx-get="{% url 'inspections:recommandation_inline_update' rec.pk %}"
+            hx-target="#rec-{{ rec.pk }}" hx-swap="outerHTML"
+            class="inline-flex items-center gap-1.5 rounded-lg bg-brand-primary hover:bg-brand-hover px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition-colors cursor-pointer whitespace-nowrap">
+            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+            Éditer
+        </button>
+    </div>
+</div>
