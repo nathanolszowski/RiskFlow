@@ -1,0 +1,50 @@
+<!-- Phase progress of the inspection folder -->
+<div id="folder-progress" {% if oob %}hx-swap-oob="true"{% endif %}
+  class="bg-surface-primary/50 border border-border-default rounded-xl p-4 text-xs text-text-subtle">
+  {% with progress=folder.phase_progress %}
+  {% if progress %}
+
+  <div class="flex items-center justify-between mb-4">
+    <span class="text-text-faded">Avancement du dossier</span>
+    <span class="font-medium text-text-body">{{ folder.get_current_phase_display }}</span>
+  </div>
+
+  <div class="mx-2">
+    <!-- Track, fill & milestones -->
+    <div class="relative h-2 rounded-full bg-surface-secondary border border-border-default">
+      <div class="absolute inset-y-0 left-0 rounded-full bg-brand-primary transition-all"
+        style="width: {{ progress.percent }}%"></div>
+
+      {% for step in progress.steps %}
+      <span class="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full border-2
+        {% if step.state == 'todo' %}bg-surface-modal border-border-default{% elif step.state == 'current' %}bg-brand-primary border-brand-light ring-4 ring-brand-primary/20{% else %}bg-brand-primary border-brand-primary{% endif %}"
+        style="left: {{ step.position }}%"></span>
+      {% endfor %}
+    </div>
+
+    <!-- Labels -->
+    <div class="relative h-5 mt-3">
+      {% for step in progress.steps %}
+      <span class="absolute whitespace-nowrap
+        {% if forloop.first %}left-0 -ml-2{% elif forloop.last %}right-0 -mr-2 text-right{% else %}-translate-x-1/2 text-center{% endif %}
+        {% if step.state == 'current' %}font-semibold text-text-main{% elif step.state == 'done' %}text-brand-primary{% else %}text-text-faded{% endif %}"
+        {% if not forloop.first and not forloop.last %}style="left: {{ step.position }}%"{% endif %}>
+        {{ step.label }}
+      </span>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% else %}
+
+  <div class="flex items-center gap-2">
+    <span
+      class="inline-flex items-center rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-400 border border-amber-500/20">
+      Archivé
+    </span>
+    <span class="text-text-body">Dossier archivé : la progression n'est plus suivie.</span>
+  </div>
+
+  {% endif %}
+  {% endwith %}
+</div>

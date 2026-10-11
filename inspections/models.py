@@ -19,6 +19,9 @@ class InspectionFolder(TrackingModel):
         COMPLETED = 'COMPLETED', 'Terminé / Clôturé'
         ARCHIVED = 'ARCHIVED', 'Archivé'
 
+    # Ordered phases displayed in the progress bar (ARCHIVED is out of the progression)
+    PROGRESS_PHASES = [Phase.CREATION, Phase.IN_PROGRESS, Phase.REVIEW, Phase.COMPLETED]
+
     reference = models.CharField(max_length=100, unique=True, verbose_name="Référence du dossier")
     current_phase = models.CharField(max_length=20, choices=Phase.choices, default=Phase.CREATION, verbose_name="Phase actuelle")
     notes = models.TextField(blank=True, verbose_name="Notes internes")
@@ -115,6 +118,35 @@ class InspectionFolder(TrackingModel):
         ).order_by('due_date').first()
         
         return next_visit.due_date if next_visit else None
+
+    @property
+    def phase_progress(self):
+        """
+        Return the progress of the folder through its phases for the progress bar, or None if the folder is archived.
+        """
+        if self.current_phase not in self.PROGRESS_PHASES:
+            return None
+
+        current_index = self.PROGRESS_PHASES.index(self.current_phase)
+        last_index = len(self.PROGRESS_PHASES) - 1
+        steps = []
+        for index, phase in enumerate(self.PROGRESS_PHASES):
+            if index < current_index:
+                state = "done"
+            elif index == current_index:
+                state = "current"
+            else:
+                state = "todo"
+            steps.append({
+                "label": phase.label,
+                "state": state,
+                "position": round(index / last_index * 100),
+            })
+
+        return {
+            "percent": round(current_index / last_index * 100),
+            "steps": steps,
+        }
 
 """
 

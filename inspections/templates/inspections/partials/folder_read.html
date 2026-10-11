@@ -1,0 +1,46 @@
+<div id="folder-info"
+    class="rounded-2xl border border-border-default bg-surface-primary p-6 backdrop-blur-xs transition-colors">
+
+    <h3 class="text-lg font-bold text-text-main mb-4">📁 Informations du Dossier</h3>
+
+    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+        <div>
+            <dt class="text-xs text-text-faded">Référence</dt>
+            <dd class="text-text-body font-mono">{{ folder.reference }}</dd>
+        </div>
+        <div>
+            <dt class="text-xs text-text-faded">Phase</dt>
+            <dd class="text-text-body">{{ folder.get_current_phase_display }}</dd>
+        </div>
+        <div>
+            <dt class="text-xs text-text-faded">Contact référent</dt>
+            <dd class="text-text-body">
+                {% if folder.contact %}
+                <a href="{% url 'crm:contact_detail' folder.contact.pk %}" class="text-brand-light hover:underline">
+                    {{ folder.contact.first_name }} {{ folder.contact.last_name }}
+                </a>
+                {% if folder.contact.position %}<span class="text-text-subtle"> — {{ folder.contact.position }}</span>{% endif %}
+                {% else %}
+                <span class="text-text-faded italic">Non renseigné</span>
+                {% endif %}
+            </dd>
+        </div>
+        <div>
+            <dt class="text-xs text-text-faded">Adresse du site d'inspection</dt>
+            <dd class="text-text-body whitespace-pre-line">
+                {% if folder.inspection_site_address %}{{ folder.inspection_site_address }}{% else %}<span class="text-text-faded italic">Non renseignée</span>{% endif %}
+            </dd>
+        </div>
+        <div class="sm:col-span-2">
+            <dt class="text-xs text-text-faded">Notes internes</dt>
+            <dd class="text-text-body whitespace-pre-line">
+                {% if folder.notes %}{{ folder.notes }}{% else %}<span class="text-text-faded italic">Aucune note.</span>{% endif %}
+            </dd>
+        </div>
+    </dl>
+</div>
+
+{% if refresh_tracking %}
+{% include "core/partials/tracking_info.html" with object=folder oob=True %}
+{% include "inspections/partials/folder_progress.html" with oob=True %}
+{% endif %}

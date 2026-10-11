@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 from django.core.paginator import Paginator
 from django.http import HttpResponse
-from .forms import InspectionFolderForm
+from .forms import InspectionFolderForm, InspectionFolderUpdateForm
 from .models import InspectionFolder
 from crm.models import Company, Contact
 from inspections.services.inspectionfolder import get_filtered_folders, get_inspection_folder_by_id, create_tracked_instance
@@ -130,6 +130,54 @@ def create_folder(request):
     )
 
 @login_required
+@require_http_methods(["GET", "POST"])
+def folder_inline_update(request, pk):
+    """
+    HTMX view to edit folder data from the overview tab.
+    - GET  : Render auto-complete form (folder_update.html).
+    - POST : Update validation.
+             If True -> Render read view with data (folder_read.html).
+             If False -> Render form with errors (folder_update.html).
+    """
+    folder = get_inspection_folder_by_id(pk, request.user)
+
+    if request.method == "POST":
+        form = InspectionFolderUpdateForm(request.POST, instance=folder)
+        if form.is_valid():
+            folder = form.save(commit=False)
+            folder.updated_by = request.user
+            folder.save()
+            return render(
+                request,
+                "inspections/partials/folder_read.html",
+                {"folder": folder, "refresh_tracking": True},
+            )
+    else:
+        form = InspectionFolderUpdateForm(instance=folder)
+
+    return render(
+        request,
+        "inspections/partials/folder_update.html",
+        {"folder": folder, "form": form},
+    )
+
+
+@login_required
+@require_GET
+def folder_inline_read(request, pk):
+    """
+    HTMX view to read only folder information from the overview tab.
+    Only fragment (folder_read.html).
+    """
+    folder = get_inspection_folder_by_id(pk, request.user)
+    return render(
+        request,
+        "inspections/partials/folder_read.html",
+        {"folder": folder},
+    )
+
+
+@login_required
 @require_POST
 def folder_archive(request, folder_id):
     folder = get_object_or_404(InspectionFolder, id=folder_id)
@@ -165,12 +213,15 @@ def folder_unarchive(request, folder_id):
 @login_required
 @require_GET
 def folder_tab_overview(request, pk):
-    """Show only the content of the overview tab."""
+    """Show only the content of the overview tab (with the edit form opened if ?edition=1)."""
     folder = get_inspection_folder_by_id(pk, request.user)
+    context = {"folder": folder}
+    if request.GET.get("edition"):
+        context["form"] = InspectionFolderUpdateForm(instance=folder)
     return render(
         request,
         "inspections/partials/tab_overview.html",
-        {"folder": folder},
+        context,
     )
 
 

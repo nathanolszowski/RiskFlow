@@ -60,7 +60,7 @@ def get_inspection_folder_by_id(pk, user):
     while ensuring that it was created by the logged-in user.
     """
     return get_object_or_404(
-        InspectionFolder.objects.select_related('company', 'created_by'),
+        InspectionFolder.objects.select_related('company', 'contact', 'created_by', 'updated_by'),
         pk=pk,
         created_by=user
     )
