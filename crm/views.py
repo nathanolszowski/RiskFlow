@@ -155,6 +155,7 @@ def company_inline_read(request, pk):
         {"company": company},
     )
 
+@login_required
 @require_POST
 def company_archive(request, pk):
     company = get_object_or_404(Company, pk=pk)
@@ -174,6 +175,7 @@ def company_archive(request, pk):
     return redirect("crm:company_detail", pk=company.pk)
 
 
+@login_required
 @require_POST
 def company_unarchive(request, pk):
     company = get_object_or_404(Company, pk=pk)
