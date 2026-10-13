@@ -180,9 +180,38 @@ def folder_inline_read(request, pk):
 
 
 @login_required
-@require_POST
+@require_http_methods(["GET", "POST"])
 def folder_archive(request, folder_id):
+    """
+    Archive a folder together with its visits and recommendations (not its company or contact).
+    - GET  : Render the confirmation modal listing the elements that will be archived.
+    - POST : Archive the folder.
+    """
     folder = get_inspection_folder_by_id(folder_id, request.user)
+
+    if request.method == "GET":
+        visits = folder.visits.filter(is_active=True).count()
+        recs = folder.recommandations.filter(is_active=True).count()
+        items = [
+            f"{visits} visite{'s' if visits > 1 else ''}",
+            f"{recs} recommandation{'s' if recs > 1 else ''}",
+        ]
+        return render(
+            request,
+            "core/partials/archive_confirm_modal.html",
+            {
+                "title": "Archiver ce dossier ?",
+                "object_label": folder.reference,
+                "post_url": reverse("inspections:folder_archive", args=[folder.id]),
+                "sections": [{
+                    "warning": True,
+                    "title": "Tous les éléments liés à ce dossier seront archivés :",
+                    "items": items,
+                    "note": "Le client et le contact référent ne sont pas archivés. Au désarchivage du dossier, ces éléments seront réactivés (sauf ceux archivés séparément auparavant).",
+                }],
+            },
+        )
+
     folder.archive(user=request.user)
 
     if request.headers.get("HX-Request"):
@@ -258,6 +287,33 @@ def visit_inline_read(request, pk):
     )
 
 
+
+@login_required
+@require_POST
+def visit_archive(request, pk):
+    visit = get_visit_by_id(pk, request.user)
+    visit.archive(user=request.user)
+
+    if request.headers.get("HX-Request"):
+        # Re-render the current tab only, so the user stays on it
+        return _render_visit_tab(request, visit.folder)
+
+    return redirect("inspections:folder_detail", pk=visit.folder_id)
+
+
+@login_required
+@require_POST
+def visit_unarchive(request, pk):
+    visit = get_visit_by_id(pk, request.user)
+    visit.unarchive(user=request.user)
+
+    if request.headers.get("HX-Request"):
+        # Re-render the current tab only, so the user stays on it
+        return _render_visit_tab(request, visit.folder)
+
+    return redirect("inspections:folder_detail", pk=visit.folder_id)
+
+
 # ==========================================
 # ==== RECOMMANDATION SECTION ==============
 # ==========================================
@@ -309,6 +365,33 @@ def recommandation_inline_read(request, pk):
         {"rec": rec},
     )
 
+
+@login_required
+@require_POST
+def recommandation_archive(request, pk):
+    rec = get_recommandation_by_id(pk, request.user)
+    rec.archive(user=request.user)
+
+    if request.headers.get("HX-Request"):
+        # Re-render the current tab only, so the user stays on it
+        return _render_recommandations_tab(request, rec.folder)
+
+    return redirect("inspections:folder_detail", pk=rec.folder_id)
+
+
+@login_required
+@require_POST
+def recommandation_unarchive(request, pk):
+    rec = get_recommandation_by_id(pk, request.user)
+    rec.unarchive(user=request.user)
+
+    if request.headers.get("HX-Request"):
+        # Re-render the current tab only, so the user stays on it
+        return _render_recommandations_tab(request, rec.folder)
+
+    return redirect("inspections:folder_detail", pk=rec.folder_id)
+
+
 # ==========================================
 # ==== FOLDER TABS SECTION =================
 # ==========================================
@@ -325,11 +408,8 @@ def folder_tab_overview(request, pk):
     )
 
 
-@login_required
-@require_GET
-def folder_tab_visit(request, pk):
-    """Open the content of the visit tab, including the latest visit and its sections."""
-    folder = get_inspection_folder_by_id(pk, request.user)
+def _render_visit_tab(request, folder):
+    """Render the visit tab content, including the latest visit and its sections."""
     latest_visit = folder.get_latest_visit
     context = {
         "folder": folder,
@@ -344,10 +424,27 @@ def folder_tab_visit(request, pk):
 
 @login_required
 @require_GET
-def folder_tab_recommandations(request, pk):
-    """Show only the content of the recommendations tab."""
+def folder_tab_visit(request, pk):
+    """Open the content of the visit tab."""
     folder = get_inspection_folder_by_id(pk, request.user)
+    return _render_visit_tab(request, folder)
+
+
+def _render_recommandations_tab(request, folder):
+    """Render the recommendations tab content."""
     return render(
         request,
         "inspections/partials/tab_recommandations.html",
-        {"recommandations": folder.recommandations.select_related("created_by", "updated_by")},)
+        {
+            "recommandations": folder.recommandations.select_related("created_by", "updated_by"),
+            "active_count": folder.recommandations.filter(is_active=True).count(),
+        },
+    )
+
+
+@login_required
+@require_GET
+def folder_tab_recommandations(request, pk):
+    """Show only the content of the recommendations tab."""
+    folder = get_inspection_folder_by_id(pk, request.user)
+    return _render_recommandations_tab(request, folder)

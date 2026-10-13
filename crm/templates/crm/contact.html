@@ -19,7 +19,7 @@
 
   <!-- Toolbar HTMX Filters & Search -->
   <div class="mb-8 bg-surface-primary border border-border-default rounded-2xl p-5 shadow-xs transition-colors">
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
 
       <!-- Research (HTMX keyup/changed with 300ms delay) -->
       <div class="sm:col-span-2 flex flex-col gap-1.5">
@@ -27,7 +27,7 @@
         <div class="relative">
           <input type="text" name="q" id="q" value="{{ request.GET.q|default:'' }}"
             placeholder="Rechercher par nom, email, poste..." hx-get="{% url 'crm:contact_list_paginated' page=1 %}"
-            hx-target="#contact-cards-container" hx-include="[name='company']"
+            hx-target="#contact-cards-container" hx-include="[name='company'], [name='status']"
             hx-trigger="keyup changed delay:300ms, search" hx-indicator="#search-spinner"
             class="w-full bg-surface-secondary border border-border-default text-text-main text-xs rounded-lg focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary block pl-9 pr-9 py-2 placeholder:text-text-muted transition-colors">
 
@@ -51,7 +51,7 @@
       <div class="flex flex-col gap-1.5">
         <label for="company" class="text-[11px] font-semibold text-text-muted uppercase tracking-wider">Société</label>
         <select name="company" id="company" hx-get="{% url 'crm:contact_list_paginated' page=1 %}"
-          hx-target="#contact-cards-container" hx-include="[name='q']"
+          hx-target="#contact-cards-container" hx-include="[name='q'], [name='status']"
           class="bg-surface-secondary border border-border-default text-text-main text-xs rounded-lg focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary block px-3 py-2 cursor-pointer transition-colors w-full">
           <option value="">Toutes les sociétés</option>
           {% for company in companies %}
@@ -59,6 +59,19 @@
             {{ company.name }}
           </option>
           {% endfor %}
+        </select>
+      </div>
+
+
+      <!-- Filter Status -->
+      <div class="flex flex-col gap-1.5">
+        <label for="status" class="text-[11px] font-semibold text-text-muted uppercase tracking-wider">Statut</label>
+        <select name="status" id="status" hx-get="{% url 'crm:contact_list_paginated' page=1 %}"
+          hx-target="#contact-cards-container" hx-include="[name='q'], [name='company']"
+          class="bg-surface-secondary border border-border-default text-text-main text-xs rounded-lg focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary block px-3 py-2 cursor-pointer transition-colors w-full">
+          <option value="active" {% if request.GET.status|default:"active" == "active" %}selected{% endif %}>Actifs uniquement</option>
+          <option value="archived" {% if request.GET.status == "archived" %}selected{% endif %}>Archivés uniquement</option>
+          <option value="all" {% if request.GET.status == "all" %}selected{% endif %}>Tous</option>
         </select>
       </div>
 

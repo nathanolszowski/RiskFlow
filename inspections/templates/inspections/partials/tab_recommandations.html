@@ -1,7 +1,7 @@
 <div class="space-y-4">
     <div class="flex justify-between items-center border-b border-border-default pb-3">
         <h3 class="text-lg font-bold text-text-main">🚨 Liste des Recommandations</h3>
-        <span class="text-xs text-text-muted font-mono">{{ recommandations|length }} Actives</span>
+        <span class="text-xs text-text-muted font-mono">{{ active_count }} Active{{ active_count|pluralize }} sur {{ recommandations|length }}</span>
     </div>
 
     <div class="space-y-3">

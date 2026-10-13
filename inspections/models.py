@@ -54,22 +54,23 @@ class InspectionFolder(TrackingModel):
     
     def cascade_archive(self, user=None):
         """
-        Properly archive the inspection folder and all its associated recommendations. This method sets the `is_active` field to False and records the current timestamp in the `archived_at` field for both the folder and its recommendations. If a user is provided, it also records who performed the archiving action.
+        Properly archive the inspection folder and all its associated visits and recommendations. This method sets the `is_active` field to False and records the current timestamp in the `archived_at` field for the folder and its children. If a user is provided, it also records who performed the archiving action.
         """
         update_data = {
             'is_active': False,
-            # Same date as the folder, so that cascade_unarchive can restore only these recommendations
+            # Same date as the folder, so that cascade_unarchive can restore only these visits and recommendations
             'archived_at': self.archived_at or timezone.now(),
         }
         if user:
             update_data['archived_by'] = user
             update_data['updated_by'] = user
 
+        self.visits.filter(is_active=True).update(**update_data)
         self.recommandations.filter(is_active=True).update(**update_data)
 
     def cascade_unarchive(self, archived_at=None, user=None):
         """
-        Restore the recommendations archived together with the inspection folder (same archive date). Recommendations archived
+        Restore the visits and recommendations archived together with the inspection folder (same archive date). Items archived
         on their own beforehand stay archived.
         """
         if not archived_at:
@@ -83,6 +84,7 @@ class InspectionFolder(TrackingModel):
         if user:
             update_data['updated_by'] = user
 
+        self.visits.filter(is_active=False, archived_at=archived_at).update(**update_data)
         self.recommandations.filter(is_active=False, archived_at=archived_at).update(**update_data)
 
     def generate_unique_reference(self):

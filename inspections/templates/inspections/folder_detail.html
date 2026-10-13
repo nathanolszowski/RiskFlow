@@ -47,9 +47,8 @@
       <span class="inline-flex items-center rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-400 border border-emerald-500/20 shrink-0">
         Actif
       </span>
-      <button hx-post="{% url 'inspections:folder_archive' folder.id %}"
-              hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-              hx-confirm="Êtes-vous sûr de vouloir archiver ce dossier ?"
+      <button hx-get="{% url 'inspections:folder_archive' folder.id %}"
+              hx-target="#modal-container" hx-swap="innerHTML"
               class="inline-flex items-center p-2 rounded-lg bg-surface-tertiary text-text-muted hover:text-red-400 hover:bg-red-500/10 border border-border-default transition-colors cursor-pointer"
               title="Archiver le dossier">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -166,9 +165,8 @@
         <span class="inline-flex items-center rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-400 border border-emerald-500/20 shrink-0">
           Actif
         </span>
-        <button hx-post="{% url 'inspections:folder_archive' folder.id %}"
-                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-                hx-confirm="Êtes-vous sûr de vouloir archiver ce dossier ?"
+        <button hx-get="{% url 'inspections:folder_archive' folder.id %}"
+                hx-target="#modal-container" hx-swap="innerHTML"
                 class="inline-flex items-center gap-1.5 rounded-lg bg-surface-tertiary px-3.5 py-2 text-xs font-semibold text-text-muted hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/20 border border-border-default transition-colors cursor-pointer whitespace-nowrap shrink-0">
           <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v1a2 2 0 01-2 2M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
@@ -184,4 +182,7 @@
 <div id="tab-content" class="min-h-[400px] mt-6">
   {% include 'inspections/partials/tab_overview.html' %}
 </div>
+
+<!-- Container for HTMX Modals -->
+<div id="modal-container"></div>
 {% endblock app_content %}

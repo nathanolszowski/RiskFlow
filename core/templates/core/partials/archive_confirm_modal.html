@@ -1,0 +1,75 @@
+<div id="archive-confirm-modal"
+     class="fixed inset-0 z-50 flex items-center justify-center p-4">
+
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-black/70 backdrop-blur-xs transition-opacity"
+         onclick="document.getElementById('archive-confirm-modal').remove()"></div>
+
+    <!-- Modal Content -->
+    <div class="relative flex max-h-[90vh] w-full max-w-lg flex-col rounded-xl border border-border-default bg-surface-primary shadow-2xl">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between border-b border-border-default px-6 py-4">
+            <h3 class="text-lg font-semibold text-text-main">{{ title }}</h3>
+            <button type="button"
+                    onclick="document.getElementById('archive-confirm-modal').remove()"
+                    class="text-text-subtle hover:text-text-main transition-colors cursor-pointer">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Body -->
+        <div class="space-y-4 overflow-y-auto p-6 text-sm text-text-body">
+            <p>Vous allez archiver <span class="font-semibold text-text-main">{{ object_label }}</span>.</p>
+
+            {% if blocking %}
+            <div class="rounded-lg border border-red-500/30 bg-red-500/10 p-4 space-y-2">
+                <p class="font-medium text-red-400">⛔ {{ blocking.title }}</p>
+                <ul class="list-disc pl-5 text-xs text-text-body space-y-0.5">
+                    {% for item in blocking.items %}
+                    <li>{{ item }}</li>
+                    {% endfor %}
+                </ul>
+                <p class="text-xs text-text-muted">{{ blocking.note }}</p>
+            </div>
+            {% endif %}
+
+            {% for section in sections %}
+            <div class="rounded-lg border p-4 space-y-2 {% if section.warning %}border-status-warning-border bg-status-warning-bg{% else %}border-border-default bg-surface-secondary{% endif %}">
+                <p class="font-medium {% if section.warning %}text-status-warning{% else %}text-text-main{% endif %}">
+                    {% if section.warning %}⚠ {% endif %}{{ section.title }}
+                </p>
+                {% if section.items %}
+                <ul class="list-disc pl-5 text-xs text-text-body space-y-0.5">
+                    {% for item in section.items %}
+                    <li>{{ item }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                {% if section.note %}
+                <p class="text-xs text-text-muted">{{ section.note }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="flex justify-end space-x-3 border-t border-border-default bg-surface-primary/50 px-6 py-4">
+            <button type="button"
+                    onclick="document.getElementById('archive-confirm-modal').remove()"
+                    class="rounded-lg border border-border-default bg-surface-tertiary px-4 py-2 text-xs font-medium text-text-body hover:bg-surface-secondary transition-colors cursor-pointer">
+                {% if blocking %}Fermer{% else %}Annuler{% endif %}
+            </button>
+            {% if not blocking %}
+            <button type="button"
+                    hx-post="{{ post_url }}"
+                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                    class="rounded-lg bg-brand-primary hover:bg-brand-hover px-4 py-2 text-xs font-semibold text-white transition-colors cursor-pointer shadow-xs">
+                Confirmer l'archivage
+            </button>
+            {% endif %}
+        </div>
+    </div>
+</div>

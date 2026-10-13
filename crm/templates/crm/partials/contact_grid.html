@@ -90,7 +90,7 @@
                     {% else %}
                     <span
                         class="inline-flex items-center rounded-full bg-surface-tertiary px-2 py-0.5 text-xs font-medium text-text-muted ring-1 ring-inset ring-border-default">
-                        Inactif
+                        Archivé
                     </span>
                     {% endif %}
                 </div>
@@ -127,7 +127,7 @@
         <div class="flex items-center space-x-1">
             {% if page_obj.has_previous %}
             <button hx-get="{% url 'crm:contact_list_paginated' %}?page={{ page_obj.previous_page_number }}"
-                hx-target="#contact-cards-container" hx-include="[name='q'], [name='company']"
+                hx-target="#contact-cards-container" hx-include="[name='q'], [name='company'], [name='status']"
                 class="rounded border border-border-default bg-surface-tertiary px-2.5 py-1 text-text-body hover:bg-surface-secondary transition-colors cursor-pointer">
                 Précédent
             </button>
@@ -137,7 +137,7 @@
 
             {% if page_obj.has_next %}
             <button hx-get="{% url 'crm:contact_list_paginated' %}?page={{ page_obj.next_page_number }}"
-                hx-target="#contact-cards-container" hx-include="[name='q'], [name='company']"
+                hx-target="#contact-cards-container" hx-include="[name='q'], [name='company'], [name='status']"
                 class="rounded border border-border-default bg-surface-tertiary px-2.5 py-1 text-text-body hover:bg-surface-secondary transition-colors cursor-pointer">
                 Suivant
             </button>

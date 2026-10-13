@@ -15,9 +15,13 @@ urlpatterns = [
     # Visits
     path("visite/<int:pk>/edition/", views.visit_inline_update, name="visit_inline_update"),
     path("visite/<int:pk>/lecture/", views.visit_inline_read, name="visit_inline_read"),
+    path("visite/<int:pk>/archive/", views.visit_archive, name="visit_archive"),
+    path("visite/<int:pk>/desarchive/", views.visit_unarchive, name="visit_unarchive"),
     # Recommandations
     path("recommandation/<int:pk>/edition/", views.recommandation_inline_update, name="recommandation_inline_update"),
     path("recommandation/<int:pk>/lecture/", views.recommandation_inline_read, name="recommandation_inline_read"),
+    path("recommandation/<int:pk>/archive/", views.recommandation_archive, name="recommandation_archive"),
+    path("recommandation/<int:pk>/desarchive/", views.recommandation_unarchive, name="recommandation_unarchive"),
     # Tabs
     path("dossier/<int:pk>/tabs/overview/", views.folder_tab_overview, name="folder_tab_overview"),
     path("dossier/<int:pk>/tabs/visit/", views.folder_tab_visit, name="folder_tab_visit"),

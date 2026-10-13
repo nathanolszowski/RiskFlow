@@ -2,6 +2,7 @@ import os
 import requests
 from django.conf import settings
 from django.db.models import Q, Count
+from django.shortcuts import get_object_or_404
 from crm.models import Company
 
 
@@ -94,6 +95,29 @@ class INSEEApiClient:
             "creation_date": etab.get("dateCreationEtablissement")
             or unit.get("dateCreationUniteLegale", ""),
         }
+
+def get_company_by_id(pk):
+    """Return a company with its tracking users, or raise a 404."""
+    return get_object_or_404(
+        Company.objects.select_related("created_by", "updated_by", "archived_by"), pk=pk
+    )
+
+
+def get_company_archive_impact(company):
+    """
+    Describe what archiving a company does:
+    - contacts: active contacts that will be archived with it,
+    - kept_contacts: active contacts left active because an active folder references them,
+    - folders: active folders of the company, which are not archived.
+    """
+    active_contacts = company.contacts.filter(is_active=True)
+    kept_contacts = active_contacts.filter(inspection_folders__is_active=True).distinct()
+    return {
+        "contacts": active_contacts.exclude(pk__in=kept_contacts),
+        "kept_contacts": kept_contacts,
+        "folders": company.inspection_folders.filter(is_active=True),
+    }
+
 
 def get_filtered_companies(request):
     """Extrait les paramètres GET et renvoie le QuerySet de sociétés filtré et trié."""

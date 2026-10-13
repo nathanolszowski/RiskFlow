@@ -1,7 +1,7 @@
 <!-- METADATA BLOCK: System Traceability (Creation, Modification & Authors) -->
 <div id="tracking-info" {% if oob %}hx-swap-oob="true"{% endif %}
   class="bg-surface-primary/50 border border-border-default rounded-xl p-4 text-xs text-text-subtle">
-  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+  <div class="grid grid-cols-1 gap-4 {% if not object.is_active and object.archived_at %}lg:grid-cols-3 sm:grid-cols-2{% else %}sm:grid-cols-2{% endif %}">
 
     <!-- Creation Information -->
     <div class="flex items-center gap-2">
@@ -34,6 +34,24 @@
         {% endif %}
       </div>
     </div>
+
+    <!-- Archive Information (only while archived) -->
+    {% if not object.is_active and object.archived_at %}
+    <div class="flex items-center gap-2">
+      <svg class="w-4 h-4 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M5 8h14M5 8a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v1a2 2 0 01-2 2M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+      </svg>
+      <div>
+        <span class="text-text-faded">Archivé le :</span>
+        <span class="font-medium text-text-body">{{ object.archived_at|date:"d/m/Y à H:i" }}</span>
+        {% if object.archived_by %}
+        <span class="text-text-faded">par</span>
+        <span class="font-medium text-brand-primary">{{ object.archived_by.get_full_name|default:object.archived_by.username }}</span>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
 
   </div>
 </div>

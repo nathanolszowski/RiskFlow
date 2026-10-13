@@ -26,6 +26,25 @@ class Company(TrackingModel):
     def __str__(self):
         return f"{self.name}"
 
+    def cascade_archive(self, user=None):
+        """Archive the active contacts with the company's archive date.
+
+        Contacts still referenced by an active folder are skipped, like a direct contact archive would be refused.
+        Unarchiving a company intentionally leaves its contacts archived.
+        """
+        update_data = {
+            "is_active": False,
+            # Same date as the company, to tell these contacts apart from ones archived separately
+            "archived_at": self.archived_at or timezone.now(),
+        }
+        if user:
+            update_data["archived_by"] = user
+            update_data["updated_by"] = user
+
+        self.contacts.filter(is_active=True).exclude(
+            inspection_folders__is_active=True
+        ).update(**update_data)
+
     def save(self, *args, **kwargs):
         if not self.reference:
             current_year = timezone.now().year

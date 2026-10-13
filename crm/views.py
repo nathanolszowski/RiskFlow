@@ -7,9 +7,19 @@ from django.views.decorators.http import (
     require_POST,
 )
 from django.core.paginator import Paginator
+from django.urls import reverse
 
-from crm.services.company import INSEEApiClient, get_filtered_companies
-from crm.services.contact import get_filtered_contacts
+from crm.services.company import (
+    INSEEApiClient,
+    get_company_archive_impact,
+    get_company_by_id,
+    get_filtered_companies,
+)
+from crm.services.contact import (
+    get_contact_archive_impact,
+    get_contact_by_id,
+    get_filtered_contacts,
+)
 
 from .forms import CompanyForm, ContactForm
 from .models import Company, Contact
@@ -155,22 +165,63 @@ def company_inline_read(request, pk):
         {"company": company},
     )
 
+def _refresh_response():
+    """HTMX response asking the browser to reload the current page."""
+    response = HttpResponse()
+    response["HX-Refresh"] = "true"
+    return response
+
+
 @login_required
-@require_POST
+@require_http_methods(["GET", "POST"])
 def company_archive(request, pk):
-    company = get_object_or_404(Company, pk=pk)
-    company.is_active = False
-    
-    # Si vous suivez la traçabilité de l'utilisateur
-    if hasattr(company, 'updated_by'):
-        company.updated_by = request.user
-        
-    company.save()
+    """
+    Archive a company and its active contacts.
+    - GET  : Render the confirmation modal, listing the impacted contacts and active folders.
+    - POST : Archive the company.
+    """
+    company = get_company_by_id(pk)
+
+    if request.method == "GET":
+        impact = get_company_archive_impact(company)
+        sections = []
+        if impact["contacts"]:
+            n = len(impact["contacts"])
+            sections.append({
+                "title": f"{n} contact{'s' if n > 1 else ''} actif{'s' if n > 1 else ''} {'seront' if n > 1 else 'sera'} également archivé{'s' if n > 1 else ''} :",
+                "items": [str(c.first_name + " " + c.last_name) for c in impact["contacts"]],
+                "note": "Au désarchivage du client, ces contacts resteront archivés.",
+            })
+        if impact["kept_contacts"]:
+            n = len(impact["kept_contacts"])
+            sections.append({
+                "warning": True,
+                "title": f"{n} contact{'s' if n > 1 else ''} {'restent actifs' if n > 1 else 'reste actif'} car référencé{'s' if n > 1 else ''} par un dossier actif :",
+                "items": [f"{c.first_name} {c.last_name}" for c in impact["kept_contacts"]],
+            })
+        if impact["folders"]:
+            n = len(impact["folders"])
+            sections.append({
+                "warning": True,
+                "title": f"{n} dossier{'s' if n > 1 else ''} d'inspection actif{'s' if n > 1 else ''} {'sont liés' if n > 1 else 'est lié'} à ce client :",
+                "items": [f.reference for f in impact["folders"]],
+                "note": "Ces dossiers restent actifs et ne sont pas archivés avec le client.",
+            })
+        return render(
+            request,
+            "core/partials/archive_confirm_modal.html",
+            {
+                "title": "Archiver ce client ?",
+                "object_label": company.name,
+                "post_url": reverse("crm:company_archive", args=[company.pk]),
+                "sections": sections,
+            },
+        )
+
+    company.archive(user=request.user)
 
     if request.headers.get("HX-Request"):
-        response = HttpResponse(status=200)
-        response["HX-Redirect"] = request.META.get("HTTP_REFERER", f"/crm/companies/{company.pk}/")
-        return response
+        return _refresh_response()
 
     return redirect("crm:company_detail", pk=company.pk)
 
@@ -178,21 +229,15 @@ def company_archive(request, pk):
 @login_required
 @require_POST
 def company_unarchive(request, pk):
-    company = get_object_or_404(Company, pk=pk)
-    company.is_active = True
-    
-    # Si vous suivez la traçabilité de l'utilisateur
-    if hasattr(company, 'updated_by'):
-        company.updated_by = request.user
-        
-    company.save()
+    """Unarchive a company. Its contacts stay archived."""
+    company = get_company_by_id(pk)
+    company.unarchive(user=request.user)
 
     if request.headers.get("HX-Request"):
-        response = HttpResponse(status=200)
-        response["HX-Redirect"] = request.META.get("HTTP_REFERER", f"/crm/companies/{company.pk}/")
-        return response
+        return _refresh_response()
 
     return redirect("crm:company_detail", pk=company.pk)
+
 
 @login_required
 @require_GET
@@ -371,3 +416,55 @@ def contact_inline_read(request, pk):
         "crm/partials/contact_read.html",
         {"contact": contact},
     )
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def contact_archive(request, pk):
+    """
+    Archive a contact, unless an active folder still references it as referent contact.
+    - GET  : Render the confirmation modal (blocking message when active folders reference the contact).
+    - POST : Archive the contact, or refuse with a 409 if active folders reference it.
+    """
+    contact = get_contact_by_id(pk)
+    folders = get_contact_archive_impact(contact)
+
+    if request.method == "GET":
+        context = {
+            "title": "Archiver ce contact ?",
+            "object_label": f"{contact.first_name} {contact.last_name}",
+            "post_url": reverse("crm:contact_archive", args=[contact.pk]),
+        }
+        if folders:
+            n = len(folders)
+            context["blocking"] = {
+                "title": f"Archivage impossible : {n} dossier{'s' if n > 1 else ''} actif{'s' if n > 1 else ''} {'référencent' if n > 1 else 'référence'} ce contact.",
+                "items": [f.reference for f in folders],
+                "note": "Changez d'abord le contact référent sur ces dossiers, puis archivez le contact.",
+            }
+        return render(request, "core/partials/archive_confirm_modal.html", context)
+
+    if folders.exists():
+        return HttpResponse(
+            "Ce contact est référencé par un ou plusieurs dossiers actifs.", status=409
+        )
+
+    contact.archive(user=request.user)
+
+    if request.headers.get("HX-Request"):
+        return _refresh_response()
+
+    return redirect("crm:contact_detail", pk=contact.pk)
+
+
+@login_required
+@require_POST
+def contact_unarchive(request, pk):
+    """Unarchive a contact."""
+    contact = get_contact_by_id(pk)
+    contact.unarchive(user=request.user)
+
+    if request.headers.get("HX-Request"):
+        return _refresh_response()
+
+    return redirect("crm:contact_detail", pk=contact.pk)

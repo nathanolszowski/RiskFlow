@@ -21,4 +21,6 @@ urlpatterns = [
     path('contacts/nouveau-contact/', views.create_contact, name='create_contact'),
     path('contact/<int:pk>/edition/', views.contact_inline_update, name='contact_inline_update'),
     path('contact/<int:pk>/lecture/', views.contact_inline_read, name='contact_inline_read'),
+    path('contact/<int:pk>/archive/', views.contact_archive, name='contact_archive'),
+    path('contact/<int:pk>/desarchive/', views.contact_unarchive, name='contact_unarchive'),
 ]
