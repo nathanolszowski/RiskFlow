@@ -63,6 +63,16 @@ def hard_delete_instance(instance):
     """
     instance.delete()
 
+
+def delete_archived_instance(instance):
+    """
+    Delete permanently a tracked instance, only if it has been archived first.
+    Raises ValueError for an active instance.
+    """
+    if instance.is_active:
+        raise ValueError("Only an archived object can be deleted permanently.")
+    hard_delete_instance(instance)
+
 def theme_processor(request):
     return {
         'current_theme': request.session.get('theme', 'dark')

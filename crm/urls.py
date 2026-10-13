@@ -13,6 +13,7 @@ urlpatterns = [
     path('clients/nouvelle-societe/', views.create_company, name='create_company'),
     path("client/<int:pk>/archive/", views.company_archive, name="company_archive"),
     path("client/<int:pk>/desarchive/", views.company_unarchive, name="company_unarchive"),
+    path("client/<int:pk>/supprimer/", views.company_delete, name="company_delete"),
     path("clients/recherche-siret/", views.search_siret_api, name="search_siret_api",),
     # Contacts
     path("contacts/", views.contact_list, name="contact_list"),
@@ -23,4 +24,5 @@ urlpatterns = [
     path('contact/<int:pk>/lecture/', views.contact_inline_read, name='contact_inline_read'),
     path('contact/<int:pk>/archive/', views.contact_archive, name='contact_archive'),
     path('contact/<int:pk>/desarchive/', views.contact_unarchive, name='contact_unarchive'),
+    path('contact/<int:pk>/supprimer/', views.contact_delete, name='contact_delete'),
 ]

@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 from django.core.paginator import Paginator
+from core.services import delete_archived_instance
 from django.http import HttpResponse
 from .forms import InspectionFolderForm, InspectionFolderUpdateForm, VisitInstanceUpdateForm, RecommandationUpdateForm
 from .models import InspectionFolder
@@ -206,7 +207,7 @@ def folder_archive(request, folder_id):
                 "sections": [{
                     "warning": True,
                     "title": "Tous les éléments liés à ce dossier seront archivés :",
-                    "items": items,
+                    "entries": items,
                     "note": "Le client et le contact référent ne sont pas archivés. Au désarchivage du dossier, ces éléments seront réactivés (sauf ceux archivés séparément auparavant).",
                 }],
             },
@@ -234,6 +235,71 @@ def folder_unarchive(request, folder_id):
         return response
 
     return redirect("inspections:folder_detail", pk=folder.id)
+
+def _delete_modal(request, obj, *, title, label, post_url, sections, post_target=None):
+    """Render the permanent-deletion modal; it only offers confirmation once the object is archived."""
+    blocking = None
+    if obj.is_active:
+        blocking = {
+            "title": "Suppression impossible : cet élément n'est pas archivé.",
+            "note": "Archivez-le d'abord, puis supprimez-le.",
+        }
+    return render(
+        request,
+        "core/partials/archive_confirm_modal.html",
+        {
+            "title": title,
+            "object_label": label,
+            "action_verb": "supprimer définitivement",
+            "confirm_label": "Supprimer définitivement",
+            "danger": True,
+            "post_url": post_url,
+            "post_target": post_target,
+            "blocking": blocking,
+            "sections": sections,
+        },
+    )
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def folder_delete(request, folder_id):
+    """
+    Permanently delete an archived folder with its visits and recommendations.
+    - GET  : Render the confirmation modal.
+    - POST : Delete the folder (409 if it is still active).
+    """
+    folder = get_inspection_folder_by_id(folder_id, request.user)
+
+    if request.method == "GET":
+        visits = folder.visits.count()
+        recs = folder.recommandations.count()
+        return _delete_modal(
+            request, folder,
+            title="Supprimer définitivement ce dossier ?",
+            label=folder.reference,
+            post_url=reverse("inspections:folder_delete", args=[folder.id]),
+            sections=[{
+                "warning": True,
+                "title": "Seront supprimés avec ce dossier :",
+                "entries": [
+                    f"{visits} visite{'s' if visits > 1 else ''}",
+                    f"{recs} recommandation{'s' if recs > 1 else ''}",
+                ],
+                "note": "Le client et le contact référent sont conservés. Cette action est irréversible.",
+            }],
+        )
+
+    if folder.is_active:
+        return HttpResponse("Le dossier doit être archivé avant d'être supprimé.", status=409)
+
+    delete_archived_instance(folder)
+
+    if request.headers.get("HX-Request"):
+        response = HttpResponse()
+        response["HX-Redirect"] = reverse("inspections:folder_list")
+        return response
+    return redirect("inspections:folder_list")
 
 # ==========================================
 # ==== VISIT SECTION =======================
@@ -314,6 +380,38 @@ def visit_unarchive(request, pk):
     return redirect("inspections:folder_detail", pk=visit.folder_id)
 
 
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def visit_delete(request, pk):
+    """
+    Permanently delete an archived visit.
+    - GET  : Render the confirmation modal.
+    - POST : Delete the visit and re-render the visit tab (409 if it is still active).
+    """
+    visit = get_visit_by_id(pk, request.user)
+
+    if request.method == "GET":
+        return _delete_modal(
+            request, visit,
+            title="Supprimer définitivement cette visite ?",
+            label=visit.template.name,
+            post_url=reverse("inspections:visit_delete", args=[visit.pk]),
+            post_target="#tab-content",
+            sections=[{"warning": True, "title": "Cette action est irréversible."}],
+        )
+
+    if visit.is_active:
+        return HttpResponse("La visite doit être archivée avant d'être supprimée.", status=409)
+
+    folder = visit.folder
+    delete_archived_instance(visit)
+
+    if request.headers.get("HX-Request"):
+        return _render_visit_tab(request, folder)
+    return redirect("inspections:folder_detail", pk=folder.pk)
+
+
 # ==========================================
 # ==== RECOMMANDATION SECTION ==============
 # ==========================================
@@ -390,6 +488,38 @@ def recommandation_unarchive(request, pk):
         return _render_recommandations_tab(request, rec.folder)
 
     return redirect("inspections:folder_detail", pk=rec.folder_id)
+
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def recommandation_delete(request, pk):
+    """
+    Permanently delete an archived recommendation.
+    - GET  : Render the confirmation modal.
+    - POST : Delete the recommendation and re-render the tab (409 if it is still active).
+    """
+    rec = get_recommandation_by_id(pk, request.user)
+
+    if request.method == "GET":
+        return _delete_modal(
+            request, rec,
+            title="Supprimer définitivement cette recommandation ?",
+            label=f"REC-{rec.pk}",
+            post_url=reverse("inspections:recommandation_delete", args=[rec.pk]),
+            post_target="#tab-content",
+            sections=[{"warning": True, "title": "Cette action est irréversible."}],
+        )
+
+    if rec.is_active:
+        return HttpResponse("La recommandation doit être archivée avant d'être supprimée.", status=409)
+
+    folder = rec.folder
+    delete_archived_instance(rec)
+
+    if request.headers.get("HX-Request"):
+        return _render_recommandations_tab(request, folder)
+    return redirect("inspections:folder_detail", pk=folder.pk)
 
 
 # ==========================================

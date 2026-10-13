@@ -9,6 +9,7 @@ from django.views.decorators.http import (
 from django.core.paginator import Paginator
 from django.urls import reverse
 
+from core.services import delete_archived_instance
 from crm.services.company import (
     INSEEApiClient,
     get_company_archive_impact,
@@ -189,7 +190,7 @@ def company_archive(request, pk):
             n = len(impact["contacts"])
             sections.append({
                 "title": f"{n} contact{'s' if n > 1 else ''} actif{'s' if n > 1 else ''} {'seront' if n > 1 else 'sera'} également archivé{'s' if n > 1 else ''} :",
-                "items": [str(c.first_name + " " + c.last_name) for c in impact["contacts"]],
+                "entries": [str(c.first_name + " " + c.last_name) for c in impact["contacts"]],
                 "note": "Au désarchivage du client, ces contacts resteront archivés.",
             })
         if impact["kept_contacts"]:
@@ -197,14 +198,14 @@ def company_archive(request, pk):
             sections.append({
                 "warning": True,
                 "title": f"{n} contact{'s' if n > 1 else ''} {'restent actifs' if n > 1 else 'reste actif'} car référencé{'s' if n > 1 else ''} par un dossier actif :",
-                "items": [f"{c.first_name} {c.last_name}" for c in impact["kept_contacts"]],
+                "entries": [f"{c.first_name} {c.last_name}" for c in impact["kept_contacts"]],
             })
         if impact["folders"]:
             n = len(impact["folders"])
             sections.append({
                 "warning": True,
                 "title": f"{n} dossier{'s' if n > 1 else ''} d'inspection actif{'s' if n > 1 else ''} {'sont liés' if n > 1 else 'est lié'} à ce client :",
-                "items": [f.reference for f in impact["folders"]],
+                "entries": [f.reference for f in impact["folders"]],
                 "note": "Ces dossiers restent actifs et ne sont pas archivés avec le client.",
             })
         return render(
@@ -439,7 +440,7 @@ def contact_archive(request, pk):
             n = len(folders)
             context["blocking"] = {
                 "title": f"Archivage impossible : {n} dossier{'s' if n > 1 else ''} actif{'s' if n > 1 else ''} {'référencent' if n > 1 else 'référence'} ce contact.",
-                "items": [f.reference for f in folders],
+                "entries": [f.reference for f in folders],
                 "note": "Changez d'abord le contact référent sur ces dossiers, puis archivez le contact.",
             }
         return render(request, "core/partials/archive_confirm_modal.html", context)
@@ -468,3 +469,124 @@ def contact_unarchive(request, pk):
         return _refresh_response()
 
     return redirect("crm:contact_detail", pk=contact.pk)
+
+
+def _plural(n, singular, plural=None):
+    """Return '<n> <word>' with the word pluralized for n > 1."""
+    return f"{n} {singular if n < 2 else plural or singular + 's'}"
+
+
+def _redirect_response(url):
+    """HTMX response asking the browser to navigate to the given URL."""
+    response = HttpResponse()
+    response["HX-Redirect"] = url
+    return response
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def company_delete(request, pk):
+    """
+    Permanently delete an archived company and its contacts.
+    Refused while the company is active or still has inspection folders.
+    - GET  : Render the confirmation modal (blocking message when deletion is refused).
+    - POST : Delete the company.
+    """
+    company = get_company_by_id(pk)
+    folders = company.inspection_folders.all()
+    contacts = company.contacts.all()
+
+    blocking = None
+    if company.is_active:
+        blocking = {
+            "title": "Suppression impossible : ce client n'est pas archivé.",
+            "note": "Archivez d'abord le client, puis supprimez-le.",
+        }
+    elif folders.exists():
+        blocking = {
+            "title": f"Suppression impossible : {_plural(len(folders), 'dossier')} d'inspection {'sont rattachés' if len(folders) > 1 else 'est rattaché'} à ce client.",
+            "entries": [f.reference for f in folders],
+            "note": "Supprimez d'abord ces dossiers (ils doivent être archivés), puis supprimez le client.",
+        }
+
+    if request.method == "GET":
+        context = {
+            "title": "Supprimer définitivement ce client ?",
+            "object_label": company.name,
+            "action_verb": "supprimer définitivement",
+            "confirm_label": "Supprimer définitivement",
+            "danger": True,
+            "post_url": reverse("crm:company_delete", args=[company.pk]),
+            "blocking": blocking,
+            "sections": [],
+        }
+        if contacts:
+            context["sections"].append({
+                "warning": True,
+                "title": f"{_plural(len(contacts), 'contact')} {'seront supprimés' if len(contacts) > 1 else 'sera supprimé'} avec ce client :",
+                "entries": [f"{c.first_name} {c.last_name}" for c in contacts],
+                "note": "Cette action est irréversible.",
+            })
+        else:
+            context["sections"].append({"warning": True, "title": "Cette action est irréversible."})
+        return render(request, "core/partials/archive_confirm_modal.html", context)
+
+    if blocking:
+        return HttpResponse(blocking["title"], status=409)
+
+    delete_archived_instance(company)
+
+    if request.headers.get("HX-Request"):
+        return _redirect_response(reverse("crm:company_list"))
+    return redirect("crm:company_list")
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def contact_delete(request, pk):
+    """
+    Permanently delete an archived contact.
+    Refused while the contact is active or still referenced by an inspection folder.
+    - GET  : Render the confirmation modal (blocking message when deletion is refused).
+    - POST : Delete the contact.
+    """
+    contact = get_contact_by_id(pk)
+    folders = contact.inspection_folders.all()
+
+    blocking = None
+    if contact.is_active:
+        blocking = {
+            "title": "Suppression impossible : ce contact n'est pas archivé.",
+            "note": "Archivez d'abord le contact, puis supprimez-le.",
+        }
+    elif folders.exists():
+        blocking = {
+            "title": f"Suppression impossible : {_plural(len(folders), 'dossier')} {'référencent' if len(folders) > 1 else 'référence'} ce contact.",
+            "entries": [f.reference for f in folders],
+            "note": "Changez d'abord le contact référent sur ces dossiers, puis supprimez le contact.",
+        }
+
+    if request.method == "GET":
+        return render(
+            request,
+            "core/partials/archive_confirm_modal.html",
+            {
+                "title": "Supprimer définitivement ce contact ?",
+                "object_label": f"{contact.first_name} {contact.last_name}",
+                "action_verb": "supprimer définitivement",
+                "confirm_label": "Supprimer définitivement",
+                "danger": True,
+                "post_url": reverse("crm:contact_delete", args=[contact.pk]),
+                "blocking": blocking,
+                "sections": [{"warning": True, "title": "Cette action est irréversible."}],
+            },
+        )
+
+    if blocking:
+        return HttpResponse(blocking["title"], status=409)
+
+    delete_archived_instance(contact)
+
+    if request.headers.get("HX-Request"):
+        return _redirect_response(reverse("crm:contact_list"))
+    return redirect("crm:contact_list")
