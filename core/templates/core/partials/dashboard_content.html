@@ -1,0 +1,148 @@
+<div class="space-y-5">
+
+  <!-- Period filter -->
+  <form method="get" action="{% url 'core:dashboard' %}"
+    hx-get="{% url 'core:dashboard' %}" hx-target="#dashboard-content" hx-swap="innerHTML" hx-push-url="true"
+    hx-trigger="change"
+    class="flex flex-wrap items-end justify-end gap-3" aria-label="Période">
+    <div class="flex flex-col gap-1">
+      <label for="dashboard-month" class="text-xs font-medium uppercase tracking-wider text-text-faded">Mois</label>
+      <select id="dashboard-month" name="month" class="form-input h-12 min-w-36 text-base">
+        {% for number, name in months %}
+        <option value="{{ number }}" {% if number == month %}selected{% endif %}>{{ name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="flex flex-col gap-1">
+      <label for="dashboard-year" class="text-xs font-medium uppercase tracking-wider text-text-faded">Année</label>
+      <select id="dashboard-year" name="year" class="form-input h-12 min-w-28 text-base">
+        {% for y in years %}
+        <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </form>
+
+  <!-- Row 1: last folder + ongoing KPI -->
+  <div class="flex flex-wrap gap-5">
+
+    {% if last_folder %}
+    <a href="{% url 'inspections:folder_detail' last_folder.pk %}"
+      class="flex min-w-0 flex-[2_1_30rem] flex-col gap-5 rounded-2xl border border-brand-border bg-brand-bg p-7 transition hover:border-brand-primary">
+      <div class="flex items-center justify-between gap-3">
+        <span class="text-xs font-semibold uppercase tracking-widest text-brand-light">Dernier dossier modifié</span>
+        <span class="text-sm text-text-subtle">{{ last_folder.updated_at|timesince }} · {{ last_folder.updated_at|date:"d/m/Y H:i" }}</span>
+      </div>
+      <div class="space-y-1.5">
+        <div class="text-3xl font-bold tracking-tight text-text-main">{{ last_folder.company.name }}</div>
+        {% if last_folder.inspection_site_address %}
+        <div class="text-base text-text-muted">{{ last_folder.inspection_site_address|truncatechars:80 }}</div>
+        {% endif %}
+        <div class="text-sm text-text-subtle">{{ last_folder.reference }}</div>
+      </div>
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <span class="inline-flex h-8 items-center gap-2 rounded-full border border-status-warning-border bg-status-warning-bg px-3.5 text-sm font-semibold text-status-warning">
+          <span class="size-2 rounded-full bg-current"></span>{{ last_folder.get_current_phase_display }}
+        </span>
+        <span class="inline-flex h-12 items-center gap-2 rounded-lg bg-brand-primary px-5 text-base font-semibold text-white">
+          Reprendre le dossier
+          <svg class="size-[18px]" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 6l6 6-6 6" /></svg>
+        </span>
+      </div>
+    </a>
+    {% else %}
+    <div class="flex min-w-0 flex-[2_1_30rem] flex-col justify-center gap-2 rounded-2xl border border-dashed border-border-default bg-surface-primary p-7">
+      <span class="text-xs font-semibold uppercase tracking-widest text-text-faded">Dernier dossier modifié</span>
+      <p class="text-base text-text-muted">Aucun dossier pour l'instant. Créez votre premier dossier d'inspection.</p>
+      <a href="{% url 'inspections:folder_list' %}" class="text-sm font-semibold text-brand-light hover:underline">Aller aux dossiers</a>
+    </div>
+    {% endif %}
+
+    <div class="flex min-w-0 flex-[1_1_17rem] flex-col justify-between gap-4 rounded-2xl border border-border-default bg-surface-primary p-7 transition-colors">
+      <span class="text-xs font-semibold uppercase tracking-widest text-text-faded">Dossiers en cours</span>
+      <div class="text-7xl font-bold leading-none text-text-main tabular-nums">{{ ongoing_total }}</div>
+      <div class="flex flex-wrap items-center gap-2 text-sm text-text-subtle">
+        {% if ongoing_delta > 0 %}
+        <span class="rounded-full bg-status-success-bg px-2 py-0.5 font-semibold text-status-success">+{{ ongoing_delta }}</span>
+        {% elif ongoing_delta < 0 %}
+        <span class="rounded-full bg-status-danger-bg px-2 py-0.5 font-semibold text-status-danger">{{ ongoing_delta }}</span>
+        {% else %}
+        <span class="rounded-full bg-surface-secondary px-2 py-0.5 font-semibold text-text-muted">=</span>
+        {% endif %}
+        vs {{ previous_period_label }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 2: status chart + upcoming visits -->
+  <div class="flex flex-wrap gap-5">
+
+    <section class="flex min-w-0 flex-[1_1_26rem] flex-col gap-5 rounded-2xl border border-border-default bg-surface-primary p-7 transition-colors">
+      <div>
+        <h2 class="text-lg font-semibold text-text-main">Statuts des dossiers en cours</h2>
+        <p class="text-sm text-text-subtle">{{ period_label }}</p>
+      </div>
+      {% if ongoing_total %}
+      <div class="flex flex-wrap items-center justify-center gap-7">
+        <svg class="shrink-0" width="200" height="200" viewBox="0 0 200 200" role="img"
+          aria-label="Répartition des dossiers en cours{% for p in phases %}{% if forloop.first %} :{% else %},{% endif %} {{ p.label }} {{ p.count }}{% endfor %}">
+          <g transform="rotate(-90 100 100)">
+            {% for p in phases %}{% if p.count %}
+            <circle cx="100" cy="100" r="76" fill="none" stroke="{{ p.color }}" stroke-width="28"
+              stroke-dasharray="{{ p.dash }}" stroke-dashoffset="{{ p.offset }}" />
+            {% endif %}{% endfor %}
+          </g>
+          <text x="100" y="104" text-anchor="middle" font-size="40" font-weight="700" fill="var(--text-main)">{{ ongoing_total }}</text>
+          <text x="100" y="126" text-anchor="middle" font-size="12" fill="var(--text-subtle)">dossiers</text>
+        </svg>
+        <ul class="flex min-w-48 flex-1 flex-col gap-3">
+          {% for p in phases %}
+          <li class="flex items-center gap-3 text-[15px]">
+            <span class="size-3 shrink-0 rounded-[3px]" style="background: {{ p.color }}"></span>
+            <span class="flex-1 text-text-body">{{ p.label }}</span>
+            <span class="font-semibold text-text-main tabular-nums">{{ p.count }}</span>
+            <span class="w-11 text-right text-text-subtle tabular-nums">{{ p.pct }} %</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% else %}
+      <p class="py-10 text-center text-sm text-text-muted">Aucun dossier en cours modifié sur cette période.</p>
+      {% endif %}
+    </section>
+
+    <section class="flex min-w-0 flex-[1_1_26rem] flex-col gap-4 rounded-2xl border border-border-default bg-surface-primary p-7 transition-colors">
+      <h2 class="text-lg font-semibold text-text-main">Prochaines visites</h2>
+      {% if upcoming_visits %}
+      <ul class="flex flex-col gap-2.5">
+        {% for item in upcoming_visits %}
+        <li class="{% if forloop.first %}-ml-5{% endif %}">
+          <a href="{% url 'inspections:folder_detail' item.visit.folder_id %}"
+            class="flex min-h-16 items-center gap-4 rounded-xl border border-border-default bg-surface-secondary px-4 py-2.5 transition hover:border-border-hover">
+            <div class="flex w-13 shrink-0 flex-col items-center leading-tight">
+              <span class="text-[11px] uppercase tracking-widest text-text-subtle">{{ item.weekday }}</span>
+              <span class="text-2xl font-bold text-text-main tabular-nums">{{ item.visit.due_date.day }}</span>
+              <span class="text-[11px] text-text-subtle">{{ item.month_short }}</span>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="truncate text-base font-semibold text-text-main">{{ item.visit.folder.company.name }}</div>
+              <div class="truncate text-sm text-text-subtle">{{ item.visit.folder.inspection_site_address|default:item.visit.folder.reference }}</div>
+            </div>
+            {% if item.visit.current_status == 'DELAY' %}
+            <span class="shrink-0 rounded-full bg-status-danger-bg px-2.5 py-1 text-xs font-semibold text-status-danger">{{ item.visit.get_current_status_display }}</span>
+            {% elif item.visit.current_status == 'VALIDATED' %}
+            <span class="shrink-0 rounded-full bg-status-success-bg px-2.5 py-1 text-xs font-semibold text-status-success">{{ item.visit.get_current_status_display }}</span>
+            {% else %}
+            <span class="shrink-0 rounded-full bg-brand-bg px-2.5 py-1 text-xs font-semibold text-brand-light">{{ item.visit.get_current_status_display }}</span>
+            {% endif %}
+          </a>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="py-10 text-center text-sm text-text-muted">Aucune visite à venir.</p>
+      {% endif %}
+    </section>
+  </div>
+
+</div>

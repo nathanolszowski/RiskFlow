@@ -1,14 +1,23 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
+from django.utils import timezone
+from django.views.decorators.http import require_GET
 from django.shortcuts import redirect
 from django.db.models import Q
 from inspections.models import InspectionFolder
 from crm.models import Company, Contact
+from core.services.dashboard import get_dashboard_context, parse_period
+
 
 @login_required
-def dashboard_test(request):
-    return render(request, 'core/dashboard.html')
+@require_GET
+def dashboard(request):
+    month, year = parse_period(request.GET.get('month'), request.GET.get('year'))
+    context = get_dashboard_context(request.user, month, year)
+    context['today'] = timezone.localdate()
+    template = 'core/partials/dashboard_content.html' if request.htmx else 'core/dashboard.html'
+    return render(request, template, context)
 
 def toggle_theme(request):
     current_theme = request.session.get('theme', 'dark')

@@ -55,6 +55,11 @@
   --color-success-bg: rgba(16, 185, 129, 0.1);
   --color-success-border: rgba(16, 185, 129, 0.2);
 
+  /* Warning (Amber) */
+  --color-warning: #fbbf24;            /* amber-400 */
+  --color-warning-bg: rgba(251, 191, 36, 0.12);
+  --color-warning-border: rgba(251, 191, 36, 0.3);
+
   /* Danger / Errors (Rose & Red) */
   --color-danger: #f87171;             /* red-400 */
   --color-danger-hover: #ef4444;       /* red-500 */
@@ -111,6 +116,11 @@
   --color-success-bg: rgba(5, 150, 105, 0.1);
   --color-success-border: rgba(5, 150, 105, 0.2);
 
+  /* Warning (Amber) */
+  --color-warning: #92400e;            /* amber-800 */
+  --color-warning-bg: rgba(217, 119, 6, 0.12);
+  --color-warning-border: rgba(217, 119, 6, 0.3);
+
   /* Danger / Errors (Rose & Red) */
   --color-danger: #dc2626;             /* red-600 */
   --color-danger-hover: #b91c1c;       /* red-700 */
@@ -160,6 +170,10 @@
   --color-status-success: var(--color-success);
   --color-status-success-bg: var(--color-success-bg);
   --color-status-success-border: var(--color-success-border);
+
+  --color-status-warning: var(--color-warning);
+  --color-status-warning-bg: var(--color-warning-bg);
+  --color-status-warning-border: var(--color-warning-border);
 
   --color-status-danger: var(--color-danger);
   --color-status-danger-hover: var(--color-danger-hover);
