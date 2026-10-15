@@ -332,5 +332,14 @@ class Recommandation(TrackingModel):
         verbose_name_plural = "Recommandations"
         ordering = ['due_date', '-priority']
 
+    @property
+    def days_until_due(self):
+        """
+        Days left before the due date (negative when overdue), or None without due date.
+        """
+        if not self.due_date:
+            return None
+        return (self.due_date - timezone.localdate()).days
+
     def __str__(self):
         return f"Rec #{self.folder.reference} - {self.description[:50]} : ({self.current_status})"

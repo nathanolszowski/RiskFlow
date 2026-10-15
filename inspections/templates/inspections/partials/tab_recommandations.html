@@ -4,6 +4,12 @@
         <span class="text-xs text-text-muted font-mono">{{ active_count }} Active{{ active_count|pluralize }} sur {{ recommandations|length }}</span>
     </div>
 
+    {% if recommandations %}
+    <div class="hidden grid-cols-[7rem_minmax(0,1fr)_9.5rem_6.75rem_1.25rem] gap-4 px-5 text-[11px] font-bold uppercase tracking-widest text-text-subtle md:grid" aria-hidden="true">
+        <span>Priorité</span><span>Recommandation</span><span>Échéance</span><span>Statut</span><span></span>
+    </div>
+    {% endif %}
+
     <div class="space-y-3">
         {% for rec in recommandations %}
         {% include "inspections/partials/recommandation_read.html" %}
