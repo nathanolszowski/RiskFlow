@@ -16,60 +16,67 @@
 :root,
 [data-theme="dark"] {
   /* Backgrounds */
-  --bg-app: #030712;                   /* gray-950 */
-  --bg-surface-primary: rgba(17, 24, 39, 0.4); /* gray-900/40 */
-  --bg-surface-secondary: rgba(3, 7, 18, 0.5); /* gray-950/50 */
-  --bg-surface-tertiary: rgba(17, 24, 39, 0.6);/* gray-900/60 */
-  --bg-surface-hover: rgba(3, 7, 18, 0.8);     /* gray-950/80 */
-  --bg-surface-muted: rgba(17, 24, 39, 0.2);   /* gray-900/20 */
-  --bg-surface-modal: #111827;                 /* gray-900 solid pour modale */
+  --bg-app: #0B1612;
+  --bg-surface-primary: #13241C;
+  --bg-surface-secondary: #0D1A14;
+  --bg-surface-tertiary: #1B3329;
+  --bg-surface-hover: #1B3329;
+  --bg-surface-muted: #0F1C16;
+  --bg-surface-modal: #13241C;
 
   /* Inputs & Controls */
-  --bg-input: rgba(3, 7, 18, 0.6);             /* gray-950/60 */
-  --border-input: #1f2937;                     /* gray-800 */
-  --placeholder-input: #4b5563;                /* gray-600 */
+  --bg-input: #0D1A14;
+  --border-input: #2A4C3D;
+  --placeholder-input: #5F7A6D;
 
   /* Bordures */
-  --border-color-default: #1f2937;     /* gray-800 */
-  --border-color-subtle: rgba(31, 41, 55, 0.6);
-  --border-color-hover: rgba(55, 65, 81, 0.8);  /* gray-700/80 */
-  --border-color-divider: rgba(31, 41, 55, 0.8);
+  --border-color-default: #2A4C3D;
+  --border-color-subtle: rgba(35, 66, 54, 0.6);
+  --border-color-hover: #3F6B58;
+  --border-color-divider: #2A4C3D;
 
   /* Typography & Texts */
-  --text-main: #ffffff;
-  --text-body: #e5e7eb;                /* gray-200 */
-  --text-muted: #d1d5db;               /* gray-300 */
-  --text-subtle: #9ca3af;              /* gray-400 */
-  --text-faded: #6b7280;               /* gray-500 */
-  --text-ghost: #4b5563;               /* gray-600 */
+  --text-main: #F4F2DF;
+  --text-body: #E3E2CD;
+  --text-muted: #C2CBB7;
+  --text-subtle: #93A99C;
+  --text-faded: #7B9285;
+  --text-ghost: #56705F;
 
-  /* Primary (Indigo Accents) */
-  --color-primary: #4f46e5;            /* indigo-600 */
-  --color-primary-hover: #6366f1;      /* indigo-500 */
-  --color-primary-light: #818cf8;      /* indigo-400 */
-  --color-primary-bg: rgba(99, 102, 241, 0.1);
-  --color-primary-border: rgba(99, 102, 241, 0.2);
+  /* Primary (Mint) */
+  --color-primary: #3AB795;
+  --color-primary-hover: #52C9A9;
+  --color-primary-light: #86E3C6;
+  --color-primary-bg: rgba(58, 183, 149, 0.14);
+  --color-primary-border: rgba(58, 183, 149, 0.4);
 
-  /* Success (Emerald) */
-  --color-success: #34d399;            /* emerald-400 */
-  --color-success-bg: rgba(16, 185, 129, 0.1);
-  --color-success-border: rgba(16, 185, 129, 0.2);
+  --color-on-primary: #06231B;
+
+  /* Chart series (dashboard donut) */
+  --chart-1: #FFCF56;
+  --chart-2: #3AB795;
+  --chart-3: #86BAA1;
+
+  /* Success */
+  --color-success: #A0E8AF;
+  --color-success-bg: rgba(160, 232, 175, 0.12);
+  --color-success-border: rgba(160, 232, 175, 0.3);
 
   /* Warning (Amber) */
-  --color-warning: #fbbf24;            /* amber-400 */
-  --color-warning-bg: rgba(251, 191, 36, 0.12);
-  --color-warning-border: rgba(251, 191, 36, 0.3);
+  --color-warning: #FFCF56;
+  --color-warning-bg: rgba(255, 207, 86, 0.12);
+  --color-warning-border: rgba(255, 207, 86, 0.32);
 
   /* Danger / Errors (Rose & Red) */
-  --color-danger: #f87171;             /* red-400 */
-  --color-danger-hover: #ef4444;       /* red-500 */
-  --color-danger-bg: rgba(239, 68, 68, 0.1);
-  --color-danger-border: rgba(239, 68, 68, 0.2);
+  --color-danger: #F4938A;
+  --color-danger-hover: #F0766A;
+  --color-danger-bg: rgba(244, 147, 138, 0.12);
+  --color-danger-border: rgba(244, 147, 138, 0.3);
 
   /* Neutral Controls */
-  --color-neutral-bg: #1f2937;
-  --color-neutral-text: #9ca3af;
-  --color-neutral-border: #374151;
+  --color-neutral-bg: #1B3329;
+  --color-neutral-text: #93A99C;
+  --color-neutral-border: #2A4C3D;
 }
 
 /* ------------------------------------------------------------------------------
@@ -77,60 +84,67 @@
  * ------------------------------------------------------------------------------ */
 [data-theme="light"] {
   /* Backgrounds */
-  --bg-app: #f8fafc;                   /* slate-50 */
-  --bg-surface-primary: #ffffff;       /* pure white */
-  --bg-surface-secondary: #f1f5f9;     /* slate-100 */
-  --bg-surface-tertiary: #e2e8f0;      /* slate-200 */
-  --bg-surface-hover: #e2e8f0;         /* slate-200 */
-  --bg-surface-muted: #f8fafc;         /* slate-50 */
-  --bg-surface-modal: #ffffff;
+  --bg-app: #EDEAD0;
+  --bg-surface-primary: #F4F1DB;
+  --bg-surface-secondary: #EBE8CC;
+  --bg-surface-tertiary: #E1DDBB;
+  --bg-surface-hover: #E1DDBB;
+  --bg-surface-muted: #F0EDD6;
+  --bg-surface-modal: #F8F6E6;
 
   /* Inputs & Controls */
-  --bg-input: #ffffff;
-  --border-input: #cbd5e1;                /* slate-300 */
-  --placeholder-input: #94a3b8;           /* slate-400 */
+  --bg-input: #F8F6E6;
+  --border-input: #BFC59E;
+  --placeholder-input: #8AA096;
 
   /* Bordures */
-  --border-color-default: #e2e8f0;     /* slate-200 */
-  --border-color-subtle: #f1f5f9;     /* slate-100 */
-  --border-color-hover: #cbd5e1;      /* slate-300 */
-  --border-color-divider: #e2e8f0;
+  --border-color-default: #CFD2AF;
+  --border-color-subtle: #E1E1C6;
+  --border-color-hover: #86BAA1;
+  --border-color-divider: #CFD2AF;
 
   /* Typography & Texts */
-  --text-main: #0f172a;                /* slate-900 */
-  --text-body: #334155;                /* slate-700 */
-  --text-muted: #475569;               /* slate-600 */
-  --text-subtle: #64748b;              /* slate-500 */
-  --text-faded: #94a3b8;               /* slate-400 */
-  --text-ghost: #cbd5e1;               /* slate-300 */
+  --text-main: #12332B;
+  --text-body: #234A40;
+  --text-muted: #3A5E53;
+  --text-subtle: #4F7166;
+  --text-faded: #6E8C80;
+  --text-ghost: #A9BDB1;
 
-  /* Primary (Indigo Accents) */
-  --color-primary: #4f46e5;            /* indigo-600 */
-  --color-primary-hover: #4338ca;      /* indigo-700 */
-  --color-primary-light: #4f46e5;      /* indigo-600 */
-  --color-primary-bg: rgba(79, 70, 229, 0.08);
-  --color-primary-border: rgba(79, 70, 229, 0.2);
+  /* Primary (Mint) */
+  --color-primary: #3AB795;
+  --color-primary-hover: #2FA384;
+  --color-primary-light: #1F7F66;
+  --color-primary-bg: rgba(58, 183, 149, 0.14);
+  --color-primary-border: rgba(58, 183, 149, 0.45);
 
-  /* Success (Emerald) */
-  --color-success: #059669;            /* emerald-600 */
-  --color-success-bg: rgba(5, 150, 105, 0.1);
-  --color-success-border: rgba(5, 150, 105, 0.2);
+  --color-on-primary: #0B2E25;
+
+  /* Chart series (dashboard donut) */
+  --chart-1: #EDB400;
+  --chart-2: #3AB795;
+  --chart-3: #1E6B57;
+
+  /* Success */
+  --color-success: #1B7A3E;
+  --color-success-bg: rgba(160, 232, 175, 0.45);
+  --color-success-border: rgba(75, 180, 100, 0.5);
 
   /* Warning (Amber) */
-  --color-warning: #92400e;            /* amber-800 */
-  --color-warning-bg: rgba(217, 119, 6, 0.12);
-  --color-warning-border: rgba(217, 119, 6, 0.3);
+  --color-warning: #7A5200;
+  --color-warning-bg: rgba(255, 207, 86, 0.32);
+  --color-warning-border: rgba(224, 170, 30, 0.65);
 
   /* Danger / Errors (Rose & Red) */
-  --color-danger: #dc2626;             /* red-600 */
-  --color-danger-hover: #b91c1c;       /* red-700 */
-  --color-danger-bg: rgba(220, 38, 38, 0.08);
-  --color-danger-border: rgba(220, 38, 38, 0.2);
+  --color-danger: #B42318;
+  --color-danger-hover: #911B12;
+  --color-danger-bg: rgba(180, 35, 24, 0.08);
+  --color-danger-border: rgba(180, 35, 24, 0.3);
 
   /* Neutral Controls */
-  --color-neutral-bg: #e2e8f0;
-  --color-neutral-text: #475569;
-  --color-neutral-border: #cbd5e1;
+  --color-neutral-bg: #E1DDBB;
+  --color-neutral-text: #3A5E53;
+  --color-neutral-border: #CFD2AF;
 }
 
 /* ------------------------------------------------------------------------------
@@ -164,6 +178,7 @@
   --color-brand-primary: var(--color-primary);
   --color-brand-hover: var(--color-primary-hover);
   --color-brand-light: var(--color-primary-light);
+  --color-brand-on: var(--color-on-primary);
   --color-brand-bg: var(--color-primary-bg);
   --color-brand-border: var(--color-primary-border);
 

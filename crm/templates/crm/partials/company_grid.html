@@ -13,12 +13,12 @@
                     <div class="flex items-center gap-3 min-w-0 flex-1">
                         <!-- Avatar -->
                         <div
-                            class="w-10 h-10 rounded-xl bg-brand-primary/10 border border-brand-primary/20 text-brand-primary font-bold flex items-center justify-center shrink-0 uppercase text-sm">
+                            class="w-10 h-10 rounded-xl bg-brand-primary/10 border border-brand-primary/20 text-brand-light font-bold flex items-center justify-center shrink-0 uppercase text-sm">
                             {{ company.name|slice:":2" }}
                         </div>
 
                         <div class="min-w-0 flex-1">
-                            <h3 class="text-base font-semibold text-text-main truncate group-hover:text-brand-primary transition-colors"
+                            <h3 class="text-base font-semibold text-text-main truncate group-hover:text-brand-light transition-colors"
                                 title="{{ company.name }}">
                                 {{ company.name }}
                             </h3>
@@ -31,17 +31,7 @@
 
                     <!-- Status badge -->
                     <div class="shrink-0">
-                        {% if company.is_active %}
-                        <span
-                            class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                            Actif
-                        </span>
-                        {% else %}
-                        <span
-                            class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-surface-tertiary text-text-subtle border border-border-default">
-                            Archivé
-                        </span>
-                        {% endif %}
+                        {% include "core/partials/status_badge.html" with is_active=company.is_active %}
                     </div>
                 </div>
 
@@ -74,7 +64,7 @@
 
                 <!-- Company detail view button -->
                 <a href="{% url 'crm:company_detail' company.id %}"
-                    class="inline-block rounded-md bg-brand-primary px-3.5 py-1.5 text-center text-xs font-semibold text-white hover:bg-brand-hover cursor-pointer transition-colors shrink-0">
+                    class="inline-block rounded-md bg-brand-primary px-3.5 py-1.5 text-center text-xs font-semibold text-brand-on hover:bg-brand-hover cursor-pointer transition-colors shrink-0">
                     Ouvrir
                 </a>
             </div>

@@ -9,11 +9,11 @@
                 <div class="flex items-start justify-between gap-3">
                     <div class="flex items-center gap-3 min-w-0">
                         <div
-                            class="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-brand-primary/10 text-sm font-bold text-brand-primary border border-brand-primary/20">
+                            class="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-brand-primary/10 text-sm font-bold text-brand-light border border-brand-primary/20">
                             {{ contact.first_name|slice:":1"|upper }}{{ contact.last_name|slice:":1"|upper }}
                         </div>
                         <div class="min-w-0">
-                            <h3 class="font-semibold text-text-main group-hover:text-brand-primary transition-colors truncate">
+                            <h3 class="font-semibold text-text-main group-hover:text-brand-light transition-colors truncate">
                                 {{ contact.first_name }} {{ contact.last_name }}
                             </h3>
                             <p class="text-xs text-text-subtle truncate">
@@ -22,12 +22,14 @@
                         </div>
                     </div>
 
-                    {% if contact.is_primary %}
-                    <span
-                        class="inline-flex items-center rounded bg-brand-primary/10 px-2 py-0.5 text-[10px] font-medium text-brand-primary border border-brand-primary/20 shrink-0">
-                        Principal
-                    </span>
-                    {% endif %}
+                    <div class="flex shrink-0 flex-col items-end gap-1.5">
+                        {% include "core/partials/status_badge.html" with is_active=contact.is_active %}
+                        {% if contact.is_primary %}
+                        <span class="inline-flex items-center rounded bg-brand-primary/10 px-2 py-0.5 text-[10px] font-medium text-brand-light border border-brand-primary/20">
+                            Principal
+                        </span>
+                        {% endif %}
+                    </div>
                 </div>
 
                 <hr class="border-border-default">
@@ -57,7 +59,7 @@
                                 d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 002-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
                         <a href="mailto:{{ contact.email }}"
-                            class="truncate text-text-body hover:text-brand-primary hover:underline transition-colors">
+                            class="truncate text-text-body hover:text-brand-light hover:underline transition-colors">
                             {{ contact.email }}
                         </a>
                     </div>
@@ -71,7 +73,7 @@
                                 d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                         </svg>
                         <a href="tel:{{ contact.phone }}"
-                            class="text-text-subtle hover:text-brand-primary hover:underline transition-colors">
+                            class="text-text-subtle hover:text-brand-light hover:underline transition-colors">
                             {{ contact.phone }}
                         </a>
                     </div>
@@ -79,24 +81,10 @@
                 </div>
             </div>
 
-            <!-- Footer : Status & Action Button -->
-            <div class="mt-5 pt-3 border-t border-border-default/60 flex items-center justify-between text-xs">
-                <div>
-                    {% if contact.is_active %}
-                    <span
-                        class="inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-400 ring-1 ring-inset ring-emerald-500/20">
-                        Actif
-                    </span>
-                    {% else %}
-                    <span
-                        class="inline-flex items-center rounded-full bg-surface-tertiary px-2 py-0.5 text-xs font-medium text-text-muted ring-1 ring-inset ring-border-default">
-                        Archivé
-                    </span>
-                    {% endif %}
-                </div>
-
+            <!-- Footer : Action Button -->
+            <div class="mt-5 pt-3 border-t border-border-default/60 flex items-center justify-end text-xs">
                 <a href="{% url 'crm:contact_detail' contact.id %}"
-                    class="inline-block rounded-md bg-brand-primary px-3.5 py-1.5 text-center text-xs font-semibold text-white hover:bg-brand-hover cursor-pointer transition-colors shrink-0">
+                    class="inline-block rounded-md bg-brand-primary px-3.5 py-1.5 text-center text-xs font-semibold text-brand-on hover:bg-brand-hover cursor-pointer transition-colors shrink-0">
                     Ouvrir
                 </a>
             </div>

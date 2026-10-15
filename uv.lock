@@ -628,7 +628,7 @@ wheels = [
 ]
 
 [[package]]
-name = "riskguard"
+name = "riskflow"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

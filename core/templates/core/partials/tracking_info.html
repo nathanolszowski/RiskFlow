@@ -14,7 +14,7 @@
         <span class="font-medium text-text-body">{{ object.created_at|date:"d/m/Y à H:i" }}</span>
         {% if object.created_by %}
         <span class="text-text-faded">par</span>
-        <span class="font-medium text-brand-primary">{{ object.created_by.get_full_name|default:object.created_by.username }}</span>
+        <span class="font-medium text-brand-light">{{ object.created_by.get_full_name|default:object.created_by.username }}</span>
         {% endif %}
       </div>
     </div>
@@ -30,7 +30,7 @@
         <span class="font-medium text-text-body">{{ object.updated_at|date:"d/m/Y à H:i" }}</span>
         {% if object.updated_by %}
         <span class="text-text-faded">par</span>
-        <span class="font-medium text-brand-primary">{{ object.updated_by.get_full_name|default:object.updated_by.username }}</span>
+        <span class="font-medium text-brand-light">{{ object.updated_by.get_full_name|default:object.updated_by.username }}</span>
         {% endif %}
       </div>
     </div>
@@ -47,7 +47,7 @@
         <span class="font-medium text-text-body">{{ object.archived_at|date:"d/m/Y à H:i" }}</span>
         {% if object.archived_by %}
         <span class="text-text-faded">par</span>
-        <span class="font-medium text-brand-primary">{{ object.archived_by.get_full_name|default:object.archived_by.username }}</span>
+        <span class="font-medium text-brand-light">{{ object.archived_by.get_full_name|default:object.archived_by.username }}</span>
         {% endif %}
       </div>
     </div>

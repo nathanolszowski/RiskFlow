@@ -18,9 +18,9 @@ MONTHS_SHORT_FR = [
 
 # Phases counted as "en cours" (COMPLETED and ARCHIVED are out), with their chart color token.
 ONGOING_PHASES = [
-    (InspectionFolder.Phase.CREATION, "var(--color-primary-light)"),
-    (InspectionFolder.Phase.IN_PROGRESS, "var(--color-warning)"),
-    (InspectionFolder.Phase.REVIEW, "var(--color-success)"),
+    (InspectionFolder.Phase.CREATION, "var(--chart-1)"),
+    (InspectionFolder.Phase.IN_PROGRESS, "var(--chart-2)"),
+    (InspectionFolder.Phase.REVIEW, "var(--chart-3)"),
 ]
 
 UPCOMING_VISITS_LIMIT = 4

@@ -10,7 +10,7 @@
           <a href="{% url 'inspections:folder_detail' folder.pk %}"
             class="flex items-center justify-between rounded-md p-2 hover:bg-surface-hover transition group">
             <div>
-              <div class="text-xs font-medium text-text-main group-hover:text-brand-primary">
+              <div class="text-xs font-medium text-text-main group-hover:text-brand-light">
                 {{ folder.reference }}
               </div>
               <div class="text-[11px] text-text-subtle">{{ folder.company.name }}</div>
@@ -28,7 +28,7 @@
         {% for company in companies %}
           <a href="{% url 'crm:company_detail' company.pk %}"
             class="flex items-center justify-between rounded-md p-2 hover:bg-surface-hover transition group">
-            <div class="text-xs font-medium text-text-main group-hover:text-brand-primary">
+            <div class="text-xs font-medium text-text-main group-hover:text-brand-light">
               {{ company.name }}
             </div>
             <span class="text-[10px] text-text-muted">{{ company.city }}</span>
@@ -45,7 +45,7 @@
           <a href="{% url 'crm:contact_detail' contact.pk %}"
             class="flex items-center justify-between rounded-md p-2 hover:bg-surface-hover transition group">
             <div>
-              <div class="text-xs font-medium text-text-main group-hover:text-brand-primary">
+              <div class="text-xs font-medium text-text-main group-hover:text-brand-light">
                 {{ contact.first_name }} {{ contact.last_name }}
               </div>
               <div class="text-[11px] text-text-subtle">{{ contact.company.name }}</div>

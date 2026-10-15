@@ -45,7 +45,7 @@
             {% endif %}
             <button type="button" hx-get="{% url 'crm:contact_inline_update' contact.pk %}" hx-target="#contact-main-column"
                 hx-swap="outerHTML"
-                class="inline-flex items-center gap-1.5 rounded-lg bg-brand-primary hover:bg-brand-hover px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition-colors cursor-pointer whitespace-nowrap">
+                class="inline-flex items-center gap-1.5 rounded-lg bg-brand-primary hover:bg-brand-hover px-3.5 py-2 text-xs font-semibold text-brand-on shadow-xs transition-colors cursor-pointer whitespace-nowrap">
                 <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -58,11 +58,7 @@
             <h1 class="text-3xl font-bold text-text-main">
                 {{ contact.first_name }} {{ contact.last_name }}
             </h1>
-            {% if contact.is_active %}
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">Actif</span>
-            {% else %}
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0">Archivé</span>
-            {% endif %}
+            {% include "core/partials/status_badge.html" with is_active=contact.is_active %}
         </div>
         {% if contact.position %}
         <p class="text-text-subtle text-lg mt-1">{{ contact.position }}</p>

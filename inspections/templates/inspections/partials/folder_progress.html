@@ -27,7 +27,7 @@
       {% for step in progress.steps %}
       <span class="absolute whitespace-nowrap
         {% if forloop.first %}left-0 -ml-2{% elif forloop.last %}right-0 -mr-2 text-right{% else %}-translate-x-1/2 text-center{% endif %}
-        {% if step.state == 'current' %}font-semibold text-text-main{% elif step.state == 'done' %}text-brand-primary{% else %}text-text-faded{% endif %}"
+        {% if step.state == 'current' %}font-semibold text-text-main{% elif step.state == 'done' %}text-brand-light{% else %}text-text-faded{% endif %}"
         {% if not forloop.first and not forloop.last %}style="left: {{ step.position }}%"{% endif %}>
         {{ step.label }}
       </span>

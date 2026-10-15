@@ -1,0 +1,11 @@
+{# Active/archived label. Context: is_active (bool). #}
+{% if is_active %}
+<span class="inline-flex shrink-0 items-center rounded-md bg-status-success-bg border border-status-success-border px-2.5 py-1 text-xs font-semibold text-status-success">
+    <span class="h-1.5 w-1.5 rounded-full bg-status-success mr-1.5 animate-pulse"></span>
+    Actif
+</span>
+{% else %}
+<span class="inline-flex shrink-0 items-center rounded-md bg-status-warning-bg border border-status-warning-border px-2.5 py-1 text-xs font-semibold text-status-warning">
+    Archivé
+</span>
+{% endif %}

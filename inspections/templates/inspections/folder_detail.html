@@ -31,9 +31,7 @@
   <!-- Mobile Status Badge & Action -->
   <div id="folder-status-header-mobile" class="flex items-center gap-2 shrink-0">
     {% if not folder.is_active %}
-      <span class="inline-flex items-center rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-400 border border-amber-500/20 shrink-0">
-        Archivé
-      </span>
+      {% include "core/partials/status_badge.html" with is_active=False %}
       <button hx-post="{% url 'inspections:folder_unarchive' folder.id %}"
               hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
               hx-confirm="Voulez-vous vraiment désarchiver ce dossier ?"
@@ -48,9 +46,7 @@
           <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg> 
         </button>
     {% else %}
-      <span class="inline-flex items-center rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-400 border border-emerald-500/20 shrink-0">
-        Actif
-      </span>
+      {% include "core/partials/status_badge.html" with is_active=True %}
       <button hx-get="{% url 'inspections:folder_archive' folder.id %}"
               hx-target="#modal-container" hx-swap="innerHTML"
               class="inline-flex items-center p-2 rounded-lg bg-surface-tertiary text-text-muted hover:text-red-400 hover:bg-red-500/10 border border-border-default transition-colors cursor-pointer"
@@ -153,9 +149,7 @@
     <!-- Desktop Status Badge & Action -->
     <div id="folder-status-header" class="flex items-center gap-2.5 pb-3">
       {% if not folder.is_active %}
-        <span class="inline-flex items-center rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-400 border border-amber-500/20 shrink-0">
-          Archivé
-        </span>
+        {% include "core/partials/status_badge.html" with is_active=False %}
         <button hx-post="{% url 'inspections:folder_unarchive' folder.id %}"
                 hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
                 hx-confirm="Voulez-vous vraiment désarchiver ce dossier ?"
@@ -170,9 +164,7 @@
           <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg> Supprimer
         </button>
       {% else %}
-        <span class="inline-flex items-center rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-400 border border-emerald-500/20 shrink-0">
-          Actif
-        </span>
+        {% include "core/partials/status_badge.html" with is_active=True %}
         <button hx-get="{% url 'inspections:folder_archive' folder.id %}"
                 hx-target="#modal-container" hx-swap="innerHTML"
                 class="inline-flex items-center gap-1.5 rounded-lg bg-surface-tertiary px-3.5 py-2 text-xs font-semibold text-text-muted hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/20 border border-border-default transition-colors cursor-pointer whitespace-nowrap shrink-0">
