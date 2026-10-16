@@ -13,6 +13,7 @@ class CustomUser(AbstractUser):
         phone_number: Optional phone number.
     """
 
+    # Add any additional fields you want for ALL USERS
     phone_number = models.CharField(max_length=15, blank=True, null=True)
 
     def __str__(self) -> str:
