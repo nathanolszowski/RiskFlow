@@ -1,37 +1,39 @@
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
-from django.urls import reverse
-from django.utils import timezone
-from django.views.decorators.http import require_GET, require_POST, require_http_methods
-from django.core.paginator import Paginator
 from core.services import delete_archived_instance
+from crm.models import Company, Contact
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator
 from django.forms import ModelChoiceField
 from django.http import HttpResponse
-from django.core.exceptions import ValidationError
+from django.shortcuts import redirect, render
+from django.urls import reverse
+from django.utils import timezone
+from django.views.decorators.http import require_GET, require_http_methods, require_POST
+
+from inspections.services.inspectionfolder import (
+    create_tracked_instance,
+    get_company_folders,
+    get_filtered_folders,
+    get_inspection_folder_by_id,
+)
+from inspections.services.recommandation import get_recommandation_by_id
+from inspections.services.visit import (
+    VisitLockedError,
+    create_visit,
+    get_next_visit,
+    get_visit_by_id,
+    get_visits_for_folder,
+    set_visit_done,
+)
+
 from .forms import (
     InspectionFolderForm,
     InspectionFolderUpdateForm,
-    VisitInstanceUpdateForm,
-    VisitCreateForm,
     RecommandationUpdateForm,
+    VisitCreateForm,
+    VisitInstanceUpdateForm,
 )
 from .models import InspectionFolder
-from crm.models import Company, Contact
-from inspections.services.inspectionfolder import (
-    get_filtered_folders,
-    get_company_folders,
-    get_inspection_folder_by_id,
-    create_tracked_instance,
-)
-from inspections.services.visit import (
-    get_visit_by_id,
-    get_visits_for_folder,
-    get_next_visit,
-    create_visit,
-    set_visit_done,
-    VisitLockedError,
-)
-from inspections.services.recommandation import get_recommandation_by_id
 
 # ==========================================
 # ==== INSPECTION FOLDER SECTION ===========

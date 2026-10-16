@@ -18,11 +18,11 @@ def update_tracked_instance(instance, user, **fields_to_update):
     """
     for field_name, value in fields_to_update.items():
         setattr(instance, field_name, value)
-    
+
     instance.updated_by = user
-    
+
     # Force the update of the updated_by and updated_at fields
-    update_fields = list(fields_to_update.keys()) + ['updated_by', 'updated_at']
+    update_fields = list(fields_to_update.keys()) + ["updated_by", "updated_at"]
     instance.save(update_fields=update_fields)
     return instance
 
@@ -73,7 +73,6 @@ def delete_archived_instance(instance):
         raise ValueError("Only an archived object can be deleted permanently.")
     hard_delete_instance(instance)
 
+
 def theme_processor(request):
-    return {
-        'current_theme': request.session.get('theme', 'dark')
-    }
+    return {"current_theme": request.session.get("theme", "dark")}

@@ -1,4 +1,5 @@
 from django.urls import path
+
 from . import views, views_templates, views_visit_form
 
 app_name = "inspections"

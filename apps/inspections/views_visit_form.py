@@ -1,3 +1,4 @@
+from core.decorators import htmx_login_required
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.http import Http404, HttpResponse
@@ -5,7 +6,6 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST
 
-from core.decorators import htmx_login_required
 from inspections.services.visit import (
     VisitLockedError,
     build_form_context,

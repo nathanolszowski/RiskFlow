@@ -1,7 +1,8 @@
 from django.contrib import admin
 from django.db import models
 from django_json_widget.widgets import JSONEditorWidget
-from .models import VisitTemplate, InspectionFolder, VisitInstance, Recommandation
+
+from .models import InspectionFolder, Recommandation, VisitInstance, VisitTemplate
 
 
 @admin.register(InspectionFolder)

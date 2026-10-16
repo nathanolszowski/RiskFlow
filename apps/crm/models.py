@@ -1,7 +1,8 @@
 from typing import TYPE_CHECKING
+
+from core.models import TrackingModel
 from django.db import models
 from django.utils import timezone
-from core.models import TrackingModel
 
 if TYPE_CHECKING:
     from django.db.models.fields.related_descriptors import RelatedManager

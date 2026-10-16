@@ -1,5 +1,6 @@
 from django import forms
-from .models import InspectionFolder, VisitInstance, VisitTemplate, Recommandation
+
+from .models import InspectionFolder, Recommandation, VisitInstance, VisitTemplate
 from .services.template import get_usable_templates
 
 

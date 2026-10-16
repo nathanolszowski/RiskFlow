@@ -2,7 +2,6 @@ import math
 
 from django.db.models import Count, Q
 from django.utils import timezone
-
 from inspections.models import InspectionFolder, VisitInstance
 from inspections.services.inspectionfolder import get_inspection_folders_by_user
 

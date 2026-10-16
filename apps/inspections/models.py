@@ -1,17 +1,19 @@
-from django.db import models
-from core.models import TrackingModel
-from django.core.exceptions import ValidationError
 import copy
-from .validators import (
-    get_default_template_structure,
-    validate_template_schema,
-    validate_answers,
-    AnswersValidationError,
-    compute_progress,
-)
-from django.utils import timezone
 import uuid
 from typing import TYPE_CHECKING
+
+from core.models import TrackingModel
+from django.core.exceptions import ValidationError
+from django.db import models
+from django.utils import timezone
+
+from .validators import (
+    AnswersValidationError,
+    compute_progress,
+    get_default_template_structure,
+    validate_answers,
+    validate_template_schema,
+)
 
 if TYPE_CHECKING:
     from django.db.models.fields.related_descriptors import RelatedManager

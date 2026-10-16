@@ -1,12 +1,12 @@
 import copy
 import uuid
 
+from core.services import delete_archived_instance
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 
-from core.services import delete_archived_instance
 from inspections.models import VisitTemplate
 from inspections.validators import (
     get_default_template_structure,

@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.urls import reverse
-from django.views.decorators.http import require_GET, require_POST, require_http_methods
+from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from inspections.services.inspectionfolder import get_inspection_folder_by_id
 from inspections.services.template import (

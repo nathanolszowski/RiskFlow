@@ -1,14 +1,14 @@
-from django.shortcuts import render
+from crm.models import Company, Contact
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 from django.http import HttpResponse
+from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_GET
-from django.shortcuts import redirect
-from django.db.models import Q
 from inspections.models import InspectionFolder
-from crm.models import Company, Contact
-from core.services.dashboard import get_dashboard_context, parse_period
+
 from core.decorators import htmx_login_required
+from core.services.dashboard import get_dashboard_context, parse_period
 
 
 @login_required

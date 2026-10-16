@@ -1,6 +1,7 @@
-from inspections.models import InspectionFolder
-from django.shortcuts import get_object_or_404
 from django.db.models import Q
+from django.shortcuts import get_object_or_404
+
+from inspections.models import InspectionFolder
 
 
 def get_inspection_folders_by_user(user):

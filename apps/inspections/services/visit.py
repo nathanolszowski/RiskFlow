@@ -6,9 +6,9 @@ from django.utils import timezone
 
 from inspections.models import VisitInstance
 from inspections.validators import (
-    validate_answers,
     compute_progress,
     iter_schema_fields,
+    validate_answers,
 )
 
 

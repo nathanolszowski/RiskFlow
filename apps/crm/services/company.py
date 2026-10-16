@@ -1,8 +1,10 @@
 import os
+
 import requests
 from django.conf import settings
-from django.db.models import Q, Count
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
+
 from crm.models import Company
 
 

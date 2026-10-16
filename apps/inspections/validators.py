@@ -1,11 +1,14 @@
+from typing import Any, Dict, List, Literal, Optional
+
+from django.core.exceptions import ValidationError
 from pydantic import (
     BaseModel,
-    ValidationError as PydanticValidationError,
     field_validator,
     model_validator,
 )
-from typing import Any, Dict, List, Optional, Literal
-from django.core.exceptions import ValidationError
+from pydantic import (
+    ValidationError as PydanticValidationError,
+)
 
 TEXT_MAX_LENGTH = 5000
 
