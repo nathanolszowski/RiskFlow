@@ -1,47 +1,59 @@
+{# Visits tab. Context: folder, status (active|archived), visits, next_visit, active_count, archived_count. #}
+<span id="visit-tab-badge" hx-swap-oob="innerHTML">{{ active_count|add:archived_count }}</span>
+
 <div class="space-y-6">
-    {% if visit %}
-    {% include "inspections/partials/visit_read.html" %}
+  <!-- Main actions -->
+  <div class="flex flex-col gap-3 sm:flex-row">
+    {% if folder.is_active %}
+    <button type="button" hx-get="{% url 'inspections:visit_create' folder.id %}" hx-target="#modal-container" hx-swap="innerHTML"
+      class="inline-flex h-14 flex-1 cursor-pointer items-center justify-center gap-2.5 rounded-xl bg-brand-primary text-base font-bold text-brand-on shadow-xs transition-colors hover:bg-brand-hover">
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      Préparer une nouvelle visite
+    </button>
+    {% endif %}
+    <button type="button" hx-get="{% url 'inspections:template_panel' %}?folder={{ folder.id }}" hx-target="#drawer-container" hx-swap="innerHTML"
+      class="inline-flex h-14 cursor-pointer items-center justify-center gap-2.5 rounded-xl border border-border-hover bg-surface-primary px-6 text-sm font-semibold text-text-main transition-colors hover:bg-surface-hover">
+      <svg class="h-[18px] w-[18px]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>
+      Templates de visite
+    </button>
+  </div>
 
-    <div class="space-y-6">
-        {% for section in sections %}
-        <div
-            class="rounded-2xl border border-border-default bg-surface-primary p-6 backdrop-blur-xs space-y-4 transition-colors">
-            <h4 class="text-sm font-bold uppercase tracking-wider text-brand-light border-b border-border-default pb-2">
-                {{ section.title }}
-            </h4>
+  {% if next_visit and status == 'active' %}
+  {% include "inspections/partials/visit_next_card.html" with visit=next_visit %}
+  {% endif %}
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {% for field in section.fields %}
-                <div class="space-y-1">
-                    <label class="block text-xs font-medium text-text-subtle">
-                        {{ field.label }}
-                        {% if field.required %}<span class="text-status-danger">*</span>{% endif %}
-                    </label>
+  <!-- Table of the visits -->
+  <div class="space-y-3">
+    <div class="flex items-center justify-between gap-3">
+      <h3 class="text-lg font-semibold text-text-main">{% if status == 'archived' %}Visites archivées{% else %}Toutes les visites{% endif %}</h3>
+      {% if status == 'archived' %}
+      <button type="button" hx-get="{% url 'inspections:folder_tab_visit' folder.id %}" hx-target="#tab-content" hx-swap="innerHTML"
+        class="cursor-pointer text-sm font-semibold text-brand-light hover:underline">Retour aux visites actives</button>
+      {% elif archived_count %}
+      <button type="button" hx-get="{% url 'inspections:folder_tab_visit' folder.id %}?status=archived" hx-target="#tab-content" hx-swap="innerHTML"
+        class="cursor-pointer text-sm font-semibold text-brand-light hover:underline">Afficher les archivées ({{ archived_count }})</button>
+      {% endif %}
+    </div>
 
-                    <div
-                        class="w-full rounded-md border border-border-default bg-surface-secondary px-3 py-2 text-sm text-text-body font-mono">
-                        <span class="text-xs text-text-faded italic">Format attendu : {{ field.type }}</span>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% empty %}
-        <div class="text-center py-8 border border-dashed border-border-default rounded-xl bg-surface-primary">
-            <p class="text-sm text-text-muted">Le modèle de visite associé est vide (aucune section).</p>
-        </div>
-        {% endfor %}
+    {% if visits %}
+    <div class="overflow-hidden rounded-2xl border border-border-default bg-surface-primary">
+      <div class="hidden gap-x-4 bg-surface-secondary px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-text-subtle lg:grid lg:grid-cols-[7rem_7rem_minmax(0,1.2fr)_9.5rem_minmax(0,1fr)_21rem]">
+        <span>Date</span><span>Statut</span><span>Template</span><span>Formulaire</span><span>Notes</span><span class="text-right">Actions</span>
+      </div>
+      {% for visit in visits %}
+      {% include "inspections/partials/visit_row.html" %}
+      {% endfor %}
     </div>
     {% else %}
-    <div class="text-center py-16 border border-dashed border-border-default rounded-2xl bg-surface-primary">
-        <svg class="mx-auto h-12 w-12 text-text-faded" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-            stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round"
-                d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-        </svg>
-        <p class="mt-4 text-sm font-semibold text-text-subtle">Aucune inspection planifiée</p>
-        <p class="mt-1 text-xs text-text-muted">Générez ou planifiez une instance de visite pour commencer à saisir les
-            données.</p>
+    <div class="rounded-2xl border border-dashed border-border-default bg-surface-primary py-14 text-center">
+      <svg class="mx-auto h-12 w-12 text-text-faded" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+      </svg>
+      <p class="mt-4 text-sm font-semibold text-text-subtle">{% if status == 'archived' %}Aucune visite archivée{% else %}Aucune visite planifiée{% endif %}</p>
+      {% if status != 'archived' %}
+      <p class="mt-1 text-xs text-text-muted">Préparez une visite à partir d'un de vos templates pour commencer à saisir les réponses.</p>
+      {% endif %}
     </div>
     {% endif %}
+  </div>
 </div>

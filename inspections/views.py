@@ -1,16 +1,18 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 from django.core.paginator import Paginator
 from core.services import delete_archived_instance
 from django.forms import ModelChoiceField
 from django.http import HttpResponse
-from .forms import InspectionFolderForm, InspectionFolderUpdateForm, VisitInstanceUpdateForm, RecommandationUpdateForm
+from django.core.exceptions import ValidationError
+from .forms import InspectionFolderForm, InspectionFolderUpdateForm, VisitInstanceUpdateForm, VisitCreateForm, RecommandationUpdateForm
 from .models import InspectionFolder
 from crm.models import Company, Contact
 from inspections.services.inspectionfolder import get_filtered_folders, get_company_folders, get_inspection_folder_by_id, create_tracked_instance
-from inspections.services.visit import get_visit_by_id
+from inspections.services.visit import get_visit_by_id, get_visits_for_folder, get_next_visit, create_visit, set_visit_done, VisitLockedError
 from inspections.services.recommandation import get_recommandation_by_id
 
 
@@ -72,6 +74,8 @@ def folder_detail(request, pk):
     context = {
         "folder": folder,
         "company_folders": get_company_folders(folder.company, request.user),
+        # Lets the visit form send the inspector back to the visits tab (?tab=visit)
+        "initial_tab": request.GET.get("tab"),
     }
     return render(request, "inspections/folder_detail.html", context)
 
@@ -318,13 +322,53 @@ def folder_delete(request, folder_id):
 
 @login_required
 @require_http_methods(["GET", "POST"])
-def visit_inline_update(request, pk):
+def visit_create(request, folder_id):
     """
-    HTMX view to edit visit planning data from the visit tab.
-    - GET  : Render auto-complete form (visit_update.html).
+    HTMX view to prepare a new visit from a template (own or shared) and a date.
+    - GET  : Render the modal (visit_create_modal.html), the template can be preselected with ?template=<pk>.
+    - POST : Validate the form and create the visit (snapshot of the template).
+             If True -> Render the visit tab with HX-Trigger: closeModal.
+             If False -> Render the modal with errors (422).
+    """
+    folder = get_inspection_folder_by_id(folder_id, request.user)
+    if not folder.is_active:
+        return HttpResponse("Le dossier est archivé.", status=409)
+
+    if request.method == "POST":
+        form = VisitCreateForm(request.POST, user=request.user)
+        if form.is_valid():
+            try:
+                create_visit(folder, form.cleaned_data["template"], form.cleaned_data["due_date"], request.user)
+            except ValidationError as e:
+                form.add_error("template", e)
+            else:
+                response = _render_visit_tab(request, folder)
+                response["HX-Trigger"] = "closeModal"
+                return response
+        response = render(
+            request,
+            "inspections/partials/visit_create_modal.html",
+            {"folder": folder, "form": form},
+            status=422,
+        )
+        # The form targets the tab: the invalid modal must replace the modal instead
+        response["HX-Retarget"] = "#modal-container"
+        response["HX-Reswap"] = "innerHTML"
+        return response
+
+    form = VisitCreateForm(user=request.user, initial={"template": request.GET.get("template"), "due_date": timezone.localdate()})
+    return render(request, "inspections/partials/visit_create_modal.html", {"folder": folder, "form": form})
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def visit_update(request, pk):
+    """
+    HTMX view to edit the planning data of a visit (status, date, notes) in a modal.
+    - GET  : Render the form (visit_update_modal.html).
     - POST : Update validation.
-             If True -> Render read view with data (visit_read.html).
-             If False -> Render form with errors (visit_update.html).
+             If True -> Render the visit tab with HX-Trigger: closeModal.
+             If False -> Render the form with errors (422).
     """
     visit = get_visit_by_id(pk, request.user)
 
@@ -334,35 +378,28 @@ def visit_inline_update(request, pk):
             visit = form.save(commit=False)
             visit.updated_by = request.user
             visit.save()
-            return render(
-                request,
-                "inspections/partials/visit_read.html",
-                {"visit": visit},
-            )
-    else:
-        form = VisitInstanceUpdateForm(instance=visit)
+            response = _render_visit_tab(request, visit.folder)
+            response["HX-Trigger"] = "closeModal"
+            return response
+        response = render(request, "inspections/partials/visit_update_modal.html", {"visit": visit, "form": form}, status=422)
+        response["HX-Retarget"] = "#modal-container"
+        response["HX-Reswap"] = "innerHTML"
+        return response
 
-    return render(
-        request,
-        "inspections/partials/visit_update.html",
-        {"visit": visit, "form": form},
-    )
+    form = VisitInstanceUpdateForm(instance=visit)
+    return render(request, "inspections/partials/visit_update_modal.html", {"visit": visit, "form": form})
 
 
 @login_required
-@require_GET
-def visit_inline_read(request, pk):
-    """
-    HTMX view to read only visit planning data from the visit tab.
-    Only fragment (visit_read.html).
-    """
+@require_POST
+def visit_toggle_done(request, pk):
+    """Tick / untick a visit as done from the visits tab (checkbox "done" present when ticked)."""
     visit = get_visit_by_id(pk, request.user)
-    return render(
-        request,
-        "inspections/partials/visit_read.html",
-        {"visit": visit},
-    )
-
+    try:
+        set_visit_done(visit, request.user, request.POST.get("done") == "on")
+    except VisitLockedError:
+        return HttpResponse("La visite est archivée.", status=409)
+    return _render_visit_tab(request, visit.folder)
 
 
 @login_required
@@ -406,7 +443,7 @@ def visit_delete(request, pk):
         return _delete_modal(
             request, visit,
             title="Supprimer définitivement cette visite ?",
-            label=visit.template.name,
+            label=visit.display_template_name,
             post_url=reverse("inspections:visit_delete", args=[visit.pk]),
             post_target="#tab-content",
             sections=[{"warning": True, "title": "Cette action est irréversible."}],
@@ -553,17 +590,20 @@ def folder_tab_overview(request, pk):
 
 
 def _render_visit_tab(request, folder):
-    """Render the visit tab content, including the latest visit and its sections."""
-    latest_visit = folder.get_latest_visit
-    context = {
-        "folder": folder,
-        "visit": latest_visit,
-        "sections": [],
-    }
-    if latest_visit and latest_visit.template and latest_visit.template.schema:
-        context["sections"] = latest_visit.template.schema.get("sections", [])
-
-    return render(request, "inspections/partials/tab_visit.html", context)
+    """Render the visit tab content: next visit, table of the visits (active or archived) and counters."""
+    status = "archived" if request.GET.get("status") == "archived" else "active"
+    return render(
+        request,
+        "inspections/partials/tab_visit.html",
+        {
+            "folder": folder,
+            "status": status,
+            "visits": get_visits_for_folder(folder, status),
+            "next_visit": get_next_visit(folder),
+            "active_count": folder.visits.filter(is_active=True).count(),
+            "archived_count": folder.visits.filter(is_active=False).count(),
+        },
+    )
 
 
 @login_required

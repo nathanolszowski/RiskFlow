@@ -1,0 +1,102 @@
+{# Editor of a template (the form is the state). Context: template, structure, name, description, shared, readonly, errors, folder_id, field_count, section_count, field_types. #}
+<div data-wide class="flex min-h-0 flex-1 flex-col gap-4">
+  <div class="flex items-center justify-between gap-3">
+    <div class="flex min-w-0 items-center gap-3">
+      <button type="button" hx-get="{% url 'inspections:template_panel' %}?scope={% if readonly %}shared{% else %}mine{% endif %}{% if folder_id %}&folder={{ folder_id }}{% endif %}"
+        hx-target="#template-drawer-content" hx-swap="innerHTML" aria-label="Retour aux templates"
+        class="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-border-default bg-surface-secondary text-text-muted transition-colors hover:text-text-main">
+        <svg class="h-[18px] w-[18px]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+      </button>
+      <div class="min-w-0">
+        <span class="block text-xs text-text-subtle">Templates de visite</span>
+        <h2 class="truncate text-xl font-semibold text-text-main">{% if template %}{{ template.name }}{% else %}Nouveau template{% endif %}</h2>
+      </div>
+    </div>
+    <button type="button" onclick="document.getElementById('template-drawer').remove()" aria-label="Fermer"
+      class="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-border-default bg-surface-secondary text-text-muted transition-colors hover:text-text-main">
+      <svg class="h-[18px] w-[18px]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>
+    </button>
+  </div>
+
+  {% if readonly %}
+  <div class="flex items-center gap-3 rounded-lg border border-brand-border bg-brand-bg p-3 text-[13px] leading-snug text-text-body">
+    <svg class="h-[18px] w-[18px] shrink-0 text-brand-light" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+    <span>Template partagé par <strong class="text-text-main">{{ template.created_by }}</strong>. Vous pouvez l'utiliser, mais pas le modifier. Copiez-le dans vos templates pour l'adapter.</span>
+  </div>
+  {% endif %}
+
+  <form id="template-editor-form"
+    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+    class="flex min-h-0 flex-1 flex-col gap-4" onsubmit="return false">
+    {% csrf_token %}
+    <input type="hidden" name="template_pk" value="{{ template.pk|default:'' }}">
+    <input type="hidden" name="folder" value="{{ folder_id|default:'' }}">
+
+    {% if errors %}
+    <div class="rounded-lg border border-status-danger-border bg-status-danger-bg p-3 text-xs text-status-danger">
+      <ul class="list-disc space-y-0.5 pl-4">{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
+
+    <div class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pr-1">
+      <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-[1fr_1.4fr]">
+        <div>
+          <label for="tpl-name" class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-text-subtle">Nom du template</label>
+          <input id="tpl-name" type="text" name="name" value="{{ name }}" placeholder="Ex. Audit entrepôt" maxlength="255" {% if readonly %}disabled{% endif %} class="form-input">
+        </div>
+        <div>
+          <label for="tpl-desc" class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-text-subtle">Description</label>
+          <input id="tpl-desc" type="text" name="description" value="{{ description }}" placeholder="À quoi sert ce template ?" {% if readonly %}disabled{% endif %} class="form-input">
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3.5 rounded-xl border border-border-default bg-surface-secondary p-3.5">
+        <svg class="h-5 w-5 shrink-0 text-brand-light" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-6 6.5-6s6.5 2.5 6.5 6M17 4.5a3.5 3.5 0 0 1 0 7M21.5 20c0-2.5-1.5-4.5-3.5-5.5"/></svg>
+        <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span class="text-sm font-semibold text-text-main">Partager avec tous les utilisateurs</span>
+          <span class="text-xs text-text-subtle">Les autres inspecteurs pourront utiliser ce template, sans pouvoir le modifier.</span>
+        </div>
+        <label class="relative inline-flex shrink-0 {% if readonly %}opacity-50{% else %}cursor-pointer{% endif %}">
+          <input type="checkbox" name="shared" class="peer sr-only" {% if shared %}checked{% endif %} {% if readonly %}disabled{% endif %} aria-label="Partager avec tous les utilisateurs">
+          <span class="h-[30px] w-[52px] rounded-full bg-surface-tertiary transition-colors peer-checked:bg-brand-primary peer-focus-visible:ring-2 peer-focus-visible:ring-brand-light"></span>
+          <span class="absolute left-[3px] top-[3px] h-6 w-6 rounded-full bg-white transition-transform peer-checked:translate-x-[22px]"></span>
+        </label>
+      </div>
+
+      {% if template and not readonly %}
+      <p class="rounded-lg border border-dashed border-border-default px-3 py-2 text-xs text-text-subtle">
+        Les visites déjà créées gardent la version actuelle de ce template : vos modifications ne s'appliquent qu'aux prochaines visites.
+      </p>
+      {% endif %}
+
+      <div class="flex items-baseline justify-between gap-3">
+        <h3 class="text-base font-semibold text-text-main">Structure du formulaire</h3>
+        <span id="template-structure-count" class="text-xs text-text-subtle">{{ section_count }} section{{ section_count|pluralize }} · {{ field_count }} champ{{ field_count|pluralize }}</span>
+      </div>
+
+      <div id="template-structure" class="flex flex-col gap-4">
+        {% include "inspections/partials/template_editor_structure.html" %}
+      </div>
+    </div>
+
+    <div class="flex justify-end gap-2.5">
+      {% if readonly %}
+      <button type="button" hx-get="{% url 'inspections:template_panel' %}?scope=shared{% if folder_id %}&folder={{ folder_id }}{% endif %}"
+        hx-target="#template-drawer-content" hx-swap="innerHTML"
+        class="h-12 cursor-pointer rounded-lg border border-border-hover px-5 text-sm font-semibold text-text-main transition-colors hover:bg-surface-hover">Fermer</button>
+      <button type="button" hx-post="{% url 'inspections:template_duplicate' template.pk %}" hx-target="#template-drawer-content" hx-swap="innerHTML"
+        hx-vals='{"scope": "mine", "folder": "{{ folder_id|default:"" }}"}'
+        class="h-12 cursor-pointer rounded-lg bg-brand-primary px-5 text-sm font-bold text-brand-on transition-colors hover:bg-brand-hover">Copier dans mes templates</button>
+      {% else %}
+      <button type="button" hx-get="{% url 'inspections:template_panel' %}?scope=mine{% if folder_id %}&folder={{ folder_id }}{% endif %}"
+        hx-target="#template-drawer-content" hx-swap="innerHTML"
+        class="h-12 cursor-pointer rounded-lg border border-border-hover px-5 text-sm font-semibold text-text-main transition-colors hover:bg-surface-hover">Annuler</button>
+      <button type="button" hx-post="{% if template %}{% url 'inspections:template_edit' template.pk %}{% else %}{% url 'inspections:template_create' %}{% endif %}"
+        hx-include="#template-editor-form" hx-target="#template-drawer-content" hx-swap="innerHTML"
+        class="h-12 cursor-pointer rounded-lg bg-brand-primary px-5 text-sm font-bold text-brand-on transition-colors hover:bg-brand-hover">
+        {% if template %}Enregistrer{% else %}Créer le template{% endif %}
+      </button>
+      {% endif %}
+    </div>
+  </form>
+</div>

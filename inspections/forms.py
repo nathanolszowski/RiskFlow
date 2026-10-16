@@ -1,5 +1,6 @@
 from django import forms
-from .models import InspectionFolder, VisitInstance, Recommandation
+from .models import InspectionFolder, VisitInstance, VisitTemplate, Recommandation
+from .services.template import get_usable_templates
 
 class InspectionFolderForm(forms.ModelForm):
     class Meta:
@@ -42,11 +43,10 @@ class InspectionFolderUpdateForm(InspectionFolderForm):
 
 
 class VisitInstanceUpdateForm(forms.ModelForm):
-    """Edit form for the planning data of a visit (template and answers are not edited here)."""
+    """Edit form for the planning data of a visit (the status is not edited: see set_visit_done)."""
     class Meta:
         model = VisitInstance
         fields = [
-                'current_status',
                 'due_date',
                 'notes',
             ]
@@ -60,6 +60,25 @@ class VisitInstanceUpdateForm(forms.ModelForm):
 
         for name, field in self.fields.items():
             field.widget.attrs.update({"class": "form-input"})
+
+
+class VisitCreateForm(forms.Form):
+    """Preparation of a visit: a usable template (own or shared) and a date."""
+    template = forms.ModelChoiceField(
+        queryset=VisitTemplate.objects.none(),
+        empty_label=None,
+        label="Template",
+        error_messages={"required": "Choisissez un template.", "invalid_choice": "Ce template n'est pas disponible."},
+    )
+    due_date = forms.DateField(
+        label="Date de la visite",
+        widget=forms.DateInput(attrs={"type": "date", "class": "form-input"}, format="%Y-%m-%d"),
+        error_messages={"required": "Indiquez la date de la visite."},
+    )
+
+    def __init__(self, *args, user, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["template"].queryset = get_usable_templates(user)
 
 
 class RecommandationUpdateForm(forms.ModelForm):

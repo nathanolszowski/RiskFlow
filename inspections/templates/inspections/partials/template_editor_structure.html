@@ -1,0 +1,91 @@
+{# Sections and fields of the editor. Re-rendered alone by each editor action. Context: structure, readonly, field_types, field_count, section_count. #}
+{% for section in structure.sections %}
+{% with si=forloop.counter0 %}
+<section class="flex flex-col gap-2.5 rounded-xl border border-border-default bg-surface-secondary p-3.5">
+  <div class="flex items-center gap-2">
+    <input type="hidden" name="s{{ si }}-id" value="{{ section.id }}">
+    <input type="text" name="s{{ si }}-title" value="{{ section.title }}" placeholder="Titre de la section" aria-label="Titre de la section" {% if readonly %}disabled{% endif %}
+      class="form-input min-w-0 flex-1 font-bold">
+    {% if not readonly %}
+    <span class="flex shrink-0 items-center gap-1">
+      {% if not forloop.first %}
+      <button type="button" hx-post="{% url 'inspections:template_editor_operation' %}" hx-include="#template-editor-form" hx-vals='{"op": "move_section_up", "section": "{{ si }}"}' hx-target="#template-structure" hx-swap="innerHTML"
+        aria-label="Monter la section" class="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-border-default text-text-muted transition-colors hover:text-text-main">↑</button>
+      {% endif %}
+      {% if not forloop.last %}
+      <button type="button" hx-post="{% url 'inspections:template_editor_operation' %}" hx-include="#template-editor-form" hx-vals='{"op": "move_section_down", "section": "{{ si }}"}' hx-target="#template-structure" hx-swap="innerHTML"
+        aria-label="Descendre la section" class="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-border-default text-text-muted transition-colors hover:text-text-main">↓</button>
+      {% endif %}
+      <button type="button" hx-post="{% url 'inspections:template_editor_operation' %}" hx-include="#template-editor-form" hx-vals='{"op": "remove_section", "section": "{{ si }}"}' hx-target="#template-structure" hx-swap="innerHTML"
+        hx-confirm="Supprimer cette section et ses champs ?" aria-label="Supprimer la section"
+        class="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-status-danger-border text-status-danger transition-colors hover:bg-status-danger-bg">
+        <svg class="h-[15px] w-[15px]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>
+      </button>
+    </span>
+    {% endif %}
+  </div>
+
+  {% for field in section.fields %}
+  {% with fi=forloop.counter0 %}
+  <div class="flex flex-col gap-1.5 rounded-lg border border-border-default bg-surface-primary p-2.5">
+    <input type="hidden" name="s{{ si }}-f{{ fi }}-id" value="{{ field.id }}">
+    <div class="grid grid-cols-[minmax(0,1fr)_auto] gap-2 sm:grid-cols-[minmax(0,1fr)_7rem_auto_auto]">
+      <input type="text" name="s{{ si }}-f{{ fi }}-label" value="{{ field.label }}" placeholder="Libellé de la question" aria-label="Libellé du champ" {% if readonly %}disabled{% endif %}
+        class="form-input col-span-2 sm:col-span-1">
+      <select name="s{{ si }}-f{{ fi }}-type" aria-label="Type du champ" {% if readonly %}disabled{% else %}
+        hx-post="{% url 'inspections:template_editor_operation' %}" hx-include="#template-editor-form" hx-vals='{"op": "refresh"}' hx-trigger="change" hx-target="#template-structure" hx-swap="innerHTML"{% endif %}
+        class="form-input">
+        {% for value, label in field_types %}
+        <option value="{{ value }}" {% if field.type == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <label class="flex items-center gap-2 text-xs text-text-body {% if not readonly %}cursor-pointer{% endif %}">
+        <input type="checkbox" name="s{{ si }}-f{{ fi }}-required" class="h-4 w-4 accent-brand-primary" {% if field.required %}checked{% endif %} {% if readonly %}disabled{% endif %}>
+        Obligatoire
+      </label>
+      {% if not readonly %}
+      <span class="flex items-center gap-1">
+        {% if not forloop.first %}
+        <button type="button" hx-post="{% url 'inspections:template_editor_operation' %}" hx-include="#template-editor-form" hx-vals='{"op": "move_field_up", "section": "{{ si }}", "field": "{{ fi }}"}' hx-target="#template-structure" hx-swap="innerHTML"
+          aria-label="Monter le champ" class="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-border-default text-text-muted transition-colors hover:text-text-main">↑</button>
+        {% endif %}
+        {% if not forloop.last %}
+        <button type="button" hx-post="{% url 'inspections:template_editor_operation' %}" hx-include="#template-editor-form" hx-vals='{"op": "move_field_down", "section": "{{ si }}", "field": "{{ fi }}"}' hx-target="#template-structure" hx-swap="innerHTML"
+          aria-label="Descendre le champ" class="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-border-default text-text-muted transition-colors hover:text-text-main">↓</button>
+        {% endif %}
+        <button type="button" hx-post="{% url 'inspections:template_editor_operation' %}" hx-include="#template-editor-form" hx-vals='{"op": "remove_field", "section": "{{ si }}", "field": "{{ fi }}"}' hx-target="#template-structure" hx-swap="innerHTML"
+          aria-label="Supprimer le champ" class="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-border-default text-text-muted transition-colors hover:text-status-danger">
+          <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </span>
+      {% endif %}
+    </div>
+    {% if field.type == 'select' %}
+    <input type="text" name="s{{ si }}-f{{ fi }}-options" value="{{ field.options|join:', ' }}" placeholder="Choix possibles, séparés par des virgules" aria-label="Choix possibles" {% if readonly %}disabled{% endif %}
+      class="form-input">
+    {% elif field.type == 'number' %}
+    <input type="text" name="s{{ si }}-f{{ fi }}-unit" value="{{ field.unit|default:'' }}" placeholder="Unité (m, kg…), facultatif" aria-label="Unité" maxlength="12" {% if readonly %}disabled{% endif %}
+      class="form-input sm:max-w-48">
+    {% endif %}
+  </div>
+  {% endwith %}
+  {% empty %}
+  <div class="rounded-lg border border-dashed border-border-hover p-3.5 text-center text-[13px] text-text-subtle">Cette section n'a pas encore de champ.</div>
+  {% endfor %}
+
+  {% if not readonly %}
+  <button type="button" hx-post="{% url 'inspections:template_editor_operation' %}" hx-include="#template-editor-form" hx-vals='{"op": "add_field", "section": "{{ si }}"}' hx-target="#template-structure" hx-swap="innerHTML"
+    class="cursor-pointer self-start rounded-lg border border-dashed border-brand-border px-3 py-2 text-[13px] font-semibold text-brand-light transition-colors hover:bg-brand-bg">+ Ajouter un champ</button>
+  {% endif %}
+</section>
+{% endwith %}
+{% endfor %}
+
+{% if not readonly %}
+<button type="button" hx-post="{% url 'inspections:template_editor_operation' %}" hx-include="#template-editor-form" hx-vals='{"op": "add_section"}' hx-target="#template-structure" hx-swap="innerHTML"
+  class="cursor-pointer rounded-xl border border-dashed border-brand-border p-3 text-sm font-semibold text-brand-light transition-colors hover:bg-brand-bg">+ Ajouter une section</button>
+{% endif %}
+
+{% if oob %}
+<span id="template-structure-count" hx-swap-oob="innerHTML">{{ section_count }} section{{ section_count|pluralize }} · {{ field_count }} champ{{ field_count|pluralize }}</span>
+{% endif %}

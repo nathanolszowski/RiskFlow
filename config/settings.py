@@ -149,8 +149,8 @@ TAILWIND_APP_NAME = 'theme'
 AUTH_USER_MODEL = 'accounts.CustomUser'
 LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'core:dashboard'
-# Session duration (60 seconds * 10)
-SESSION_COOKIE_AGE = 600
+# Session duration (60 seconds * 60). The visit form keeps the session alive while it is open (see core:session_ping)
+SESSION_COOKIE_AGE = 3600
 # Restart the countdown every time the user loads or refreshes a page
 SESSION_SAVE_EVERY_REQUEST = True
 # Session expires when the user closes the browser

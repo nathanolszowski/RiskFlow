@@ -1,0 +1,56 @@
+{# Planning data of a visit (status, date, notes). Context: visit, form. #}
+<div id="visit-update-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+
+  <!-- Backdrop -->
+  <div class="fixed inset-0 bg-black/70 backdrop-blur-xs transition-opacity"
+    onclick="document.getElementById('visit-update-modal').remove()"></div>
+
+  <!-- Modal Content -->
+  <div class="relative flex max-h-[90vh] w-full max-w-lg flex-col rounded-xl border border-border-default bg-surface-primary shadow-2xl">
+
+    <div class="flex items-center justify-between border-b border-border-default px-6 py-4">
+      <h3 class="text-lg font-semibold text-text-main">Modifier la visite — {{ visit.display_template_name }}</h3>
+      <button type="button" onclick="document.getElementById('visit-update-modal').remove()" aria-label="Fermer"
+        class="cursor-pointer text-text-subtle transition-colors hover:text-text-main">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+      </button>
+    </div>
+
+    <form hx-post="{% url 'inspections:visit_update' visit.pk %}" hx-target="#tab-content" hx-swap="innerHTML"
+      hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' class="flex flex-col overflow-hidden">
+      {% csrf_token %}
+
+      <div class="space-y-4 overflow-y-auto p-6">
+        {% if form.non_field_errors %}
+        <div class="rounded-lg border border-status-danger-border bg-status-danger-bg p-2.5 text-xs text-status-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div>
+          <label class="mb-1 block text-xs font-medium text-text-subtle">Date de visite</label>
+          {{ form.due_date }}
+          {% if form.due_date.errors %}<p class="mt-1 text-xs text-status-danger">{{ form.due_date.errors.0 }}</p>{% endif %}
+          {% if visit.is_late %}<p class="mt-1 text-xs text-status-danger">La date est dépassée : la visite est en retard.</p>{% endif %}
+        </div>
+
+        <div>
+          <label class="mb-1 block text-xs font-medium text-text-subtle">Notes sur la visite</label>
+          {{ form.notes }}
+          {% if form.notes.errors %}<p class="mt-1 text-xs text-status-danger">{{ form.notes.errors.0 }}</p>{% endif %}
+        </div>
+      </div>
+
+      <div class="flex justify-end space-x-3 border-t border-border-default bg-surface-primary/50 px-6 py-4">
+        <button type="button" onclick="document.getElementById('visit-update-modal').remove()"
+          class="cursor-pointer rounded-lg border border-border-default bg-surface-tertiary px-4 py-2 text-xs font-medium text-text-body transition-colors hover:bg-surface-secondary">Annuler</button>
+        <button type="submit"
+          class="cursor-pointer rounded-lg bg-brand-primary px-4 py-2 text-xs font-medium text-brand-on shadow-xs transition-colors hover:bg-brand-hover">Enregistrer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  document.body.addEventListener("closeModal", function () {
+    document.getElementById("visit-update-modal")?.remove();
+  }, { once: true });
+</script>

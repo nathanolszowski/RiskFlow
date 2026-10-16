@@ -1,0 +1,26 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Visite · {{ visit.folder.reference }} · RiskFlow{% endblock %}
+
+{% block content %}
+{# Full screen form of a visit. Every request of the form is queued on #visit-form so that answers are saved in order. #}
+<div id="visit-form"
+  class="flex h-screen flex-col overflow-hidden bg-app-bg text-text-body"
+  data-visit="{{ visit.pk }}" data-save-url="{% url 'inspections:visit_save_answers' visit.pk %}"
+  hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+
+  <div id="visit-banner" role="alert" class="hidden px-6 py-2.5 text-center text-sm font-semibold"></div>
+
+  <div id="visit-form-page" class="flex min-h-0 flex-1 flex-col">
+    {% include "inspections/partials/visit_form_page.html" %}
+  </div>
+
+  <!-- Heartbeat: keeps the session alive while the form is open, even without typing -->
+  <div hidden hx-get="{% url 'core:session_ping' %}" hx-trigger="every 300s" hx-swap="none" hx-sync="this:drop"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'inspections/visit_form.js' %}"></script>
+{% endblock %}

@@ -102,7 +102,12 @@ def get_upcoming_visits(user, today=None):
             is_active=True,
             due_date__isnull=False,
         )
-        .filter(Q(due_date__gte=today) | Q(current_status=VisitInstance.Status.DELAY))
+        .filter(
+            Q(due_date__gte=today)
+            | Q(current_status=VisitInstance.Status.DELAY)
+            # A planned visit whose date is over is late, even if its status was never switched to DELAY
+            | Q(current_status=VisitInstance.Status.SCHEDULED, due_date__lt=today)
+        )
         .select_related("folder__company")
         .order_by("due_date", "pk")[:UPCOMING_VISITS_LIMIT]
     )

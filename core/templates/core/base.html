@@ -21,6 +21,16 @@
 
     {% block content %}{% endblock %}
 
+    <script>
+        // Forms re-rendered by the server with validation errors answer 422: HTMX must swap them like a success
+        document.body.addEventListener("htmx:beforeSwap", function (event) {
+            if (event.detail.xhr.status === 422) {
+                event.detail.shouldSwap = true;
+                event.detail.isError = false;
+            }
+        });
+    </script>
+
     {% block extra_js %}{% endblock %}
 </body>
 

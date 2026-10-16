@@ -1,0 +1,6 @@
+{# Required fields still to answer, in the footer. Out of band when oob. #}
+<div id="visit-remaining" {% if oob %}hx-swap-oob="true"{% endif %}
+  class="flex-1 text-center text-[13px] font-semibold {% if progress.missing_required %}text-text-muted{% else %}text-status-success{% endif %}">
+  {% if progress.missing_required %}{{ progress.missing_required }} champ{{ progress.missing_required|pluralize }} obligatoire{{ progress.missing_required|pluralize }} restant{{ progress.missing_required|pluralize }}
+  {% else %}Tous les champs obligatoires sont remplis{% endif %}
+</div>

@@ -1,0 +1,67 @@
+{# Preparation of a visit: choice of the template and date. Context: folder, form. #}
+<div id="visit-create-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+
+  <!-- Backdrop -->
+  <div class="fixed inset-0 bg-black/70 backdrop-blur-xs transition-opacity"
+    onclick="document.getElementById('visit-create-modal').remove()"></div>
+
+  <!-- Modal Content -->
+  <div class="relative flex max-h-[90vh] w-full max-w-xl flex-col rounded-xl border border-border-default bg-surface-primary shadow-2xl">
+
+    <div class="flex items-center justify-between border-b border-border-default px-6 py-4">
+      <h3 class="text-lg font-semibold text-text-main">Préparer une nouvelle visite</h3>
+      <button type="button" onclick="document.getElementById('visit-create-modal').remove()" aria-label="Fermer"
+        class="cursor-pointer text-text-subtle transition-colors hover:text-text-main">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+      </button>
+    </div>
+
+    <form hx-post="{% url 'inspections:visit_create' folder.id %}" hx-target="#tab-content" hx-swap="innerHTML"
+      hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' class="flex flex-col overflow-hidden">
+      {% csrf_token %}
+
+      <div class="space-y-6 overflow-y-auto p-6">
+        <div>
+          <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-light">1 · Choisir un template</h4>
+          <div class="space-y-2.5">
+            {% for t in form.fields.template.queryset %}
+            <label class="flex cursor-pointer items-center gap-3.5 rounded-xl border border-border-default bg-surface-secondary p-3.5 transition-colors hover:border-border-hover has-[:checked]:border-brand-primary has-[:checked]:bg-brand-bg">
+              <input type="radio" name="template" value="{{ t.pk }}" class="h-4 w-4 shrink-0 accent-brand-primary"
+                {% if form.template.value|stringformat:"s" == t.pk|stringformat:"s" %}checked{% elif forloop.first and not form.template.value %}checked{% endif %}>
+              <span class="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span class="text-sm font-semibold text-text-main">{{ t.name }}</span>
+                <span class="text-xs text-text-subtle">{% if t.created_by_id == request.user.pk %}Moi{% else %}Par {{ t.created_by }}{% endif %} · modifié le {{ t.updated_at|date:"d/m/Y" }}</span>
+              </span>
+              <span class="text-xs text-text-muted">{{ t.schema.sections|length }} section{{ t.schema.sections|length|pluralize }}</span>
+            </label>
+            {% empty %}
+            <p class="rounded-lg border border-dashed border-border-default p-4 text-center text-sm text-text-muted">
+              Aucun template disponible. Créez-en un depuis « Templates de visite ».
+            </p>
+            {% endfor %}
+          </div>
+          {% if form.template.errors %}<p class="mt-2 text-xs text-status-danger">{{ form.template.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+          <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-light">2 · Date de la visite</h4>
+          {{ form.due_date }}
+          {% if form.due_date.errors %}<p class="mt-1 text-xs text-status-danger">{{ form.due_date.errors.0 }}</p>{% endif %}
+        </div>
+      </div>
+
+      <div class="flex justify-end space-x-3 border-t border-border-default bg-surface-primary/50 px-6 py-4">
+        <button type="button" onclick="document.getElementById('visit-create-modal').remove()"
+          class="cursor-pointer rounded-lg border border-border-default bg-surface-tertiary px-4 py-2 text-xs font-medium text-text-body transition-colors hover:bg-surface-secondary">Annuler</button>
+        <button type="submit"
+          class="cursor-pointer rounded-lg bg-brand-primary px-4 py-2 text-xs font-medium text-brand-on shadow-xs transition-colors hover:bg-brand-hover">Créer la visite</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  document.body.addEventListener("closeModal", function () {
+    document.getElementById("visit-create-modal")?.remove();
+  }, { once: true });
+</script>

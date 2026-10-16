@@ -8,6 +8,7 @@ from django.db.models import Q
 from inspections.models import InspectionFolder
 from crm.models import Company, Contact
 from core.services.dashboard import get_dashboard_context, parse_period
+from core.decorators import htmx_login_required
 
 
 @login_required
@@ -18,6 +19,12 @@ def dashboard(request):
     context['today'] = timezone.localdate()
     template = 'core/partials/dashboard_content.html' if request.htmx else 'core/dashboard.html'
     return render(request, template, context)
+
+@htmx_login_required(redirect=False)
+@require_GET
+def session_ping(request):
+    """Heartbeat: SESSION_SAVE_EVERY_REQUEST restarts the session countdown on each call."""
+    return HttpResponse(status=204)
 
 def toggle_theme(request):
     current_theme = request.session.get('theme', 'dark')

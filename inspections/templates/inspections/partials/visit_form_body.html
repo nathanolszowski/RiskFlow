@@ -1,0 +1,101 @@
+{# Current section and footer of the form. Context: see build_form_context. The navigation follows out of band when oob. #}
+{% load l10n %}
+<main class="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-10">
+  <div class="mx-auto flex max-w-3xl flex-col gap-5">
+    <div class="flex flex-col gap-1">
+      <span class="text-xs font-bold uppercase tracking-wider text-brand-light">Section {{ section_number }} sur {{ section_count }}</span>
+      <h2 class="text-2xl font-bold tracking-tight text-text-main">{{ section.title }}</h2>
+    </div>
+
+    {% for field in fields %}
+    <div data-field-card {% if field.error %}data-invalid{% endif %}
+      class="flex flex-col gap-3 rounded-2xl border border-border-default bg-surface-primary p-5 data-[invalid]:border-status-danger">
+      <div class="flex items-center justify-between gap-3">
+        <span id="label-{{ field.id }}" class="text-[17px] font-semibold text-text-main">{{ field.label }}</span>
+        <span class="shrink-0 text-xs font-semibold {% if field.required %}text-brand-light{% else %}text-text-subtle{% endif %}">{% if field.required %}Obligatoire{% else %}Facultatif{% endif %}</span>
+      </div>
+
+      {# One small form per field: radio groups stay separate and a save only sends this field #}
+      <form onsubmit="return false" class="flex flex-col gap-2" aria-labelledby="label-{{ field.id }}">
+        <input type="hidden" name="field_id" value="{{ field.id }}">
+        <input type="hidden" name="section_id" value="{{ section.id }}">
+
+        {% if field.type == 'boolean' %}
+        <div class="grid grid-cols-2 gap-3">
+          {% for value, label in yes_no %}
+          <label class="relative block">
+            <input type="radio" name="value" value="{{ value }}" class="peer sr-only"
+              {% if field.value is True and value == 'true' or field.value is False and value == 'false' %}checked{% endif %}
+              {% if readonly %}disabled{% else %}hx-post="{% url 'inspections:visit_save_answers' visit.pk %}" hx-trigger="change" hx-swap="none" hx-sync="#visit-form:queue all"{% endif %}>
+            <span class="flex h-[60px] cursor-pointer items-center justify-center rounded-xl border-2 border-border-hover bg-surface-secondary text-lg font-bold text-text-main transition-colors peer-checked:border-brand-primary peer-checked:bg-brand-primary peer-checked:text-brand-on peer-focus-visible:ring-2 peer-focus-visible:ring-brand-light peer-disabled:cursor-default">{{ label }}</span>
+          </label>
+          {% endfor %}
+        </div>
+
+        {% elif field.type == 'number' %}
+        <div class="flex items-center gap-3" data-stepper data-step="{{ field.step|default:1|unlocalize }}"
+          {% if field.min is not None %}data-min="{{ field.min|unlocalize }}"{% endif %} {% if field.max is not None %}data-max="{{ field.max|unlocalize }}"{% endif %}>
+          <button type="button" data-direction="-1" aria-label="Diminuer" {% if readonly %}disabled{% endif %}
+            class="h-[60px] w-[60px] shrink-0 cursor-pointer rounded-xl border-2 border-border-hover bg-surface-secondary text-3xl font-semibold text-text-main transition-colors hover:bg-surface-hover disabled:cursor-default disabled:opacity-50">−</button>
+          <div class="flex h-[60px] min-w-32 items-center justify-center gap-1.5 rounded-xl border-2 border-border-default px-3 focus-within:border-brand-primary" style="background-color: var(--bg-input)">
+            <input type="text" inputmode="decimal" name="value" value="{{ field.value_display }}" placeholder="—" aria-labelledby="label-{{ field.id }}"
+              {% if readonly %}disabled{% else %}hx-post="{% url 'inspections:visit_save_answers' visit.pk %}" hx-trigger="change" hx-swap="none" hx-sync="#visit-form:queue all"{% endif %}
+              class="w-24 bg-transparent text-center text-[26px] font-bold tabular-nums text-text-main outline-none placeholder:text-text-faded">
+            {% if field.unit %}<span class="text-sm font-medium text-text-subtle">{{ field.unit }}</span>{% endif %}
+          </div>
+          <button type="button" data-direction="1" aria-label="Augmenter" {% if readonly %}disabled{% endif %}
+            class="h-[60px] w-[60px] shrink-0 cursor-pointer rounded-xl border-2 border-border-hover bg-surface-secondary text-3xl font-semibold text-text-main transition-colors hover:bg-surface-hover disabled:cursor-default disabled:opacity-50">+</button>
+        </div>
+
+        {% elif field.type == 'select' %}
+        <div class="flex flex-wrap gap-2.5">
+          {% for option in field.options %}
+          <label class="relative block">
+            <input type="radio" name="value" value="{{ option }}" class="peer sr-only" {% if field.value == option %}checked{% endif %}
+              {% if readonly %}disabled{% else %}hx-post="{% url 'inspections:visit_save_answers' visit.pk %}" hx-trigger="change" hx-swap="none" hx-sync="#visit-form:queue all"{% endif %}>
+            <span class="flex h-14 min-w-32 cursor-pointer items-center justify-center rounded-xl border-2 border-border-hover bg-surface-secondary px-5 text-base font-semibold text-text-main transition-colors peer-checked:border-brand-primary peer-checked:bg-brand-primary peer-checked:text-brand-on peer-focus-visible:ring-2 peer-focus-visible:ring-brand-light peer-disabled:cursor-default">{{ option }}</span>
+          </label>
+          {% endfor %}
+        </div>
+
+        {% else %}
+        <textarea name="value" rows="3" placeholder="Saisir une observation…" aria-labelledby="label-{{ field.id }}" maxlength="5000"
+          {% if readonly %}disabled{% else %}hx-post="{% url 'inspections:visit_save_answers' visit.pk %}" hx-trigger="input changed delay:800ms, change" hx-swap="none" hx-sync="#visit-form:queue all"{% endif %}
+          class="w-full resize-y rounded-xl border-2 border-border-default px-4 py-3.5 text-base leading-normal text-text-main placeholder:text-text-faded focus:border-brand-primary focus:outline-none disabled:opacity-70"
+          style="background-color: var(--bg-input)">{{ field.value|default:"" }}</textarea>
+        {% endif %}
+      </form>
+
+      <p id="err-{{ field.id }}" class="text-[13px] font-semibold text-status-danger{% if not field.error %} hidden{% endif %}">{{ field.error|default:"" }}</p>
+    </div>
+    {% empty %}
+    <p class="rounded-xl border border-dashed border-border-default p-8 text-center text-sm text-text-muted">Cette section n'a pas de champ.</p>
+    {% endfor %}
+  </div>
+</main>
+
+<footer class="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-border-default bg-surface-primary px-4 py-3.5 sm:px-6">
+  {% if previous_section_id %}
+  <button type="button" hx-get="{% url 'inspections:visit_form_section' visit.pk previous_section_id %}" hx-target="#visit-form-body" hx-swap="innerHTML" hx-sync="#visit-form:queue all"
+    class="h-14 cursor-pointer rounded-xl border-2 border-border-hover px-6 text-base font-semibold text-text-main transition-colors hover:bg-surface-hover">← Précédent</button>
+  {% else %}
+  <span class="h-14 w-px"></span>
+  {% endif %}
+
+  {% include "inspections/partials/visit_form_remaining.html" with oob=False %}
+
+  <div class="flex gap-3">
+    {% if next_section_id %}
+    <button type="button" hx-get="{% url 'inspections:visit_form_section' visit.pk next_section_id %}" hx-target="#visit-form-body" hx-swap="innerHTML" hx-sync="#visit-form:queue all"
+      class="h-14 cursor-pointer rounded-xl border-2 border-border-hover px-7 text-base font-bold text-text-main transition-colors hover:bg-surface-hover">Section suivante →</button>
+    {% endif %}
+    {% if not readonly %}
+    <button type="button" hx-post="{% url 'inspections:visit_complete' visit.pk %}" hx-target="#visit-form-page" hx-swap="innerHTML" hx-sync="#visit-form:queue all"
+      class="h-14 cursor-pointer rounded-xl bg-brand-primary px-7 text-base font-bold text-brand-on transition-colors hover:bg-brand-hover">Terminer la visite</button>
+    {% endif %}
+  </div>
+</footer>
+
+{% if oob %}
+{% include "inspections/partials/visit_form_nav.html" %}
+{% endif %}

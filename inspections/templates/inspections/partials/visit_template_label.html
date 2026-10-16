@@ -1,0 +1,7 @@
+{# Name of the template a visit was made from (its own copy of the structure does not depend on it). Context: visit. #}
+<span class="text-sm text-text-body">{{ visit.display_template_name }}</span>
+{% if not visit.template %}
+<span class="block text-[11px] text-text-faded">Template supprimé</span>
+{% elif not visit.template.is_active %}
+<span class="block text-[11px] text-text-faded">Template archivé</span>
+{% endif %}

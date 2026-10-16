@@ -1,8 +1,14 @@
 from django.db import models
 from core.models import TrackingModel
 from django.core.exceptions import ValidationError
-from pydantic import ValidationError as PydanticValidationError
-from .validators import VisitTemplateSchema, get_default_template_structure
+import copy
+from .validators import (
+    get_default_template_structure,
+    validate_template_schema,
+    validate_answers,
+    AnswersValidationError,
+    compute_progress,
+)
 from django.utils import timezone
 import uuid
 from typing import TYPE_CHECKING
@@ -200,11 +206,14 @@ class VisitTemplate(TrackingModel):
 
     def clean(self):
         super().clean()
-        try:
-            VisitTemplateSchema(**self.schema)
-        except PydanticValidationError as e:
-            raise ValidationError(f"Le format JSON de la structure est invalide : {e}")
-        
+        validate_template_schema(self.schema)
+
+    def save(self, *args, **kwargs):
+        # Skipped when only some fields are written (e.g. archive metadata), as the schema is then untouched
+        if kwargs.get("update_fields") is None:
+            self.full_clean()
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.name
 
@@ -222,16 +231,24 @@ class VisitInstance(TrackingModel):
         related_name='visits', 
         verbose_name="Dossier associé"
     )
+    # The template is only the origin of the visit: the visit works on its own snapshot (instance_schema),
+    # so the template can be edited, archived or deleted without any effect on the visit.
     template = models.ForeignKey(
-        VisitTemplate, 
-        on_delete=models.PROTECT, 
-        related_name='instances', 
-        verbose_name="Template utilisé"
+        VisitTemplate,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='instances',
+        verbose_name="Template d'origine"
     )
+    template_name = models.CharField(max_length=255, blank=True, verbose_name="Nom du template d'origine")
     instance_schema = models.JSONField(blank=True, default=dict, verbose_name="Structure de l'instance (JSON)")
     
     # --- DATA & STATUS ---
+    # Answers are stored as {"answers": {"<field id>": value}}, keyed by the ids of instance_schema
     data = models.JSONField(blank=True, default=dict, verbose_name="Données saisies (JSON)")
+    revision = models.PositiveIntegerField(default=0, verbose_name="Révision des réponses")
+    completed_at = models.DateTimeField(null=True, blank=True, verbose_name="Date de fin de la visite")
     current_status = models.CharField(max_length=20, choices=Status.choices, default=Status.SCHEDULED, verbose_name="Statut de la visite")
     due_date = models.DateField(null=True, blank=True, verbose_name="Date de visite")
     notes = models.TextField(
@@ -248,41 +265,77 @@ class VisitInstance(TrackingModel):
         verbose_name_plural = "Instances de visite"
         ordering = ['-created_at']
 
+    def snapshot_template(self):
+        """Freeze the structure of the template into the visit."""
+        if self.template:
+            self.instance_schema = copy.deepcopy(self.template.schema)
+            self.template_name = self.template.name
+
     def clean(self):
         """
-        Automatic population of the template structure if the data field is empty, based on the selected VisitTemplate.
+        Snapshot of the template if the visit has no structure yet, then validation of the structure
+        and of the answers against it (required fields are only enforced once the visit is done).
         """
         super().clean()
 
-        if self.template and (not self.data or self.data == {}):
-            template_schema = self.template.schema if isinstance(self.template.schema, dict) else {}
-            sections = template_schema.get('sections', [])
-            
-            initial_data = {
-                "template_name": self.template.name,
-                "sections": []
-            }
-            for section in sections:
-                section_data = {
-                    "title": section.get("title", ""),
-                    "fields": []
-                }
-                for field in section.get("fields", []):
-                    section_data["fields"].append({
-                        "label": field.get("label", ""),
-                        "type": field.get("type", "text"),
-                        "required": field.get("required", False),
-                        "value": ""
-                    })
-                initial_data["sections"].append(section_data)
-            self.data = initial_data
+        if not self.instance_schema:
+            self.snapshot_template()
+        validate_template_schema(self.instance_schema)
+
+        if not isinstance(self.data, dict):
+            raise ValidationError("Les données de la visite doivent être un objet JSON.")
+        answers = self.data.get("answers", {})
+        # Required fields are only enforced by the "Terminer" action of the form (complete_visit):
+        # a visit can also be ticked as done from its planning, e.g. when it was filled elsewhere.
+        try:
+            cleaned = validate_answers(self.instance_schema, answers)
+        except AnswersValidationError as e:
+            # A plain error: the keys of the field errors are field ids of the visit, not fields of a form
+            raise ValidationError("Réponses invalides : " + " ; ".join(e.field_errors.values()))
+        self.data = {**self.data, "answers": cleaned}
 
     def save(self, *args, **kwargs):
-        self.full_clean()
+        # Skipped when only some fields are written: the answers are validated by the service that writes them
+        if kwargs.get("update_fields") is None:
+            self.full_clean()
         super().save(*args, **kwargs)
 
+    @property
+    def answers(self):
+        return self.data.get("answers", {}) if isinstance(self.data, dict) else {}
+
+    @property
+    def progress(self):
+        return compute_progress(self.instance_schema, self.answers)
+
+    @property
+    def is_late(self):
+        """A planned visit whose date is over (the stored DELAY status is kept for the existing records)."""
+        if self.current_status == self.Status.DELAY:
+            return True
+        return (
+            self.current_status == self.Status.SCHEDULED
+            and self.due_date is not None
+            and self.due_date < timezone.localdate()
+        )
+
+    @property
+    def days_until_due(self):
+        """Days left before the visit date (negative when over), or None without date."""
+        if not self.due_date:
+            return None
+        return (self.due_date - timezone.localdate()).days
+
+    @property
+    def display_template_name(self):
+        return self.template_name or (self.template.name if self.template else "Template supprimé")
+
+    @property
+    def template_is_available(self):
+        return self.template is not None and self.template.is_active
+
     def __str__(self):
-        return f"Visite {self.template.name} - Dossier {self.folder.reference}"
+        return f"Visite {self.display_template_name} - Dossier {self.folder.reference}"
 
 """
 

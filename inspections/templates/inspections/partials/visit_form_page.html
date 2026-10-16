@@ -1,0 +1,38 @@
+{# Header, navigation and body of the visit form. Context: see build_form_context; show_errors after a refused "Terminer". #}
+<header class="flex shrink-0 flex-wrap items-center gap-x-5 gap-y-3 border-b border-border-default bg-surface-primary px-4 py-3.5 sm:px-6">
+  <a href="{% url 'inspections:folder_detail' visit.folder_id %}?tab=visit"
+    class="inline-flex h-12 shrink-0 items-center gap-2 rounded-lg border border-border-default bg-surface-secondary px-4 text-sm font-semibold text-text-main transition-colors hover:bg-surface-hover">
+    <svg class="h-[18px] w-[18px]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+    Dossier
+  </a>
+  <div class="flex min-w-0 flex-1 basis-60 flex-col gap-0.5">
+    <h1 class="truncate text-xl font-bold text-text-main">
+      Visite{% if visit.due_date %} du {{ visit.due_date|date:"d/m/Y" }}{% endif %} · {{ visit.folder.company.name }}
+    </h1>
+    <span class="truncate text-[13px] text-text-subtle">
+      {{ visit.folder.reference }} · {{ visit.display_template_name }}{% if visit.folder.inspection_site_address %} · {{ visit.folder.inspection_site_address }}{% endif %}
+    </span>
+  </div>
+  {% include "inspections/partials/visit_form_progress.html" %}
+  {% include "inspections/partials/visit_form_status.html" %}
+</header>
+
+{% if visit.current_status == 'VALIDATED' or not visit.is_active %}
+<div class="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-status-warning-border bg-status-warning-bg px-6 py-2.5 text-sm text-status-warning">
+  <span class="font-semibold">
+    {% if not visit.is_active %}Cette visite est archivée : le formulaire est en lecture seule.
+    {% else %}Visite terminée{% if visit.completed_at %} le {{ visit.completed_at|date:"d/m/Y" }}{% endif %} : le formulaire est en lecture seule.{% endif %}
+  </span>
+  {% if visit.is_active %}
+  <button type="button" hx-post="{% url 'inspections:visit_reopen' visit.pk %}" hx-confirm="Rouvrir cette visite pour modifier les réponses ?"
+    class="h-10 cursor-pointer rounded-lg border border-status-warning-border px-4 text-xs font-semibold transition-colors hover:bg-surface-hover">Rouvrir la visite</button>
+  {% endif %}
+</div>
+{% endif %}
+
+<div class="flex min-h-0 flex-1 flex-col md:flex-row">
+  {% include "inspections/partials/visit_form_nav.html" %}
+  <div id="visit-form-body" class="flex min-h-0 min-w-0 flex-1 flex-col">
+    {% include "inspections/partials/visit_form_body.html" %}
+  </div>
+</div>

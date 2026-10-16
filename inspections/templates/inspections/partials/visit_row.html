@@ -1,0 +1,43 @@
+{# One row of the table of the visits. Context: visit, csrf_token. #}
+<div class="grid grid-cols-1 items-center gap-x-4 gap-y-2 border-t border-border-default px-5 py-3 lg:grid-cols-[7rem_7rem_minmax(0,1.2fr)_9.5rem_minmax(0,1fr)_21rem] {% if not visit.is_active %}opacity-70{% endif %}">
+  <span class="text-sm font-semibold tabular-nums text-text-main">{% if visit.due_date %}{{ visit.due_date|date:"d/m/Y" }}{% else %}—{% endif %}</span>
+  <span class="flex flex-wrap items-center gap-1.5">
+    {% include "inspections/partials/visit_status_badge.html" %}
+    {% if not visit.is_active %}<span class="rounded-full border border-status-warning-border bg-status-warning-bg px-2 py-0.5 text-[10px] font-semibold text-status-warning">Archivée</span>{% endif %}
+  </span>
+  <div>{% include "inspections/partials/visit_template_label.html" %}</div>
+  {% include "inspections/partials/visit_progress.html" %}
+  <span class="truncate text-sm text-text-muted">{{ visit.notes|default:"Aucune note" }}</span>
+  <span class="flex items-center justify-end gap-2 whitespace-nowrap">
+    <a href="{% url 'inspections:visit_form' visit.pk %}"
+      class="rounded-lg bg-brand-primary px-3.5 py-2 text-xs font-semibold text-brand-on transition-colors hover:bg-brand-hover whitespace-nowrap">
+      {% if visit.current_status == 'VALIDATED' or not visit.is_active %}Consulter{% elif visit.progress.done %}Reprendre{% else %}Ouvrir le formulaire{% endif %}
+    </a>
+    {% if visit.is_active %}
+    {# Once done, a visit leaves the "next visit" card: this box is the way to untick it #}
+    <label class="flex cursor-pointer items-center gap-1.5 text-xs font-semibold text-text-body" title="Visite effectuée">
+      <input type="checkbox" name="done" value="on" class="h-4 w-4 accent-brand-primary" {% if visit.current_status == 'VALIDATED' %}checked{% endif %}
+        hx-post="{% url 'inspections:visit_toggle_done' visit.pk %}" hx-trigger="change" hx-target="#tab-content" hx-swap="innerHTML"
+        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+      Effectuée
+    </label>
+    <button type="button" hx-post="{% url 'inspections:visit_archive' visit.pk %}" hx-target="#tab-content" hx-swap="innerHTML"
+      hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' hx-confirm="Êtes-vous sûr de vouloir archiver cette visite ?"
+      aria-label="Archiver la visite" title="Archiver"
+      class="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-border-default text-text-muted transition-colors hover:bg-surface-hover hover:text-text-main">
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10h14V9M10 13h4"/></svg>
+    </button>
+    {% else %}
+    <button type="button" hx-post="{% url 'inspections:visit_unarchive' visit.pk %}" hx-target="#tab-content" hx-swap="innerHTML"
+      hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' hx-confirm="Voulez-vous vraiment désarchiver cette visite ?"
+      class="cursor-pointer rounded-lg border border-border-default bg-surface-secondary px-3 py-2 text-xs font-semibold text-text-main transition-colors hover:bg-surface-tertiary">
+      Désarchiver
+    </button>
+    <button type="button" hx-get="{% url 'inspections:visit_delete' visit.pk %}" hx-target="#modal-container" hx-swap="innerHTML"
+      aria-label="Supprimer définitivement" title="Supprimer définitivement"
+      class="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-status-danger-border text-status-danger transition-colors hover:bg-status-danger-bg">
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>
+    </button>
+    {% endif %}
+  </span>
+</div>

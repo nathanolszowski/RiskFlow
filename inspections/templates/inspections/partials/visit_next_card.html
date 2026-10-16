@@ -1,0 +1,51 @@
+{# Next visit to do. Context: visit, folder. #}
+<div class="rounded-2xl border border-brand-border bg-brand-bg p-5">
+  <div class="flex flex-col gap-5 lg:flex-row lg:items-center">
+    <div class="flex shrink-0 flex-col gap-1">
+      <span class="text-[11px] font-bold uppercase tracking-widest text-brand-light">Prochaine visite</span>
+      {% if visit.due_date %}
+      <span class="text-xl font-bold text-text-main">{{ visit.due_date|date:"d/m/Y" }}</span>
+      <span class="text-xs font-semibold {% if visit.is_late %}text-status-danger{% else %}text-text-muted{% endif %}">
+        {% with days=visit.days_until_due %}{% if visit.is_late %}En retard{% elif days == 0 %}Aujourd'hui{% elif days == 1 %}Demain{% else %}Dans {{ days }} jours{% endif %}{% endwith %}
+      </span>
+      {% else %}
+      <span class="text-xl font-bold text-text-main">Date à définir</span>
+      {% endif %}
+    </div>
+
+    <div class="grid min-w-0 flex-1 grid-cols-1 gap-x-6 gap-y-3 text-sm text-text-body sm:grid-cols-2">
+      {% if folder.inspection_site_address %}
+      <span class="flex min-w-0 items-center gap-2.5">
+        <svg class="h-4 w-4 shrink-0 text-brand-light" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+        <span class="truncate">{{ folder.inspection_site_address }}</span>
+      </span>
+      {% endif %}
+      <span class="flex items-center gap-2.5 sm:col-span-2">
+        <svg class="h-4 w-4 shrink-0 text-brand-light" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>
+        {{ visit.display_template_name }} · {{ visit.progress.total }} champs
+      </span>
+      {% if visit.notes %}
+      <span class="text-text-muted sm:col-span-2">{{ visit.notes|truncatechars:140 }}</span>
+      {% endif %}
+    </div>
+
+    <div class="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center">
+      <div class="flex flex-row gap-2 lg:flex-col">
+        <a href="{% url 'inspections:visit_form' visit.pk %}"
+          class="inline-flex h-11 items-center justify-center rounded-lg bg-brand-primary px-5 text-sm font-bold text-brand-on transition-colors hover:bg-brand-hover">
+          {% if visit.progress.done %}Reprendre le formulaire{% else %}Ouvrir le formulaire{% endif %}
+        </a>
+        <button type="button" hx-get="{% url 'inspections:visit_update' visit.pk %}" hx-target="#modal-container" hx-swap="innerHTML"
+          class="inline-flex h-9 cursor-pointer items-center justify-center rounded-lg border border-border-hover px-4 text-xs font-semibold text-text-main transition-colors hover:bg-surface-hover">
+          Modifier
+        </button>
+      </div>
+      <label class="flex cursor-pointer flex-col items-center gap-2 rounded-lg border border-border-default bg-surface-primary px-4 py-3">
+        <span class="text-sm font-semibold text-text-main">Visite effectuée</span>
+        <input type="checkbox" name="done" value="on" class="h-6 w-6 accent-brand-primary"
+          hx-post="{% url 'inspections:visit_toggle_done' visit.pk %}" hx-trigger="change" hx-target="#tab-content" hx-swap="innerHTML"
+          hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+      </label>
+    </div>
+  </div>
+</div>

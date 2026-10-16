@@ -1,0 +1,6 @@
+{# Save indicator of the header. The script of the form switches it to "saving" / "not saved". Out of band when oob. #}
+<span id="save-status" {% if oob %}hx-swap-oob="true"{% endif %} data-state="saved" aria-live="polite"
+  class="inline-flex shrink-0 items-center gap-1.5 text-xs text-text-subtle data-[state=error]:font-semibold data-[state=error]:text-status-danger">
+  <svg class="h-3.5 w-3.5 text-brand-light" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>
+  <span data-save-text>{% if visit.revision %}Enregistré à {{ visit.updated_at|time:"H:i" }}{% else %}Enregistrement automatique{% endif %}</span>
+</span>

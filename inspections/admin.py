@@ -39,8 +39,9 @@ class VisitTemplateAdmin(admin.ModelAdmin):
 class VisitInstanceAdmin(admin.ModelAdmin):
     list_display = ('id', 'folder', 'template', 'current_status', 'is_active', 'created_by')
     list_filter = ('current_status', 'is_active', 'due_date')
-    search_fields = ('folder__reference', 'template__name')
-    readonly_fields = ('created_at', 'updated_by', 'updated_at', 'archived_at', 'archived_by')
+    search_fields = ('folder__reference', 'template__name', 'template_name')
+    # The snapshot of the template and the revision are only written by the services
+    readonly_fields = ('created_at', 'updated_by', 'updated_at', 'archived_at', 'archived_by', 'template_name', 'instance_schema', 'revision')
 
     formfield_overrides = {
         models.JSONField: {'widget': JSONEditorWidget},
