@@ -8,13 +8,16 @@ class InspectionFolderForm(forms.ModelForm):
         fields = [
                 'company',
                 'contact',
-                'current_phase',
                 'inspection_site_address',
                 'notes',
             ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        # A new folder skips the CREATION phase and starts directly at PREPARATION
+        if not self.instance.pk:
+            self.instance.current_phase = InspectionFolder.Phase.PREPARATION
 
         for name, field in self.fields.items():
             field.widget.attrs.update({"class": "form-input"})
@@ -35,6 +38,13 @@ class InspectionFolderUpdateForm(InspectionFolderForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        # CREATION is only a transient phase: not selectable (unless the folder is still in it)
+        phase_field = self.fields["current_phase"]
+        phase_field.choices = [
+            (value, label) for value, label in phase_field.choices
+            if value != InspectionFolder.Phase.CREATION or value == self.instance.current_phase
+        ]
 
         contact_field = self.fields.get("contact")
         if self.instance.pk and isinstance(contact_field, forms.ModelChoiceField):

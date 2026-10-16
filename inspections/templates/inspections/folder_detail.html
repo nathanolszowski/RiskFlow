@@ -23,8 +23,8 @@
       <option value="{% url 'inspections:folder_tab_overview' folder.id %}">Vue d'ensemble</option>
       <option value="{% url 'inspections:folder_tab_visit' folder.id %}">Formulaire de visite</option>
       <option value="{% url 'inspections:folder_tab_recommandations' folder.id %}">Recommandations</option>
-      <option value="">Médias</option>
-      <option value="">Rapports</option>
+      <option value="{% url 'inspections:folder_tab_overview' folder.id %}">Médias</option>
+      <option value="{% url 'inspections:folder_tab_overview' folder.id %}">Rapports</option>
     </select>
   </div>
 
@@ -62,6 +62,7 @@
 <!-- Desktop Tab Bar with Right-aligned Status & Action -->
 <div class="hidden sm:block mb-6" hx-on:click="
         let currentTab = event.target.closest('.tab-btn');
+        if (currentTab && currentTab.dataset.fallbackOverview !== undefined) currentTab = document.querySelector('.tab-btn[data-overview]');
         if (currentTab) {
             document.querySelectorAll('.tab-btn').forEach(t => {
                 t.classList.remove('border-brand-primary', 'text-brand-light');
@@ -81,7 +82,7 @@
     <nav class="-mb-px flex space-x-8" aria-label="Tabs" hx-target="#tab-content" hx-swap="innerHTML">
 
       <!-- Overview-->
-      <button hx-get="{% url 'inspections:folder_tab_overview' folder.id %}"
+      <button hx-get="{% url 'inspections:folder_tab_overview' folder.id %}" data-overview
         class="tab-btn group inline-flex items-center border-b-2 border-brand-primary px-1 pb-4 text-sm font-medium text-brand-light transition-colors cursor-pointer"
         aria-current="page">
         <svg class="mr-2 h-5 w-5 text-brand-light transition-colors" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
@@ -123,7 +124,7 @@
       </button>
 
       <!-- Médias -->
-      <button hx-get=""
+      <button hx-get="{% url 'inspections:folder_tab_overview' folder.id %}" data-fallback-overview
         class="tab-btn group inline-flex items-center border-b-2 border-transparent px-1 pb-4 text-sm font-medium text-text-subtle hover:border-border-hover hover:text-text-main transition-colors cursor-pointer">
         <svg class="mr-2 h-5 w-5 text-text-faded transition-colors" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
           stroke="currentColor">
@@ -134,7 +135,7 @@
       </button>
 
       <!-- Rapports -->
-      <button hx-get=""
+      <button hx-get="{% url 'inspections:folder_tab_overview' folder.id %}" data-fallback-overview
         class="tab-btn group inline-flex items-center border-b-2 border-transparent px-1 pb-4 text-sm font-medium text-text-subtle hover:border-border-hover hover:text-text-main transition-colors cursor-pointer">
         <svg class="mr-2 h-5 w-5 text-text-faded transition-colors" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
           stroke="currentColor">
