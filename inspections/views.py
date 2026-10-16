@@ -1,9 +1,10 @@
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 from django.core.paginator import Paginator
 from core.services import delete_archived_instance
+from django.forms import ModelChoiceField
 from django.http import HttpResponse
 from .forms import InspectionFolderForm, InspectionFolderUpdateForm, VisitInstanceUpdateForm, RecommandationUpdateForm
 from .models import InspectionFolder
@@ -77,7 +78,12 @@ def folder_detail(request, pk):
 @login_required
 @require_http_methods(["GET", "POST"])
 def create_folder(request):
-    """Vue HTMX pour créer un dossier d'inspection (depuis la liste ou la fiche Société)."""
+    """HTMX view to create a new inspection folder
+    - GET  : Render the form in a modal (folder_form_modal.html).
+    - POST : Validate the form and create the folder.
+             If True -> Return 204 to close the modal and refresh the list.
+             If False -> Render the form with errors (folder_form_modal.html).
+    """
     company_id = request.GET.get("company") or request.POST.get("company")
     selected_company = Company.objects.filter(pk=company_id).first() if company_id else None
 
@@ -85,10 +91,12 @@ def create_folder(request):
         form = InspectionFolderForm(request.POST)
 
         if selected_company:
-            form.fields['contact'].queryset = Contact.objects.filter(company=selected_company)
+            contact_field = form.fields['contact']
+            if isinstance(contact_field, ModelChoiceField):
+                contact_field.queryset = Contact.objects.filter(company=selected_company)
 
         if form.is_valid():
-            folder = create_tracked_instance(form, request.user)
+            create_tracked_instance(form, request.user)
 
             # From company
             if selected_company:
@@ -124,7 +132,9 @@ def create_folder(request):
     form = InspectionFolderForm(initial=initial_data)
 
     if selected_company:
-        form.fields['contact'].queryset = Contact.objects.filter(company=selected_company)
+        contact_field = form.fields['contact']
+        if isinstance(contact_field, ModelChoiceField):
+            contact_field.queryset = Contact.objects.filter(company=selected_company)
 
     return render(
         request, 
@@ -203,7 +213,7 @@ def folder_archive(request, folder_id):
             {
                 "title": "Archiver ce dossier ?",
                 "object_label": folder.reference,
-                "post_url": reverse("inspections:folder_archive", args=[folder.id]),
+                "post_url": reverse("inspections:folder_archive", args=[folder.pk]),
                 "sections": [{
                     "warning": True,
                     "title": "Tous les éléments liés à ce dossier seront archivés :",
@@ -220,7 +230,7 @@ def folder_archive(request, folder_id):
         response["HX-Refresh"] = "true"
         return response
 
-    return redirect("inspections:folder_detail", pk=folder.id)
+    return redirect("inspections:folder_detail", pk=folder.pk)
 
 
 @login_required
@@ -234,7 +244,7 @@ def folder_unarchive(request, folder_id):
         response["HX-Refresh"] = "true"
         return response
 
-    return redirect("inspections:folder_detail", pk=folder.id)
+    return redirect("inspections:folder_detail", pk=folder.pk)
 
 def _delete_modal(request, obj, *, title, label, post_url, sections, post_target=None):
     """Render the permanent-deletion modal; it only offers confirmation once the object is archived."""
@@ -278,7 +288,7 @@ def folder_delete(request, folder_id):
             request, folder,
             title="Supprimer définitivement ce dossier ?",
             label=folder.reference,
-            post_url=reverse("inspections:folder_delete", args=[folder.id]),
+            post_url=reverse("inspections:folder_delete", args=[folder.pk]),
             sections=[{
                 "warning": True,
                 "title": "Seront supprimés avec ce dossier :",

@@ -47,7 +47,7 @@ class VisitInstanceAdmin(admin.ModelAdmin):
     }
 
     def save_model(self, request, obj, form, change):
-        # 🎯 Correction de l'indentation et vérification de la présence de created_by
+        # Correctly set the created_by and updated_by fields based on whether the object is being created or updated
         if not change or not obj.created_by:
             obj.created_by = request.user
         obj.updated_by = request.user

@@ -5,6 +5,10 @@ from pydantic import ValidationError as PydanticValidationError
 from .validators import VisitTemplateSchema, get_default_template_structure
 from django.utils import timezone
 import uuid
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from django.db.models.fields.related_descriptors import RelatedManager
 """
 
 ==== INSPECTION FOLDER SECTION ====
@@ -43,6 +47,11 @@ class InspectionFolder(TrackingModel):
         related_name='inspection_folders',
         verbose_name="Contact référent"
     )
+
+    if TYPE_CHECKING:
+        # Reverse relations (related_name), declared for Pylance only
+        visits: 'RelatedManager[VisitInstance]'
+        recommandations: 'RelatedManager[Recommandation]'
 
     class Meta(TrackingModel.Meta):
         verbose_name = "Dossier d'inspection"
@@ -133,7 +142,7 @@ class InspectionFolder(TrackingModel):
         """Return the date of the next scheduled visit for this inspection folder, or None if there are no upcoming visits."""
         from django.utils import timezone
         
-        # On cherche la première visite dont la date est supérieure ou égale à aujourd'hui
+        # First upcoming visit with a due date greater than or equal to today
         next_visit = self.visits.filter(
             due_date__gte=timezone.now()
         ).order_by('due_date').first()
@@ -161,11 +170,11 @@ class InspectionFolder(TrackingModel):
             steps.append({
                 "label": phase.label,
                 "state": state,
-                "position": round(index / last_index * 100),
+                "style": f"left: {round(index / last_index * 100)}%",
             })
 
         return {
-            "percent": round(current_index / last_index * 100),
+            "style": f"width: {round(current_index / last_index * 100)}%",
             "steps": steps,
         }
 
@@ -225,6 +234,10 @@ class VisitInstance(TrackingModel):
         blank=True,
         verbose_name="Notes sur la visite"
     )
+
+    if TYPE_CHECKING:
+        # FK id attribute, declared for Pylance only
+        folder_id: int
 
     class Meta(TrackingModel.Meta):
         verbose_name = "Instance de visite"
@@ -326,6 +339,10 @@ class Recommandation(TrackingModel):
         blank=True,
         verbose_name="Notes sur la recommandation"
     )
+
+    if TYPE_CHECKING:
+        # FK id attribute, declared for Pylance only
+        folder_id: int
 
     class Meta(TrackingModel.Meta):
         verbose_name = "Recommandation"

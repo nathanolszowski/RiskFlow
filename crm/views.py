@@ -1,3 +1,4 @@
+from typing import Any
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.decorators import login_required
@@ -431,7 +432,7 @@ def contact_archive(request, pk):
     folders = get_contact_archive_impact(contact)
 
     if request.method == "GET":
-        context = {
+        context: dict[str, Any] = {
             "title": "Archiver ce contact ?",
             "object_label": f"{contact.first_name} {contact.last_name}",
             "post_url": reverse("crm:contact_archive", args=[contact.pk]),

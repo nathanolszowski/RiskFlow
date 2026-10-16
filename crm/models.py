@@ -1,6 +1,11 @@
+from typing import TYPE_CHECKING
 from django.db import models
 from django.utils import timezone
 from core.models import TrackingModel
+
+if TYPE_CHECKING:
+    from django.db.models.fields.related_descriptors import RelatedManager
+    from inspections.models import InspectionFolder
 
 class Company(TrackingModel):
     reference = models.CharField(max_length=50, unique=True, verbose_name="Référence Société")
@@ -17,6 +22,11 @@ class Company(TrackingModel):
     labels = models.TextField(blank=True, verbose_name="Certifications et labels")
     executive_board = models.TextField(blank=True, verbose_name="Conseil d'administration")
     website = models.URLField(blank=True, verbose_name="Site web")
+
+    if TYPE_CHECKING:
+        # Reverse relation (related_name), declared for Pylance only
+        contacts: 'RelatedManager[Contact]'
+        inspection_folders: 'RelatedManager[InspectionFolder]'
 
     class Meta(TrackingModel.Meta):
         verbose_name = "Société"
@@ -75,6 +85,10 @@ class Contact(TrackingModel):
     phone_number_fix = models.CharField(max_length=20, blank=True, verbose_name="Numéro de téléphone fixe")
     phone_number_mobile = models.CharField(max_length=20, blank=True, verbose_name="Numéro de téléphone mobile")
     position = models.CharField(max_length=100, verbose_name="Poste")
+
+    if TYPE_CHECKING:
+        # Reverse relation (related_name), declared for Pylance only
+        inspection_folders: 'RelatedManager[InspectionFolder]'
 
     class Meta(TrackingModel.Meta):
         verbose_name = "Contact"

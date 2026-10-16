@@ -13,12 +13,12 @@
     <!-- Track, fill & milestones -->
     <div class="relative h-2 rounded-full bg-surface-secondary border border-border-default">
       <div class="absolute inset-y-0 left-0 rounded-full bg-brand-primary transition-all"
-        style="width: {{ progress.percent }}%"></div>
+        {% if progress.style %}style="{{ progress.style }}"{% endif %}></div>
 
       {% for step in progress.steps %}
       <span class="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full border-2
         {% if step.state == 'todo' %}bg-surface-modal border-border-default{% elif step.state == 'current' %}bg-brand-primary border-brand-light ring-4 ring-brand-primary/20{% else %}bg-brand-primary border-brand-primary{% endif %}"
-        style="left: {{ step.position }}%"></span>
+        {% if step.style %}style="{{ step.style }}"{% endif %}></span>
       {% endfor %}
     </div>
 
@@ -28,7 +28,7 @@
       <span class="absolute whitespace-nowrap
         {% if forloop.first %}left-0 -ml-2{% elif forloop.last %}right-0 -mr-2 text-right{% else %}-translate-x-1/2 text-center{% endif %}
         {% if step.state == 'current' %}font-semibold text-text-main{% elif step.state == 'done' %}text-brand-light{% else %}text-text-faded{% endif %}"
-        {% if not forloop.first and not forloop.last %}style="left: {{ step.position }}%"{% endif %}>
+        {% if not forloop.first and not forloop.last %}style="{{ step.style }}"{% endif %}>
         {{ step.label }}
       </span>
       {% endfor %}
