@@ -16,11 +16,13 @@ MONTHS_SHORT_FR = [
     "juil.", "août", "sept.", "oct.", "nov.", "déc.",
 ]
 
-# Phases counted as "en cours" (COMPLETED and ARCHIVED are out), with their chart color token.
+# Phases counted as "en cours" (CLOSED and ARCHIVED are out), with their chart color token.
 ONGOING_PHASES = [
     (InspectionFolder.Phase.CREATION, "var(--chart-1)"),
-    (InspectionFolder.Phase.IN_PROGRESS, "var(--chart-2)"),
-    (InspectionFolder.Phase.REVIEW, "var(--chart-3)"),
+    (InspectionFolder.Phase.PREPARATION, "var(--chart-2)"),
+    (InspectionFolder.Phase.VISIT, "var(--chart-3)"),
+    (InspectionFolder.Phase.REPORT, "var(--chart-4)"),
+    (InspectionFolder.Phase.FOLLOW_UP, "var(--chart-5)"),
 ]
 
 UPCOMING_VISITS_LIMIT = 4

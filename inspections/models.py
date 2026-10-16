@@ -17,14 +17,18 @@ if TYPE_CHECKING:
 
 class InspectionFolder(TrackingModel):
     class Phase(models.TextChoices):
-        CREATION = 'CREATION', 'En création'
-        IN_PROGRESS = 'IN_PROGRESS', 'Dossier en cours'
-        REVIEW = 'REVIEW', 'En cours de revue'
-        COMPLETED = 'COMPLETED', 'Terminé / Clôturé'
+        CREATION = 'CREATION', 'Création'
+        PREPARATION = 'PREPARATION', 'Préparation'
+        VISIT = 'VISIT', 'Visite'
+        REPORT = 'REPORT', 'Rapport'
+        FOLLOW_UP = 'FOLLOW_UP', 'Suivi'
+        CLOSED = 'CLOSED', 'Clôturé'
         ARCHIVED = 'ARCHIVED', 'Archivé'
 
     # Ordered phases displayed in the progress bar (ARCHIVED is out of the progression)
-    PROGRESS_PHASES = [Phase.CREATION, Phase.IN_PROGRESS, Phase.REVIEW, Phase.COMPLETED]
+    PROGRESS_PHASES = [
+        Phase.CREATION, Phase.PREPARATION, Phase.VISIT, Phase.REPORT, Phase.FOLLOW_UP, Phase.CLOSED,
+    ]
 
     reference = models.CharField(max_length=100, unique=True, verbose_name="Référence du dossier")
     current_phase = models.CharField(max_length=20, choices=Phase.choices, default=Phase.CREATION, verbose_name="Phase actuelle")
