@@ -40,7 +40,7 @@ def visit_form_section(request, pk, section_id):
     visit = get_visit_by_id(pk, request.user)
     context = build_form_context(visit, section_id)
     context["oob"] = True
-    return render(request, "inspections/partials/visit_form_body.html", context)
+    return render(request, "inspections/partials/visit/visit_form_body.html", context)
 
 
 def _saved_context(visit, section_id, field_id, error=None):
@@ -74,12 +74,12 @@ def visit_save_answers(request, pk):
         message = e.field_errors[field_id] if isinstance(e, AnswersValidationError) else e.messages[0]
         return render(
             request,
-            "inspections/partials/visit_form_saved.html",
+            "inspections/partials/visit/visit_form_saved.html",
             _saved_context(visit, section_id, field_id, message),
             status=422,
         )
 
-    return render(request, "inspections/partials/visit_form_saved.html", _saved_context(visit, section_id, field_id))
+    return render(request, "inspections/partials/visit/visit_form_saved.html", _saved_context(visit, section_id, field_id))
 
 
 @login_required
@@ -98,7 +98,7 @@ def visit_complete(request, pk):
         visit.refresh_from_db()
         context = build_form_context(visit, get_first_incomplete_section(visit), errors=e.field_errors)
         context["show_errors"] = True
-        return render(request, "inspections/partials/visit_form_page.html", context, status=422)
+        return render(request, "inspections/partials/visit/visit_form_page.html", context, status=422)
 
     response = HttpResponse(status=204)
     response["HX-Redirect"] = reverse("inspections:folder_detail", args=[visit.folder_id]) + "?tab=visit"

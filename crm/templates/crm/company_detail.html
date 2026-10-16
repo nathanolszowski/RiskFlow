@@ -15,7 +15,7 @@
       <div class="min-w-0">
         <div class="flex items-center gap-3">
           <h1 class="text-2xl font-bold text-text-main tracking-tight truncate">{{ company.name }}</h1>
-          {% include "core/partials/status_badge.html" with is_active=company.is_active %}
+          {% include "core/partials/ui/status_badge.html" with is_active=company.is_active %}
         </div>
         {% if company.reference %}
         <p class="text-xs text-text-subtle font-mono mt-0.5">Réf. Client : {{ company.reference }}</p>
@@ -73,11 +73,11 @@
   <!-- Single Column Layout -->
   <div class="space-y-6">
 
-    {% include "core/partials/tracking_info.html" with object=company %}
+    {% include "core/partials/tracking/tracking_info.html" with object=company %}
 
     <!-- BLOCK 1: Company Information (through HTMX) -->
     <div id="company-left-column">
-      {% include "crm/partials/company_read.html" %}
+      {% include "crm/partials/company/company_read.html" %}
     </div>
 
     <!-- BLOCK 2: Linked Contacts -->

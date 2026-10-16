@@ -1,6 +1,6 @@
 <div class="space-y-4">
     <div class="flex justify-between items-center border-b border-border-default pb-3">
-        <h3 class="text-lg font-bold text-text-main">🚨 Liste des Recommandations</h3>
+        <h3 class="text-lg font-bold text-text-main">Liste des Recommandations</h3>
         <span class="text-xs text-text-muted font-mono">{{ active_count }} Active{{ active_count|pluralize }} sur {{ recommandations|length }}</span>
     </div>
 
@@ -12,7 +12,7 @@
 
     <div class="space-y-3">
         {% for rec in recommandations %}
-        {% include "inspections/partials/recommandation_read.html" %}
+        {% include "inspections/partials/recommandation/recommandation_read.html" %}
         {% empty %}
         <p class="text-sm text-text-muted italic text-center py-4">Aucune recommandation émise pour le moment.</p>
         {% endfor %}

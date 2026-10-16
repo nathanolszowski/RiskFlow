@@ -1,23 +1,23 @@
 <!-- Traceability -->
 <div class="mb-6">
-    {% include "core/partials/tracking_info.html" with object=folder %}
+    {% include "core/partials/tracking/tracking_info.html" with object=folder %}
 </div>
 
 <!-- Phase progress -->
 <div class="mb-6">
-    {% include "inspections/partials/folder_progress.html" %}
+    {% include "inspections/partials/folder/folder_progress.html" %}
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
     <div class="lg:col-span-2">
-        {% include "inspections/partials/folder_read.html" %}
+        {% include "inspections/partials/folder/folder_read.html" %}
     </div>
 
     <div class="lg:col-span-1">
         <div
             class="rounded-2xl border border-border-default bg-surface-primary p-6 backdrop-blur-xs h-full transition-colors">
-            <h3 class="text-lg font-bold text-text-main mb-4">🏢 Informations Client</h3>
+            <h3 class="text-lg font-bold text-text-main mb-4">Informations Client</h3>
             <p class="text-sm text-text-main font-bold">{{ folder.company.name }}</p>
             <p class="text-sm text-text-main">{{ folder.company.business_line }}</p>
 

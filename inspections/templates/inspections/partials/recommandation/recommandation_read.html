@@ -16,7 +16,7 @@
             <span class="col-span-2 row-start-2 flex min-w-0 flex-col gap-0.5 md:col-span-1 md:row-start-auto">
                 <span class="flex items-center gap-2 font-mono text-[11px] text-text-subtle">
                     REC-{{ rec.pk }}
-                    {% if not rec.is_active %}{% include "core/partials/status_badge.html" with is_active=False %}{% endif %}
+                    {% if not rec.is_active %}{% include "core/partials/ui/status_badge.html" with is_active=False %}{% endif %}
                 </span>
                 <span class="truncate text-[15px] font-semibold text-text-main">{{ rec.topic|default:"Sans sujet" }}</span>
             </span>
@@ -75,7 +75,7 @@
             </div>
 
             <div class="flex flex-wrap items-center justify-between gap-3">
-                {% include "core/partials/tracking_line.html" with object=rec %}
+                {% include "core/partials/tracking/tracking_line.html" with object=rec %}
 
                 <div class="flex flex-wrap items-center gap-2">
                     {% if not rec.is_active %}

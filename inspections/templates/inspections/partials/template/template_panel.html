@@ -26,7 +26,7 @@
   hx-vals='{"scope": "{{ scope }}", "folder": "{{ folder_id|default:"" }}"}'
   class="form-input">
 
-{% include "inspections/partials/template_list.html" %}
+{% include "inspections/partials/template/template_list.html" %}
 
 <button type="button" hx-get="{% url 'inspections:template_create' %}{% if folder_id %}?folder={{ folder_id }}{% endif %}"
   hx-target="#template-drawer-content" hx-swap="innerHTML"

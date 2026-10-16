@@ -13,8 +13,8 @@
       {{ visit.folder.reference }} · {{ visit.display_template_name }}{% if visit.folder.inspection_site_address %} · {{ visit.folder.inspection_site_address }}{% endif %}
     </span>
   </div>
-  {% include "inspections/partials/visit_form_progress.html" %}
-  {% include "inspections/partials/visit_form_status.html" %}
+  {% include "inspections/partials/visit/visit_form_progress.html" %}
+  {% include "inspections/partials/visit/visit_form_status.html" %}
 </header>
 
 {% if visit.current_status == 'VALIDATED' or not visit.is_active %}
@@ -31,8 +31,8 @@
 {% endif %}
 
 <div class="flex min-h-0 flex-1 flex-col md:flex-row">
-  {% include "inspections/partials/visit_form_nav.html" %}
+  {% include "inspections/partials/visit/visit_form_nav.html" %}
   <div id="visit-form-body" class="flex min-h-0 min-w-0 flex-1 flex-col">
-    {% include "inspections/partials/visit_form_body.html" %}
+    {% include "inspections/partials/visit/visit_form_body.html" %}
   </div>
 </div>

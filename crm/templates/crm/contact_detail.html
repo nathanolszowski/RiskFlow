@@ -58,7 +58,7 @@
             <h1 class="text-3xl font-bold text-text-main">
                 {{ contact.first_name }} {{ contact.last_name }}
             </h1>
-            {% include "core/partials/status_badge.html" with is_active=contact.is_active %}
+            {% include "core/partials/ui/status_badge.html" with is_active=contact.is_active %}
         </div>
         {% if contact.position %}
         <p class="text-text-subtle text-lg mt-1">{{ contact.position }}</p>
@@ -67,14 +67,14 @@
 
     <!-- Traceability -->
     <div class="mb-6">
-        {% include "core/partials/tracking_info.html" with object=contact %}
+        {% include "core/partials/tracking/tracking_info.html" with object=contact %}
     </div>
 
     <!-- Contact card -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
         <!-- Left column : Main infos (through HTMX) -->
-        {% include "crm/partials/contact_read.html" %}
+        {% include "crm/partials/contact/contact_read.html" %}
 
         <!-- Right Column : Related company -->
         <div class="space-y-6">

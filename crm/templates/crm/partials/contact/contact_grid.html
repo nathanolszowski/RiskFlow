@@ -23,7 +23,7 @@
                     </div>
 
                     <div class="flex shrink-0 flex-col items-end gap-1.5">
-                        {% include "core/partials/status_badge.html" with is_active=contact.is_active %}
+                        {% include "core/partials/ui/status_badge.html" with is_active=contact.is_active %}
                         {% if contact.is_primary %}
                         <span class="inline-flex items-center rounded bg-brand-primary/10 px-2 py-0.5 text-[10px] font-medium text-brand-light border border-brand-primary/20">
                             Principal

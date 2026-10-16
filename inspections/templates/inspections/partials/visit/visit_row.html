@@ -2,11 +2,11 @@
 <div class="grid grid-cols-1 items-center gap-x-4 gap-y-2 border-t border-border-default px-5 py-3 lg:grid-cols-[7rem_7rem_minmax(0,1.2fr)_9.5rem_minmax(0,1fr)_21rem] {% if not visit.is_active %}opacity-70{% endif %}">
   <span class="text-sm font-semibold tabular-nums text-text-main">{% if visit.due_date %}{{ visit.due_date|date:"d/m/Y" }}{% else %}—{% endif %}</span>
   <span class="flex flex-wrap items-center gap-1.5">
-    {% include "inspections/partials/visit_status_badge.html" %}
+    {% include "inspections/partials/visit/visit_status_badge.html" %}
     {% if not visit.is_active %}<span class="rounded-full border border-status-warning-border bg-status-warning-bg px-2 py-0.5 text-[10px] font-semibold text-status-warning">Archivée</span>{% endif %}
   </span>
-  <div>{% include "inspections/partials/visit_template_label.html" %}</div>
-  {% include "inspections/partials/visit_progress.html" %}
+  <div>{% include "inspections/partials/visit/visit_template_label.html" %}</div>
+  {% include "inspections/partials/visit/visit_progress.html" %}
   <span class="truncate text-sm text-text-muted">{{ visit.notes|default:"Aucune note" }}</span>
   <span class="flex items-center justify-end gap-2 whitespace-nowrap">
     <a href="{% url 'inspections:visit_form' visit.pk %}"

@@ -82,7 +82,7 @@
   <span class="h-14 w-px"></span>
   {% endif %}
 
-  {% include "inspections/partials/visit_form_remaining.html" with oob=False %}
+  {% include "inspections/partials/visit/visit_form_remaining.html" with oob=False %}
 
   <div class="flex gap-3">
     {% if next_section_id %}
@@ -97,5 +97,5 @@
 </footer>
 
 {% if oob %}
-{% include "inspections/partials/visit_form_nav.html" %}
+{% include "inspections/partials/visit/visit_form_nav.html" %}
 {% endif %}

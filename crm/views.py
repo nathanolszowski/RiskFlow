@@ -62,7 +62,7 @@ def company_list_paginated(request, page=1):
 
     return render(
         request,
-        "crm/partials/company_grid.html",
+        "crm/partials/company/company_grid.html",
         {
             "companies": page_obj,
             "page_obj": page_obj,
@@ -101,7 +101,7 @@ def create_company(request):
 
             response = render(
                 request,
-                "crm/partials/company_grid.html",
+                "crm/partials/company/company_grid.html",
                 {"companies": page_obj, "page_obj": page_obj},
             )
             response["HX-Trigger"] = "closeModal"
@@ -109,14 +109,14 @@ def create_company(request):
         else:
             return render(
                 request,
-                "crm/partials/company_form_modal.html",
+                "crm/partials/company/company_form_modal.html",
                 {"form": form},
                 status=422,
             )
 
     form = CompanyForm()
     return render(
-        request, "crm/partials/company_form_modal.html", {"form": form}
+        request, "crm/partials/company/company_form_modal.html", {"form": form}
     )
 
 
@@ -140,7 +140,7 @@ def company_inline_update(request, pk):
             company.save()
             return render(
                 request,
-                "crm/partials/company_read.html",
+                "crm/partials/company/company_read.html",
                 {"company": company, "refresh_tracking": True},
             )
     else:
@@ -148,7 +148,7 @@ def company_inline_update(request, pk):
 
     return render(
         request,
-        "crm/partials/company_update.html",
+        "crm/partials/company/company_update.html",
         {"company": company, "form": form},
     )
 
@@ -163,7 +163,7 @@ def company_inline_read(request, pk):
     company = get_object_or_404(Company, pk=pk)
     return render(
         request,
-        "crm/partials/company_read.html",
+        "crm/partials/company/company_read.html",
         {"company": company},
     )
 
@@ -211,7 +211,7 @@ def company_archive(request, pk):
             })
         return render(
             request,
-            "core/partials/archive_confirm_modal.html",
+            "core/partials/modal/archive_confirm_modal.html",
             {
                 "title": "Archiver ce client ?",
                 "object_label": company.name,
@@ -262,7 +262,7 @@ def search_siret_api(request):
     else:
         context = {"found": False, "query": siret_query}
 
-    return render(request, "crm/partials/siret_search_result.html", context)
+    return render(request, "crm/partials/company/siret_search_result.html", context)
 
 
 # ==========================================
@@ -302,7 +302,7 @@ def contact_list_paginated(request, page=1):
 
     return render(
         request,
-        "crm/partials/contact_grid.html",
+        "crm/partials/contact/contact_grid.html",
         {
             "contacts": page_obj,
             "page_obj": page_obj,
@@ -346,7 +346,7 @@ def create_contact(request):
 
             response = render(
                 request,
-                "crm/partials/contact_grid.html",
+                "crm/partials/contact/contact_grid.html",
                 {"contacts": page_obj, "page_obj": page_obj},
             )
             response["HX-Trigger"] = "closeModal"
@@ -354,7 +354,7 @@ def create_contact(request):
         else:
             return render(
                 request,
-                "crm/partials/contact_form_modal.html",
+                "crm/partials/contact/contact_form_modal.html",
                 {"form": form},
                 status=422,
             )
@@ -365,7 +365,7 @@ def create_contact(request):
 
     form = ContactForm(initial=initial_data)
     return render(
-        request, "crm/partials/contact_form_modal.html", {"form": form}
+        request, "crm/partials/contact/contact_form_modal.html", {"form": form}
     )
 
 @login_required
@@ -390,7 +390,7 @@ def contact_inline_update(request, pk):
             contact.save()
             return render(
                 request,
-                "crm/partials/contact_read.html",
+                "crm/partials/contact/contact_read.html",
                 {"contact": contact, "refresh_tracking": True},
             )
     else:
@@ -398,7 +398,7 @@ def contact_inline_update(request, pk):
 
     return render(
         request,
-        "crm/partials/contact_update.html",
+        "crm/partials/contact/contact_update.html",
         {"contact": contact, "form": form},
     )
 
@@ -415,7 +415,7 @@ def contact_inline_read(request, pk):
     )
     return render(
         request,
-        "crm/partials/contact_read.html",
+        "crm/partials/contact/contact_read.html",
         {"contact": contact},
     )
 
@@ -444,7 +444,7 @@ def contact_archive(request, pk):
                 "entries": [f.reference for f in folders],
                 "note": "Changez d'abord le contact référent sur ces dossiers, puis archivez le contact.",
             }
-        return render(request, "core/partials/archive_confirm_modal.html", context)
+        return render(request, "core/partials/modal/archive_confirm_modal.html", context)
 
     if folders.exists():
         return HttpResponse(
@@ -530,7 +530,7 @@ def company_delete(request, pk):
             })
         else:
             context["sections"].append({"warning": True, "title": "Cette action est irréversible."})
-        return render(request, "core/partials/archive_confirm_modal.html", context)
+        return render(request, "core/partials/modal/archive_confirm_modal.html", context)
 
     if blocking:
         return HttpResponse(blocking["title"], status=409)
@@ -570,7 +570,7 @@ def contact_delete(request, pk):
     if request.method == "GET":
         return render(
             request,
-            "core/partials/archive_confirm_modal.html",
+            "core/partials/modal/archive_confirm_modal.html",
             {
                 "title": "Supprimer définitivement ce contact ?",
                 "object_label": f"{contact.first_name} {contact.last_name}",

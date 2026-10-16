@@ -17,7 +17,7 @@ def dashboard(request):
     month, year = parse_period(request.GET.get('month'), request.GET.get('year'))
     context = get_dashboard_context(request.user, month, year)
     context['today'] = timezone.localdate()
-    template = 'core/partials/dashboard_content.html' if request.htmx else 'core/dashboard.html'
+    template = 'core/partials/dashboard/dashboard_content.html' if request.htmx else 'core/dashboard.html'
     return render(request, template, context)
 
 @htmx_login_required(redirect=False)
@@ -58,7 +58,7 @@ def global_search(request):
             Q(email__icontains=query)
         )[:5]
 
-    return render(request, 'core/partials/search_results.html', {
+    return render(request, 'core/partials/search/search_results.html', {
         'query': query,
         'folders': folders,
         'companies': companies,

@@ -1,6 +1,0 @@
-{# Answer of a save: everything is out of band, nothing replaces the field being filled. #}
-{% include "inspections/partials/visit_form_progress.html" %}
-{% include "inspections/partials/visit_form_nav.html" %}
-{% include "inspections/partials/visit_form_remaining.html" %}
-{% if not error %}{% include "inspections/partials/visit_form_status.html" %}{% endif %}
-<p id="err-{{ changed_field }}" hx-swap-oob="true" class="text-[13px] font-semibold text-status-danger{% if not error %} hidden{% endif %}">{{ error|default:"" }}</p>

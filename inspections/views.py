@@ -57,7 +57,7 @@ def folder_list_paginated(request, page=1):
 
     return render(
         request,
-        "inspections/partials/folder_grid.html",
+        "inspections/partials/folder/folder_grid.html",
         {
             "folders": page_obj,
             "page_obj": page_obj,
@@ -116,7 +116,7 @@ def create_folder(request):
 
             response = render(
                 request,
-                "inspections/partials/folder_grid.html",
+                "inspections/partials/folder/folder_grid.html",
                 {"folders": page_obj, "page_obj": page_obj},
             )
             response["HX-Trigger"] = "closeModal"
@@ -125,7 +125,7 @@ def create_folder(request):
         else:
             return render(
                 request,
-                "inspections/partials/folder_form_modal.html",
+                "inspections/partials/folder/folder_form_modal.html",
                 {"form": form, "selected_company": selected_company},
                 status=422,
             )
@@ -143,7 +143,7 @@ def create_folder(request):
 
     return render(
         request, 
-        "inspections/partials/folder_form_modal.html", 
+        "inspections/partials/folder/folder_form_modal.html", 
         {"form": form, "selected_company": selected_company}
     )
 
@@ -167,7 +167,7 @@ def folder_inline_update(request, pk):
             folder.save()
             return render(
                 request,
-                "inspections/partials/folder_read.html",
+                "inspections/partials/folder/folder_read.html",
                 {"folder": folder, "refresh_tracking": True},
             )
     else:
@@ -175,7 +175,7 @@ def folder_inline_update(request, pk):
 
     return render(
         request,
-        "inspections/partials/folder_update.html",
+        "inspections/partials/folder/folder_update.html",
         {"folder": folder, "form": form},
     )
 
@@ -190,7 +190,7 @@ def folder_inline_read(request, pk):
     folder = get_inspection_folder_by_id(pk, request.user)
     return render(
         request,
-        "inspections/partials/folder_read.html",
+        "inspections/partials/folder/folder_read.html",
         {"folder": folder},
     )
 
@@ -214,7 +214,7 @@ def folder_archive(request, folder_id):
         ]
         return render(
             request,
-            "core/partials/archive_confirm_modal.html",
+            "core/partials/modal/archive_confirm_modal.html",
             {
                 "title": "Archiver ce dossier ?",
                 "object_label": folder.reference,
@@ -261,7 +261,7 @@ def _delete_modal(request, obj, *, title, label, post_url, sections, post_target
         }
     return render(
         request,
-        "core/partials/archive_confirm_modal.html",
+        "core/partials/modal/archive_confirm_modal.html",
         {
             "title": title,
             "object_label": label,
@@ -347,7 +347,7 @@ def visit_create(request, folder_id):
                 return response
         response = render(
             request,
-            "inspections/partials/visit_create_modal.html",
+            "inspections/partials/visit/visit_create_modal.html",
             {"folder": folder, "form": form},
             status=422,
         )
@@ -357,7 +357,7 @@ def visit_create(request, folder_id):
         return response
 
     form = VisitCreateForm(user=request.user, initial={"template": request.GET.get("template"), "due_date": timezone.localdate()})
-    return render(request, "inspections/partials/visit_create_modal.html", {"folder": folder, "form": form})
+    return render(request, "inspections/partials/visit/visit_create_modal.html", {"folder": folder, "form": form})
 
 
 @login_required
@@ -381,13 +381,13 @@ def visit_update(request, pk):
             response = _render_visit_tab(request, visit.folder)
             response["HX-Trigger"] = "closeModal"
             return response
-        response = render(request, "inspections/partials/visit_update_modal.html", {"visit": visit, "form": form}, status=422)
+        response = render(request, "inspections/partials/visit/visit_update_modal.html", {"visit": visit, "form": form}, status=422)
         response["HX-Retarget"] = "#modal-container"
         response["HX-Reswap"] = "innerHTML"
         return response
 
     form = VisitInstanceUpdateForm(instance=visit)
-    return render(request, "inspections/partials/visit_update_modal.html", {"visit": visit, "form": form})
+    return render(request, "inspections/partials/visit/visit_update_modal.html", {"visit": visit, "form": form})
 
 
 @login_required
@@ -484,7 +484,7 @@ def recommandation_inline_update(request, pk):
             rec.save()
             return render(
                 request,
-                "inspections/partials/recommandation_read.html",
+                "inspections/partials/recommandation/recommandation_read.html",
                 {"rec": rec},
             )
     else:
@@ -492,7 +492,7 @@ def recommandation_inline_update(request, pk):
 
     return render(
         request,
-        "inspections/partials/recommandation_update.html",
+        "inspections/partials/recommandation/recommandation_update.html",
         {"rec": rec, "form": form},
     )
 
@@ -507,7 +507,7 @@ def recommandation_inline_read(request, pk):
     rec = get_recommandation_by_id(pk, request.user)
     return render(
         request,
-        "inspections/partials/recommandation_read.html",
+        "inspections/partials/recommandation/recommandation_read.html",
         {"rec": rec},
     )
 
@@ -581,7 +581,7 @@ def folder_tab_overview(request, pk):
     folder = get_inspection_folder_by_id(pk, request.user)
     return render(
         request,
-        "inspections/partials/tab_overview.html",
+        "inspections/partials/tabs/tab_overview.html",
         {
             "folder": folder,
             "company_folders": get_company_folders(folder.company, request.user),
@@ -594,7 +594,7 @@ def _render_visit_tab(request, folder):
     status = "archived" if request.GET.get("status") == "archived" else "active"
     return render(
         request,
-        "inspections/partials/tab_visit.html",
+        "inspections/partials/tabs/tab_visit.html",
         {
             "folder": folder,
             "status": status,
@@ -618,7 +618,7 @@ def _render_recommandations_tab(request, folder):
     """Render the recommendations tab content."""
     return render(
         request,
-        "inspections/partials/tab_recommandations.html",
+        "inspections/partials/tabs/tab_recommandations.html",
         {
             "recommandations": folder.recommandations.select_related("created_by", "updated_by"),
             "active_count": folder.recommandations.filter(is_active=True).count(),

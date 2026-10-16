@@ -62,10 +62,10 @@ def _render_panel(request, scope=None, drawer=False):
     """The list of templates. drawer=True renders the whole side panel (overlay included)."""
     context = _panel_context(request, scope)
     if drawer:
-        return render(request, "inspections/partials/template_drawer.html", context)
+        return render(request, "inspections/partials/template/template_drawer.html", context)
     if request.headers.get("HX-Target") == "template-list":
-        return render(request, "inspections/partials/template_list.html", context)
-    return render(request, "inspections/partials/template_panel.html", context)
+        return render(request, "inspections/partials/template/template_list.html", context)
+    return render(request, "inspections/partials/template/template_panel.html", context)
 
 
 @login_required
@@ -98,7 +98,7 @@ def _editor_context(request, template, structure, *, name, description, shared, 
 
 
 def _render_editor(request, context, status=200):
-    return render(request, "inspections/partials/template_editor.html", context, status=status)
+    return render(request, "inspections/partials/template/template_editor.html", context, status=status)
 
 
 def _editor_from_post(request, template):
@@ -217,7 +217,7 @@ def template_editor_operation(request):
     context["field_count"] = sum(len(s["fields"]) for s in context["structure"]["sections"])
     context["section_count"] = len(context["structure"]["sections"])
     context["oob"] = True
-    return render(request, "inspections/partials/template_editor_structure.html", context)
+    return render(request, "inspections/partials/template/template_editor_structure.html", context)
 
 
 # ==========================================
@@ -241,7 +241,7 @@ def template_toggle_share(request, pk):
 
 
 def _template_modal(request, template, **extra):
-    return render(request, "core/partials/archive_confirm_modal.html", {
+    return render(request, "core/partials/modal/archive_confirm_modal.html", {
         "object_label": template.name,
         "post_target": "#template-drawer-content",
         **extra,
@@ -300,7 +300,7 @@ def template_delete(request, pk):
                 "title": "Suppression impossible : ce template n'est pas archivé.",
                 "note": "Archivez-le d'abord, puis supprimez-le.",
             }
-        return render(request, "core/partials/archive_confirm_modal.html", {
+        return render(request, "core/partials/modal/archive_confirm_modal.html", {
             "title": "Supprimer définitivement ce template ?",
             "object_label": template.name,
             "action_verb": "supprimer définitivement",

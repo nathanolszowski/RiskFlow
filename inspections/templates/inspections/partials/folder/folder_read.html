@@ -2,7 +2,7 @@
     class="h-full rounded-2xl border border-border-default bg-surface-primary p-6 backdrop-blur-xs transition-colors">
 
     <div class="flex items-center justify-between gap-3 mb-4">
-        <h3 class="text-lg font-bold text-text-main">📁 Informations du Dossier</h3>
+        <h3 class="text-lg font-bold text-text-main">Informations du Dossier</h3>
         <button type="button" hx-get="{% url 'inspections:folder_inline_update' folder.pk %}" hx-target="#folder-info"
             hx-swap="outerHTML"
             class="inline-flex items-center gap-1.5 rounded-lg bg-brand-primary hover:bg-brand-hover px-3.5 py-2 text-xs font-semibold text-brand-on shadow-xs transition-colors cursor-pointer whitespace-nowrap">
@@ -52,6 +52,6 @@
 </div>
 
 {% if refresh_tracking %}
-{% include "core/partials/tracking_info.html" with object=folder oob=True %}
-{% include "inspections/partials/folder_progress.html" with oob=True %}
+{% include "core/partials/tracking/tracking_info.html" with object=folder oob=True %}
+{% include "inspections/partials/folder/folder_progress.html" with oob=True %}
 {% endif %}

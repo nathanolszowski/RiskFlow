@@ -19,7 +19,7 @@
   </div>
 
   {% if next_visit and status == 'active' %}
-  {% include "inspections/partials/visit_next_card.html" with visit=next_visit %}
+  {% include "inspections/partials/visit/visit_next_card.html" with visit=next_visit %}
   {% endif %}
 
   <!-- Table of the visits -->
@@ -41,7 +41,7 @@
         <span>Date</span><span>Statut</span><span>Template</span><span>Formulaire</span><span>Notes</span><span class="text-right">Actions</span>
       </div>
       {% for visit in visits %}
-      {% include "inspections/partials/visit_row.html" %}
+      {% include "inspections/partials/visit/visit_row.html" %}
       {% endfor %}
     </div>
     {% else %}
