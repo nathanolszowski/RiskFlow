@@ -5,7 +5,11 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
 from inspections.models import VisitInstance
-from inspections.validators import validate_answers, compute_progress, iter_schema_fields
+from inspections.validators import (
+    validate_answers,
+    compute_progress,
+    iter_schema_fields,
+)
 
 
 class VisitLockedError(Exception):
@@ -18,17 +22,19 @@ def get_visit_by_id(pk, user):
     while ensuring that its inspection folder was created by the logged-in user.
     """
     return get_object_or_404(
-        VisitInstance.objects.select_related('folder', 'template', 'created_by', 'updated_by'),
+        VisitInstance.objects.select_related(
+            "folder", "template", "created_by", "updated_by"
+        ),
         pk=pk,
-        folder__created_by=user
+        folder__created_by=user,
     )
 
 
 def get_visits_for_folder(folder, status="active"):
     """Visits of a folder: active ones by default, archived ones with status='archived'."""
-    visits = folder.visits.select_related('template', 'created_by', 'updated_by')
+    visits = folder.visits.select_related("template", "created_by", "updated_by")
     visits = visits.filter(is_active=(status != "archived"))
-    return visits.order_by(F('due_date').desc(nulls_last=True), '-created_at')
+    return visits.order_by(F("due_date").desc(nulls_last=True), "-created_at")
 
 
 def get_next_visit(folder):
@@ -36,7 +42,7 @@ def get_next_visit(folder):
     return (
         folder.visits.filter(is_active=True)
         .exclude(current_status=VisitInstance.Status.VALIDATED)
-        .order_by(F('due_date').asc(nulls_last=True), 'created_at')
+        .order_by(F("due_date").asc(nulls_last=True), "created_at")
         .first()
     )
 
@@ -47,7 +53,9 @@ def create_visit(folder, template, due_date, user):
     so the visit does not depend on the template afterwards.
     """
     if not template.is_active:
-        raise ValidationError("Ce template est archivé : il ne peut plus servir à préparer une visite.")
+        raise ValidationError(
+            "Ce template est archivé : il ne peut plus servir à préparer une visite."
+        )
     if template.created_by_id != user.pk and not template.shared:
         raise ValidationError("Ce template n'est pas disponible.")
 
@@ -74,7 +82,10 @@ def save_answers(visit_id, user, changes):
     """
     with transaction.atomic():
         visit = VisitInstance.objects.select_for_update().get(pk=visit_id)
-        if not visit.is_active or visit.current_status == VisitInstance.Status.VALIDATED:
+        if (
+            not visit.is_active
+            or visit.current_status == VisitInstance.Status.VALIDATED
+        ):
             raise VisitLockedError()
 
         cleaned = validate_answers(visit.instance_schema, changes)
@@ -88,7 +99,7 @@ def save_answers(visit_id, user, changes):
         visit.data = {**visit.data, "answers": answers}
         visit.revision += 1
         visit.updated_by = user
-        visit.save(update_fields=['data', 'revision', 'updated_by', 'updated_at'])
+        visit.save(update_fields=["data", "revision", "updated_by", "updated_at"])
     return visit
 
 
@@ -121,7 +132,9 @@ def set_visit_done(visit, user, done):
         visit.current_status = VisitInstance.Status.SCHEDULED
         visit.completed_at = None
     visit.updated_by = user
-    visit.save(update_fields=['current_status', 'completed_at', 'updated_by', 'updated_at'])
+    visit.save(
+        update_fields=["current_status", "completed_at", "updated_by", "updated_at"]
+    )
     return visit
 
 
@@ -132,7 +145,9 @@ def reopen_visit(visit, user):
     visit.current_status = VisitInstance.Status.SCHEDULED
     visit.completed_at = None
     visit.updated_by = user
-    visit.save(update_fields=['current_status', 'completed_at', 'updated_by', 'updated_at'])
+    visit.save(
+        update_fields=["current_status", "completed_at", "updated_by", "updated_at"]
+    )
     return visit
 
 
@@ -179,7 +194,9 @@ def build_form_context(visit, section_id=None, errors=None):
     """
     errors = errors or {}
     progress = visit.progress
-    sections = sorted(visit.instance_schema.get("sections", []), key=lambda s: s.get("order", 0))
+    sections = sorted(
+        visit.instance_schema.get("sections", []), key=lambda s: s.get("order", 0)
+    )
     ids = [s["id"] for s in sections]
     index = ids.index(section_id) if section_id in ids else 0
     section = sections[index] if sections else {"id": "", "title": "", "fields": []}
@@ -188,22 +205,26 @@ def build_form_context(visit, section_id=None, errors=None):
     fields = []
     for field in sorted(section.get("fields", []), key=lambda f: f.get("order", 0)):
         value = answers.get(field["id"])
-        fields.append({
-            **field,
-            "required": field.get("required", True),
-            "options": field.get("options") or [],
-            "unit": field.get("unit") or "",
-            "step": field.get("step"),
-            "min": field.get("min"),
-            "max": field.get("max"),
-            "value": value,
-            "value_display": "" if value is None else str(value).replace(".", ","),
-            "error": errors.get(field["id"]),
-        })
+        fields.append(
+            {
+                **field,
+                "required": field.get("required", True),
+                "options": field.get("options") or [],
+                "unit": field.get("unit") or "",
+                "step": field.get("step"),
+                "min": field.get("min"),
+                "max": field.get("max"),
+                "value": value,
+                "value_display": "" if value is None else str(value).replace(".", ","),
+                "error": errors.get(field["id"]),
+            }
+        )
 
     nav = []
     for item, summary in zip(sections, progress["by_section"]):
-        nav.append({**summary, "number": len(nav) + 1, "current": item["id"] == section["id"]})
+        nav.append(
+            {**summary, "number": len(nav) + 1, "current": item["id"] == section["id"]}
+        )
 
     return {
         "visit": visit,
@@ -216,5 +237,6 @@ def build_form_context(visit, section_id=None, errors=None):
         "previous_section_id": ids[index - 1] if index > 0 else None,
         "next_section_id": ids[index + 1] if index + 1 < len(ids) else None,
         "yes_no": [("true", "Oui"), ("false", "Non")],
-        "readonly": (not visit.is_active) or visit.current_status == VisitInstance.Status.VALIDATED,
+        "readonly": (not visit.is_active)
+        or visit.current_status == VisitInstance.Status.VALIDATED,
     }

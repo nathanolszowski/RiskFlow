@@ -19,10 +19,10 @@ from inspections.services.visit import (
 )
 from inspections.validators import AnswersValidationError
 
-
 # ==========================================
 # ==== VISIT FORM (FILLING ON THE FIELD) ===
 # ==========================================
+
 
 @login_required
 @require_GET
@@ -71,7 +71,11 @@ def visit_save_answers(request, pk):
     except VisitLockedError:
         return HttpResponse("La visite est terminée ou archivée.", status=409)
     except ValidationError as e:
-        message = e.field_errors[field_id] if isinstance(e, AnswersValidationError) else e.messages[0]
+        message = (
+            e.field_errors[field_id]
+            if isinstance(e, AnswersValidationError)
+            else e.messages[0]
+        )
         return render(
             request,
             "inspections/partials/visit/visit_form_saved.html",
@@ -79,7 +83,11 @@ def visit_save_answers(request, pk):
             status=422,
         )
 
-    return render(request, "inspections/partials/visit/visit_form_saved.html", _saved_context(visit, section_id, field_id))
+    return render(
+        request,
+        "inspections/partials/visit/visit_form_saved.html",
+        _saved_context(visit, section_id, field_id),
+    )
 
 
 @login_required
@@ -96,12 +104,21 @@ def visit_complete(request, pk):
         return HttpResponse("La visite est archivée.", status=409)
     except AnswersValidationError as e:
         visit.refresh_from_db()
-        context = build_form_context(visit, get_first_incomplete_section(visit), errors=e.field_errors)
+        context = build_form_context(
+            visit, get_first_incomplete_section(visit), errors=e.field_errors
+        )
         context["show_errors"] = True
-        return render(request, "inspections/partials/visit/visit_form_page.html", context, status=422)
+        return render(
+            request,
+            "inspections/partials/visit/visit_form_page.html",
+            context,
+            status=422,
+        )
 
     response = HttpResponse(status=204)
-    response["HX-Redirect"] = reverse("inspections:folder_detail", args=[visit.folder_id]) + "?tab=visit"
+    response["HX-Redirect"] = (
+        reverse("inspections:folder_detail", args=[visit.folder_id]) + "?tab=visit"
+    )
     return response
 
 

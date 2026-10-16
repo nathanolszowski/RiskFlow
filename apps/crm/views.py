@@ -26,7 +26,6 @@ from crm.services.contact import (
 from .forms import CompanyForm, ContactForm
 from .models import Company, Contact
 
-
 # ==========================================
 # ==== COMPANY SECTION =====================
 # ==========================================
@@ -167,6 +166,7 @@ def company_inline_read(request, pk):
         {"company": company},
     )
 
+
 def _refresh_response():
     """HTMX response asking the browser to reload the current page."""
     response = HttpResponse()
@@ -189,26 +189,37 @@ def company_archive(request, pk):
         sections = []
         if impact["contacts"]:
             n = len(impact["contacts"])
-            sections.append({
-                "title": f"{n} contact{'s' if n > 1 else ''} actif{'s' if n > 1 else ''} {'seront' if n > 1 else 'sera'} également archivé{'s' if n > 1 else ''} :",
-                "entries": [str(c.first_name + " " + c.last_name) for c in impact["contacts"]],
-                "note": "Au désarchivage du client, ces contacts resteront archivés.",
-            })
+            sections.append(
+                {
+                    "title": f"{n} contact{'s' if n > 1 else ''} actif{'s' if n > 1 else ''} {'seront' if n > 1 else 'sera'} également archivé{'s' if n > 1 else ''} :",
+                    "entries": [
+                        str(c.first_name + " " + c.last_name)
+                        for c in impact["contacts"]
+                    ],
+                    "note": "Au désarchivage du client, ces contacts resteront archivés.",
+                }
+            )
         if impact["kept_contacts"]:
             n = len(impact["kept_contacts"])
-            sections.append({
-                "warning": True,
-                "title": f"{n} contact{'s' if n > 1 else ''} {'restent actifs' if n > 1 else 'reste actif'} car référencé{'s' if n > 1 else ''} par un dossier actif :",
-                "entries": [f"{c.first_name} {c.last_name}" for c in impact["kept_contacts"]],
-            })
+            sections.append(
+                {
+                    "warning": True,
+                    "title": f"{n} contact{'s' if n > 1 else ''} {'restent actifs' if n > 1 else 'reste actif'} car référencé{'s' if n > 1 else ''} par un dossier actif :",
+                    "entries": [
+                        f"{c.first_name} {c.last_name}" for c in impact["kept_contacts"]
+                    ],
+                }
+            )
         if impact["folders"]:
             n = len(impact["folders"])
-            sections.append({
-                "warning": True,
-                "title": f"{n} dossier{'s' if n > 1 else ''} d'inspection actif{'s' if n > 1 else ''} {'sont liés' if n > 1 else 'est lié'} à ce client :",
-                "entries": [f.reference for f in impact["folders"]],
-                "note": "Ces dossiers restent actifs et ne sont pas archivés avec le client.",
-            })
+            sections.append(
+                {
+                    "warning": True,
+                    "title": f"{n} dossier{'s' if n > 1 else ''} d'inspection actif{'s' if n > 1 else ''} {'sont liés' if n > 1 else 'est lié'} à ce client :",
+                    "entries": [f.reference for f in impact["folders"]],
+                    "note": "Ces dossiers restent actifs et ne sont pas archivés avec le client.",
+                }
+            )
         return render(
             request,
             "core/partials/modal/archive_confirm_modal.html",
@@ -246,10 +257,7 @@ def company_unarchive(request, pk):
 def search_siret_api(request):
     """Request data from INSEE API and auto-complete the company creation form"""
     siret_query = (
-        request.GET.get("siret_search", "")
-        .strip()
-        .replace(" ", "")
-        .replace("-", "")
+        request.GET.get("siret_search", "").strip().replace(" ", "").replace("-", "")
     )
 
     if not siret_query or len(siret_query) != 14 or not siret_query.isdigit():
@@ -368,6 +376,7 @@ def create_contact(request):
         request, "crm/partials/contact/contact_form_modal.html", {"form": form}
     )
 
+
 @login_required
 @require_http_methods(["GET", "POST"])
 def contact_inline_update(request, pk):
@@ -444,7 +453,9 @@ def contact_archive(request, pk):
                 "entries": [f.reference for f in folders],
                 "note": "Changez d'abord le contact référent sur ces dossiers, puis archivez le contact.",
             }
-        return render(request, "core/partials/modal/archive_confirm_modal.html", context)
+        return render(
+            request, "core/partials/modal/archive_confirm_modal.html", context
+        )
 
     if folders.exists():
         return HttpResponse(
@@ -522,15 +533,21 @@ def company_delete(request, pk):
             "sections": [],
         }
         if contacts:
-            context["sections"].append({
-                "warning": True,
-                "title": f"{_plural(len(contacts), 'contact')} {'seront supprimés' if len(contacts) > 1 else 'sera supprimé'} avec ce client :",
-                "entries": [f"{c.first_name} {c.last_name}" for c in contacts],
-                "note": "Cette action est irréversible.",
-            })
+            context["sections"].append(
+                {
+                    "warning": True,
+                    "title": f"{_plural(len(contacts), 'contact')} {'seront supprimés' if len(contacts) > 1 else 'sera supprimé'} avec ce client :",
+                    "entries": [f"{c.first_name} {c.last_name}" for c in contacts],
+                    "note": "Cette action est irréversible.",
+                }
+            )
         else:
-            context["sections"].append({"warning": True, "title": "Cette action est irréversible."})
-        return render(request, "core/partials/modal/archive_confirm_modal.html", context)
+            context["sections"].append(
+                {"warning": True, "title": "Cette action est irréversible."}
+            )
+        return render(
+            request, "core/partials/modal/archive_confirm_modal.html", context
+        )
 
     if blocking:
         return HttpResponse(blocking["title"], status=409)
@@ -579,7 +596,9 @@ def contact_delete(request, pk):
                 "danger": True,
                 "post_url": reverse("crm:contact_delete", args=[contact.pk]),
                 "blocking": blocking,
-                "sections": [{"warning": True, "title": "Cette action est irréversible."}],
+                "sections": [
+                    {"warning": True, "title": "Cette action est irréversible."}
+                ],
             },
         )
 

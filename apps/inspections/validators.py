@@ -1,4 +1,9 @@
-from pydantic import BaseModel, ValidationError as PydanticValidationError, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ValidationError as PydanticValidationError,
+    field_validator,
+    model_validator,
+)
 from typing import Any, Dict, List, Optional, Literal
 from django.core.exceptions import ValidationError
 
@@ -9,7 +14,7 @@ TEXT_MAX_LENGTH = 5000
 class FieldSchema(BaseModel):
     id: str
     label: str
-    type: Literal['boolean', 'text', 'select', 'number']
+    type: Literal["boolean", "text", "select", "number"]
     required: bool = True
     options: Optional[List[str]] = None
     order: int
@@ -19,19 +24,25 @@ class FieldSchema(BaseModel):
     min: Optional[float] = None
     max: Optional[float] = None
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def check_options(self):
-        if self.type == 'select':
+        if self.type == "select":
             if not self.options:
-                raise ValueError(f"Le champ « {self.label} » est un choix : il faut au moins une option.")
+                raise ValueError(
+                    f"Le champ « {self.label} » est un choix : il faut au moins une option."
+                )
             if len(set(self.options)) != len(self.options):
-                raise ValueError(f"Le champ « {self.label} » contient des options en double.")
+                raise ValueError(
+                    f"Le champ « {self.label} » contient des options en double."
+                )
         return self
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def check_bounds(self):
         if self.min is not None and self.max is not None and self.min > self.max:
-            raise ValueError(f"Le champ « {self.label} » a un minimum supérieur au maximum.")
+            raise ValueError(
+                f"Le champ « {self.label} » a un minimum supérieur au maximum."
+            )
         return self
 
 
@@ -46,21 +57,23 @@ class VisitTemplateSchema(BaseModel):
     version: str = "1.0"
     sections: List[SectionSchema]
 
-    @field_validator('sections')
+    @field_validator("sections")
     @classmethod
     def check_not_empty(cls, sections):
         if not sections:
             raise ValueError("Le template doit contenir au moins une section.")
         return sections
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def check_unique_ids(self):
         section_ids = [section.id for section in self.sections]
         if len(set(section_ids)) != len(section_ids):
             raise ValueError("Les identifiants de section doivent être uniques.")
         field_ids = [field.id for section in self.sections for field in section.fields]
         if len(set(field_ids)) != len(field_ids):
-            raise ValueError("Les identifiants de champ doivent être uniques dans tout le template.")
+            raise ValueError(
+                "Les identifiants de champ doivent être uniques dans tout le template."
+            )
         return self
 
 
@@ -90,11 +103,11 @@ def get_default_template_structure():
                         "label": "Libellé de la question ?",
                         "type": "boolean",
                         "required": True,
-                        "order": 1
+                        "order": 1,
                     }
-                ]
+                ],
             }
-        ]
+        ],
     }
 
 
@@ -113,11 +126,15 @@ def validate_template_schema(schema) -> dict:
     Raise a Django ValidationError so that it can be used by models, forms and services.
     """
     if not isinstance(schema, dict):
-        raise ValidationError("Le format JSON de la structure est invalide : un objet est attendu.")
+        raise ValidationError(
+            "Le format JSON de la structure est invalide : un objet est attendu."
+        )
     try:
         VisitTemplateSchema(**schema)
     except PydanticValidationError as e:
-        raise ValidationError(f"Le format JSON de la structure est invalide : {_format_pydantic_error(e)}")
+        raise ValidationError(
+            f"Le format JSON de la structure est invalide : {_format_pydantic_error(e)}"
+        )
     return schema
 
 
@@ -155,7 +172,9 @@ def _clean_answer(field: dict, value):
         if not isinstance(value, str):
             raise ValueError("Un texte est attendu.")
         if len(value) > TEXT_MAX_LENGTH:
-            raise ValueError(f"Le texte ne peut pas dépasser {TEXT_MAX_LENGTH} caractères.")
+            raise ValueError(
+                f"Le texte ne peut pas dépasser {TEXT_MAX_LENGTH} caractères."
+            )
         return value
     raise ValueError("Type de champ inconnu.")
 
@@ -187,7 +206,11 @@ def validate_answers(schema: dict, answers, *, strict: bool = False) -> dict:
 
     if strict:
         for field_id, field in fields.items():
-            if field.get("required", True) and field_id not in cleaned and field_id not in errors:
+            if (
+                field.get("required", True)
+                and field_id not in cleaned
+                and field_id not in errors
+            ):
                 errors[field_id] = "Ce champ est obligatoire pour terminer la visite."
 
     if errors:
@@ -206,16 +229,20 @@ def compute_progress(schema: dict, answers: dict) -> dict:
         fields = sorted(section.get("fields", []), key=lambda f: f.get("order", 0))
         section_done = sum(1 for f in fields if _has_value(answers.get(f["id"])))
         section_missing = sum(
-            1 for f in fields if f.get("required", True) and not _has_value(answers.get(f["id"]))
+            1
+            for f in fields
+            if f.get("required", True) and not _has_value(answers.get(f["id"]))
         )
-        sections.append({
-            "id": section["id"],
-            "title": section.get("title", ""),
-            "done": section_done,
-            "total": len(fields),
-            "missing_required": section_missing,
-            "complete": section_done == len(fields),
-        })
+        sections.append(
+            {
+                "id": section["id"],
+                "title": section.get("title", ""),
+                "done": section_done,
+                "total": len(fields),
+                "missing_required": section_missing,
+                "complete": section_done == len(fields),
+            }
+        )
         done += section_done
         total += len(fields)
         missing_required += section_missing

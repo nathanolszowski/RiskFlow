@@ -35,13 +35,9 @@ class INSEEApiClient:
                 # Fallback
                 if not etablissement and "etablissements" in data:
                     etablissements = data.get("etablissements", [])
-                    etablissement = (
-                        etablissements[0] if etablissements else None
-                    )
+                    etablissement = etablissements[0] if etablissements else None
                 if etablissement:
-                    return cls._format_etablissement_data(
-                        etablissement, siret
-                    )
+                    return cls._format_etablissement_data(etablissement, siret)
         except requests.RequestException:
             pass
         return None
@@ -66,9 +62,7 @@ class INSEEApiClient:
         ville = address.get("libelleCommuneEtablissement") or ""
 
         address_parts = [
-            p
-            for p in [f"{num} {type_v} {lib_v}".strip(), f"{cp} {ville}".strip()]
-            if p
+            p for p in [f"{num} {type_v} {lib_v}".strip(), f"{cp} {ville}".strip()] if p
         ]
         full_address = ", ".join(address_parts)
         # SIREN & VAT number calculation
@@ -87,14 +81,13 @@ class INSEEApiClient:
             "vat_number": vat_number,
             "legal_structure": unit.get("categorieJuridiqueUniteLegale", ""),
             "company_size_category": unit.get("categorieEntreprise", ""),
-            "business_line": actual_period.get(
-                "activitePrincipaleEtablissement"
-            )
+            "business_line": actual_period.get("activitePrincipaleEtablissement")
             or unit.get("activitePrincipaleUniteLegale", ""),
             "address": full_address,
             "creation_date": etab.get("dateCreationEtablissement")
             or unit.get("dateCreationUniteLegale", ""),
         }
+
 
 def get_company_by_id(pk):
     """Return a company with its tracking users, or raise a 404."""
@@ -111,7 +104,9 @@ def get_company_archive_impact(company):
     - folders: active folders of the company, which are not archived.
     """
     active_contacts = company.contacts.filter(is_active=True)
-    kept_contacts = active_contacts.filter(inspection_folders__is_active=True).distinct()
+    kept_contacts = active_contacts.filter(
+        inspection_folders__is_active=True
+    ).distinct()
     return {
         "contacts": active_contacts.exclude(pk__in=kept_contacts),
         "kept_contacts": kept_contacts,
@@ -122,33 +117,33 @@ def get_company_archive_impact(company):
 def get_filtered_companies(request):
     """Extrait les paramètres GET et renvoie le QuerySet de sociétés filtré et trié."""
     companies = Company.objects.annotate(
-        inspection_folders_count=Count('inspection_folders')
+        inspection_folders_count=Count("inspection_folders")
     )
-    
+
     # Recherche textuelle
-    q = request.GET.get('q', '').strip()
+    q = request.GET.get("q", "").strip()
     if q:
         companies = companies.filter(
-            Q(name__icontains=q) | 
-            Q(siren__icontains=q) | 
-            Q(siret__icontains=q) | 
-            Q(reference__icontains=q)
+            Q(name__icontains=q)
+            | Q(siren__icontains=q)
+            | Q(siret__icontains=q)
+            | Q(reference__icontains=q)
         )
-        
+
     # Filtre par statut
-    status = request.GET.get('status', 'active').strip()
-    if status == 'active':
+    status = request.GET.get("status", "active").strip()
+    if status == "active":
         companies = companies.filter(is_active=True)
-    elif status == 'archived':
+    elif status == "archived":
         companies = companies.filter(is_active=False)
 
     # Tri sécurisé
-    sort_by = request.GET.get('sort', 'name')
-    allowed_sorts = ['name', '-created_at', '-inspection_folders_count']
-    
+    sort_by = request.GET.get("sort", "name")
+    allowed_sorts = ["name", "-created_at", "-inspection_folders_count"]
+
     if sort_by in allowed_sorts:
         companies = companies.order_by(sort_by)
     else:
-        companies = companies.order_by('name') # Fallback par défaut
+        companies = companies.order_by("name")  # Fallback par défaut
 
     return companies

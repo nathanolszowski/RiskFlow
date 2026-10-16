@@ -6,7 +6,10 @@ from crm.models import Contact
 def get_contact_by_id(pk):
     """Return a contact with its company, or raise a 404."""
     return get_object_or_404(
-        Contact.objects.select_related("company", "created_by", "updated_by", "archived_by"), pk=pk
+        Contact.objects.select_related(
+            "company", "created_by", "updated_by", "archived_by"
+        ),
+        pk=pk,
     )
 
 

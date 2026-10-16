@@ -23,10 +23,10 @@ from inspections.services.template import (
     validate_editor_structure,
 )
 
-
 # ==========================================
 # ==== VISIT TEMPLATES (SIDE PANEL) ========
 # ==========================================
+
 
 def _folder_id(request):
     """Folder the panel was opened from: the "Utiliser" action prepares a visit on it."""
@@ -41,7 +41,11 @@ def _panel_context(request, scope=None):
     scope = scope or request.GET.get("scope") or request.POST.get("scope") or "mine"
     if scope not in TEMPLATE_SCOPES:
         scope = "mine"
-    status = request.GET.get("status") if request.GET.get("status") in ("active", "archived") else "all"
+    status = (
+        request.GET.get("status")
+        if request.GET.get("status") in ("active", "archived")
+        else "all"
+    )
     query = request.GET.get("q", "").strip()
     templates = list(get_filtered_templates(request.user, scope, query, status))
     for template in templates:
@@ -62,9 +66,13 @@ def _render_panel(request, scope=None, drawer=False):
     """The list of templates. drawer=True renders the whole side panel (overlay included)."""
     context = _panel_context(request, scope)
     if drawer:
-        return render(request, "inspections/partials/template/template_drawer.html", context)
+        return render(
+            request, "inspections/partials/template/template_drawer.html", context
+        )
     if request.headers.get("HX-Target") == "template-list":
-        return render(request, "inspections/partials/template/template_list.html", context)
+        return render(
+            request, "inspections/partials/template/template_list.html", context
+        )
     return render(request, "inspections/partials/template/template_panel.html", context)
 
 
@@ -81,7 +89,18 @@ def template_panel(request):
 # ==== TEMPLATE EDITOR =====================
 # ==========================================
 
-def _editor_context(request, template, structure, *, name, description, shared, readonly=False, errors=None):
+
+def _editor_context(
+    request,
+    template,
+    structure,
+    *,
+    name,
+    description,
+    shared,
+    readonly=False,
+    errors=None,
+):
     return {
         "template": template,
         "structure": structure,
@@ -93,12 +112,22 @@ def _editor_context(request, template, structure, *, name, description, shared, 
         "folder_id": _folder_id(request),
         "field_count": sum(len(s["fields"]) for s in structure["sections"]),
         "section_count": len(structure["sections"]),
-        "field_types": [("boolean", "Oui / Non"), ("number", "Nombre"), ("select", "Choix"), ("text", "Texte")],
+        "field_types": [
+            ("boolean", "Oui / Non"),
+            ("number", "Nombre"),
+            ("select", "Choix"),
+            ("text", "Texte"),
+        ],
     }
 
 
 def _render_editor(request, context, status=200):
-    return render(request, "inspections/partials/template/template_editor.html", context, status=status)
+    return render(
+        request,
+        "inspections/partials/template/template_editor.html",
+        context,
+        status=status,
+    )
 
 
 def _editor_from_post(request, template):
@@ -131,11 +160,20 @@ def _save_editor(request, template):
     try:
         if template is None:
             template = create_template(
-                request.user, context["name"], context["description"], context["shared"], schema
+                request.user,
+                context["name"],
+                context["description"],
+                context["shared"],
+                schema,
             )
         else:
             template = update_template(
-                template, request.user, context["name"], context["description"], context["shared"], schema
+                template,
+                request.user,
+                context["name"],
+                context["description"],
+                context["shared"],
+                schema,
             )
     except ValidationError as e:
         context["errors"] = e.messages
@@ -158,7 +196,12 @@ def template_create(request):
         return _render_panel(request, "mine")
 
     structure = {"version": "1.0", "sections": [new_section()]}
-    return _render_editor(request, _editor_context(request, None, structure, name="", description="", shared=False))
+    return _render_editor(
+        request,
+        _editor_context(
+            request, None, structure, name="", description="", shared=False
+        ),
+    )
 
 
 @login_required
@@ -176,8 +219,12 @@ def template_edit(request, pk):
         return _render_panel(request, "mine")
 
     context = _editor_context(
-        request, template, template.schema,
-        name=template.name, description=template.description, shared=template.shared,
+        request,
+        template,
+        template.schema,
+        name=template.name,
+        description=template.description,
+        shared=template.shared,
     )
     return _render_editor(request, context)
 
@@ -188,8 +235,12 @@ def template_read(request, pk):
     """Read only view of a template (the ones shared by the other users)."""
     template = get_template_by_id(pk, request.user)
     context = _editor_context(
-        request, template, template.schema,
-        name=template.name, description=template.description, shared=template.shared,
+        request,
+        template,
+        template.schema,
+        name=template.name,
+        description=template.description,
+        shared=template.shared,
         readonly=template.created_by_id != request.user.pk,
     )
     return _render_editor(request, context)
@@ -203,7 +254,9 @@ def template_editor_operation(request):
     then render the editor again. Nothing is saved.
     """
     pk = request.POST.get("template_pk")
-    template = get_owned_template_by_id(int(pk), request.user) if pk and pk.isdigit() else None
+    template = (
+        get_owned_template_by_id(int(pk), request.user) if pk and pk.isdigit() else None
+    )
 
     context = _editor_from_post(request, template)
 
@@ -212,17 +265,25 @@ def template_editor_operation(request):
         return int(value) if value.isdigit() else None
 
     apply_editor_operation(
-        context["structure"], request.POST.get("op", ""), section=index("section"), field=index("field"),
+        context["structure"],
+        request.POST.get("op", ""),
+        section=index("section"),
+        field=index("field"),
     )
-    context["field_count"] = sum(len(s["fields"]) for s in context["structure"]["sections"])
+    context["field_count"] = sum(
+        len(s["fields"]) for s in context["structure"]["sections"]
+    )
     context["section_count"] = len(context["structure"]["sections"])
     context["oob"] = True
-    return render(request, "inspections/partials/template/template_editor_structure.html", context)
+    return render(
+        request, "inspections/partials/template/template_editor_structure.html", context
+    )
 
 
 # ==========================================
 # ==== TEMPLATE ACTIONS ====================
 # ==========================================
+
 
 @login_required
 @require_POST
@@ -241,11 +302,15 @@ def template_toggle_share(request, pk):
 
 
 def _template_modal(request, template, **extra):
-    return render(request, "core/partials/modal/archive_confirm_modal.html", {
-        "object_label": template.name,
-        "post_target": "#template-drawer-content",
-        **extra,
-    })
+    return render(
+        request,
+        "core/partials/modal/archive_confirm_modal.html",
+        {
+            "object_label": template.name,
+            "post_target": "#template-drawer-content",
+            **extra,
+        },
+    )
 
 
 @login_required
@@ -260,14 +325,18 @@ def template_archive(request, pk):
 
     if request.method == "GET":
         return _template_modal(
-            request, template,
+            request,
+            template,
             title="Archiver ce template ?",
-            post_url=reverse("inspections:template_archive", args=[template.pk]) + _folder_query(request),
-            sections=[{
-                "warning": True,
-                "title": "Ce template ne sera plus proposé pour préparer une visite.",
-                "note": "Les visites déjà créées gardent leur formulaire. Si le template est partagé, les autres inspecteurs ne le voient plus.",
-            }],
+            post_url=reverse("inspections:template_archive", args=[template.pk])
+            + _folder_query(request),
+            sections=[
+                {
+                    "warning": True,
+                    "title": "Ce template ne sera plus proposé pour préparer une visite.",
+                    "note": "Les visites déjà créées gardent leur formulaire. Si le template est partagé, les autres inspecteurs ne le voient plus.",
+                }
+            ],
         )
 
     template.archive(user=request.user)
@@ -300,27 +369,36 @@ def template_delete(request, pk):
                 "title": "Suppression impossible : ce template n'est pas archivé.",
                 "note": "Archivez-le d'abord, puis supprimez-le.",
             }
-        return render(request, "core/partials/modal/archive_confirm_modal.html", {
-            "title": "Supprimer définitivement ce template ?",
-            "object_label": template.name,
-            "action_verb": "supprimer définitivement",
-            "confirm_label": "Supprimer définitivement",
-            "danger": True,
-            "post_url": reverse("inspections:template_delete", args=[template.pk]) + _folder_query(request),
-            "post_target": "#template-drawer-content",
-            "blocking": blocking,
-            "sections": [{
-                "warning": True,
-                "title": "Cette action est irréversible.",
-                "note": (
-                    f"{used} visite{'s' if used > 1 else ''} créée{'s' if used > 1 else ''} depuis ce template "
-                    f"garde{'nt' if used > 1 else ''} son formulaire et le nom du template."
-                ),
-            }],
-        })
+        return render(
+            request,
+            "core/partials/modal/archive_confirm_modal.html",
+            {
+                "title": "Supprimer définitivement ce template ?",
+                "object_label": template.name,
+                "action_verb": "supprimer définitivement",
+                "confirm_label": "Supprimer définitivement",
+                "danger": True,
+                "post_url": reverse("inspections:template_delete", args=[template.pk])
+                + _folder_query(request),
+                "post_target": "#template-drawer-content",
+                "blocking": blocking,
+                "sections": [
+                    {
+                        "warning": True,
+                        "title": "Cette action est irréversible.",
+                        "note": (
+                            f"{used} visite{'s' if used > 1 else ''} créée{'s' if used > 1 else ''} depuis ce template "
+                            f"garde{'nt' if used > 1 else ''} son formulaire et le nom du template."
+                        ),
+                    }
+                ],
+            },
+        )
 
     if template.is_active:
-        return HttpResponse("Le template doit être archivé avant d'être supprimé.", status=409)
+        return HttpResponse(
+            "Le template doit être archivé avant d'être supprimé.", status=409
+        )
 
     delete_template(template)
     return _render_panel(request, "mine")

@@ -13,6 +13,7 @@ def htmx_login_required(view=None, *, redirect=True):
     work (the visit form) use redirect=False and tell the user themselves.
     Usable as @htmx_login_required or @htmx_login_required(redirect=False).
     """
+
     def decorator(func):
         @wraps(func)
         def wrapper(request, *args, **kwargs):
@@ -24,7 +25,11 @@ def htmx_login_required(view=None, *, redirect=True):
                     response["HX-Redirect"] = resolve_url(settings.LOGIN_URL)
                 return response
             from django.contrib.auth.views import redirect_to_login
-            return redirect_to_login(request.get_full_path(), resolve_url(settings.LOGIN_URL))
+
+            return redirect_to_login(
+                request.get_full_path(), resolve_url(settings.LOGIN_URL)
+            )
+
         return wrapper
 
     return decorator(view) if view is not None else decorator

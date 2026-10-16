@@ -8,7 +8,7 @@ def get_recommandation_by_id(pk, user):
     while ensuring that its inspection folder was created by the logged-in user.
     """
     return get_object_or_404(
-        Recommandation.objects.select_related('folder', 'created_by', 'updated_by'),
+        Recommandation.objects.select_related("folder", "created_by", "updated_by"),
         pk=pk,
-        folder__created_by=user
+        folder__created_by=user,
     )

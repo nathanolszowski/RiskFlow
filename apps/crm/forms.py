@@ -1,13 +1,17 @@
 from django import forms
 from .models import Company, Contact
 
+
 class CompanyForm(forms.ModelForm):
     vat_number = forms.CharField(required=False)
     legal_structure = forms.CharField(required=False)
     nb_employees = forms.IntegerField(required=False)
-    labels = forms.CharField(widget=forms.Textarea(attrs={'rows': 2}), required=False)
-    executive_board = forms.CharField(widget=forms.Textarea(attrs={'rows': 2}), required=False)
+    labels = forms.CharField(widget=forms.Textarea(attrs={"rows": 2}), required=False)
+    executive_board = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 2}), required=False
+    )
     website = forms.URLField(required=False)
+
     class Meta:
         model = Company
         fields = [
@@ -27,39 +31,37 @@ class CompanyForm(forms.ModelForm):
             "executive_board",
         ]
         widgets = {
-            "creation_date": forms.DateInput(
-                attrs={"type": "date"}, format="%Y-%m-%d"
-            ),
+            "creation_date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
             "address": forms.Textarea(attrs={"rows": 2}),
             "labels": forms.Textarea(attrs={"rows": 2}),
             "executive_board": forms.Textarea(attrs={"rows": 2}),
         }
 
     def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
-            for field in self.fields.values():
-                field.widget.attrs["class"] = "form-input"
+        for field in self.fields.values():
+            field.widget.attrs["class"] = "form-input"
 
-            placeholders = {
-                "name": "ex: ACME Industries",
-                "siren": "ex: 775652126",
-                "siret": "ex: 77565212602114",
-                "vat_number": "ex: FR12775652126",
-                "legal_structure": "ex: SAS, SARL...",
-                "business_line": "ex: Industrie métallurgique",
-                "company_size_category": "ex: PME / ETI / GE",
-                "nb_employees": "ex: 50",
-                "creation_date": "ex: 2015-06-12",
-                "website": "ex: https://www.exemple.fr",
-                "address": "ex: 12 Rue de la Paix, 75000 Paris",
-                "labels": "ex: ISO 9001, ISO 27001",
-                "executive_board": "ex: Jean Dupont (PDG)",
-            }
-            for field_name, placeholder_text in placeholders.items():
-                field = self.fields.get(field_name)
-                if field:
-                    field.widget.attrs["placeholder"] = placeholder_text
+        placeholders = {
+            "name": "ex: ACME Industries",
+            "siren": "ex: 775652126",
+            "siret": "ex: 77565212602114",
+            "vat_number": "ex: FR12775652126",
+            "legal_structure": "ex: SAS, SARL...",
+            "business_line": "ex: Industrie métallurgique",
+            "company_size_category": "ex: PME / ETI / GE",
+            "nb_employees": "ex: 50",
+            "creation_date": "ex: 2015-06-12",
+            "website": "ex: https://www.exemple.fr",
+            "address": "ex: 12 Rue de la Paix, 75000 Paris",
+            "labels": "ex: ISO 9001, ISO 27001",
+            "executive_board": "ex: Jean Dupont (PDG)",
+        }
+        for field_name, placeholder_text in placeholders.items():
+            field = self.fields.get(field_name)
+            if field:
+                field.widget.attrs["placeholder"] = placeholder_text
 
 
 class ContactForm(forms.ModelForm):

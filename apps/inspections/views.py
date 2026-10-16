@@ -8,17 +8,35 @@ from core.services import delete_archived_instance
 from django.forms import ModelChoiceField
 from django.http import HttpResponse
 from django.core.exceptions import ValidationError
-from .forms import InspectionFolderForm, InspectionFolderUpdateForm, VisitInstanceUpdateForm, VisitCreateForm, RecommandationUpdateForm
+from .forms import (
+    InspectionFolderForm,
+    InspectionFolderUpdateForm,
+    VisitInstanceUpdateForm,
+    VisitCreateForm,
+    RecommandationUpdateForm,
+)
 from .models import InspectionFolder
 from crm.models import Company, Contact
-from inspections.services.inspectionfolder import get_filtered_folders, get_company_folders, get_inspection_folder_by_id, create_tracked_instance
-from inspections.services.visit import get_visit_by_id, get_visits_for_folder, get_next_visit, create_visit, set_visit_done, VisitLockedError
+from inspections.services.inspectionfolder import (
+    get_filtered_folders,
+    get_company_folders,
+    get_inspection_folder_by_id,
+    create_tracked_instance,
+)
+from inspections.services.visit import (
+    get_visit_by_id,
+    get_visits_for_folder,
+    get_next_visit,
+    create_visit,
+    set_visit_done,
+    VisitLockedError,
+)
 from inspections.services.recommandation import get_recommandation_by_id
-
 
 # ==========================================
 # ==== INSPECTION FOLDER SECTION ===========
 # ==========================================
+
 
 @login_required
 @require_GET
@@ -90,15 +108,19 @@ def create_folder(request):
              If False -> Render the form with errors (folder_form_modal.html).
     """
     company_id = request.GET.get("company") or request.POST.get("company")
-    selected_company = Company.objects.filter(pk=company_id).first() if company_id else None
+    selected_company = (
+        Company.objects.filter(pk=company_id).first() if company_id else None
+    )
 
     if request.method == "POST":
         form = InspectionFolderForm(request.POST)
 
         if selected_company:
-            contact_field = form.fields['contact']
+            contact_field = form.fields["contact"]
             if isinstance(contact_field, ModelChoiceField):
-                contact_field.queryset = Contact.objects.filter(company=selected_company)
+                contact_field.queryset = Contact.objects.filter(
+                    company=selected_company
+                )
 
         if form.is_valid():
             create_tracked_instance(form, request.user)
@@ -137,15 +159,16 @@ def create_folder(request):
     form = InspectionFolderForm(initial=initial_data)
 
     if selected_company:
-        contact_field = form.fields['contact']
+        contact_field = form.fields["contact"]
         if isinstance(contact_field, ModelChoiceField):
             contact_field.queryset = Contact.objects.filter(company=selected_company)
 
     return render(
-        request, 
-        "inspections/partials/folder/folder_form_modal.html", 
-        {"form": form, "selected_company": selected_company}
+        request,
+        "inspections/partials/folder/folder_form_modal.html",
+        {"form": form, "selected_company": selected_company},
     )
+
 
 @login_required
 @require_http_methods(["GET", "POST"])
@@ -219,12 +242,14 @@ def folder_archive(request, folder_id):
                 "title": "Archiver ce dossier ?",
                 "object_label": folder.reference,
                 "post_url": reverse("inspections:folder_archive", args=[folder.pk]),
-                "sections": [{
-                    "warning": True,
-                    "title": "Tous les éléments liés à ce dossier seront archivés :",
-                    "entries": items,
-                    "note": "Le client et le contact référent ne sont pas archivés. Au désarchivage du dossier, ces éléments seront réactivés (sauf ceux archivés séparément auparavant).",
-                }],
+                "sections": [
+                    {
+                        "warning": True,
+                        "title": "Tous les éléments liés à ce dossier seront archivés :",
+                        "entries": items,
+                        "note": "Le client et le contact référent ne sont pas archivés. Au désarchivage du dossier, ces éléments seront réactivés (sauf ceux archivés séparément auparavant).",
+                    }
+                ],
             },
         )
 
@@ -250,6 +275,7 @@ def folder_unarchive(request, folder_id):
         return response
 
     return redirect("inspections:folder_detail", pk=folder.pk)
+
 
 def _delete_modal(request, obj, *, title, label, post_url, sections, post_target=None):
     """Render the permanent-deletion modal; it only offers confirmation once the object is archived."""
@@ -290,23 +316,28 @@ def folder_delete(request, folder_id):
         visits = folder.visits.count()
         recs = folder.recommandations.count()
         return _delete_modal(
-            request, folder,
+            request,
+            folder,
             title="Supprimer définitivement ce dossier ?",
             label=folder.reference,
             post_url=reverse("inspections:folder_delete", args=[folder.pk]),
-            sections=[{
-                "warning": True,
-                "title": "Seront supprimés avec ce dossier :",
-                "entries": [
-                    f"{visits} visite{'s' if visits > 1 else ''}",
-                    f"{recs} recommandation{'s' if recs > 1 else ''}",
-                ],
-                "note": "Le client et le contact référent sont conservés. Cette action est irréversible.",
-            }],
+            sections=[
+                {
+                    "warning": True,
+                    "title": "Seront supprimés avec ce dossier :",
+                    "entries": [
+                        f"{visits} visite{'s' if visits > 1 else ''}",
+                        f"{recs} recommandation{'s' if recs > 1 else ''}",
+                    ],
+                    "note": "Le client et le contact référent sont conservés. Cette action est irréversible.",
+                }
+            ],
         )
 
     if folder.is_active:
-        return HttpResponse("Le dossier doit être archivé avant d'être supprimé.", status=409)
+        return HttpResponse(
+            "Le dossier doit être archivé avant d'être supprimé.", status=409
+        )
 
     delete_archived_instance(folder)
 
@@ -316,9 +347,11 @@ def folder_delete(request, folder_id):
         return response
     return redirect("inspections:folder_list")
 
+
 # ==========================================
 # ==== VISIT SECTION =======================
 # ==========================================
+
 
 @login_required
 @require_http_methods(["GET", "POST"])
@@ -338,7 +371,12 @@ def visit_create(request, folder_id):
         form = VisitCreateForm(request.POST, user=request.user)
         if form.is_valid():
             try:
-                create_visit(folder, form.cleaned_data["template"], form.cleaned_data["due_date"], request.user)
+                create_visit(
+                    folder,
+                    form.cleaned_data["template"],
+                    form.cleaned_data["due_date"],
+                    request.user,
+                )
             except ValidationError as e:
                 form.add_error("template", e)
             else:
@@ -356,8 +394,18 @@ def visit_create(request, folder_id):
         response["HX-Reswap"] = "innerHTML"
         return response
 
-    form = VisitCreateForm(user=request.user, initial={"template": request.GET.get("template"), "due_date": timezone.localdate()})
-    return render(request, "inspections/partials/visit/visit_create_modal.html", {"folder": folder, "form": form})
+    form = VisitCreateForm(
+        user=request.user,
+        initial={
+            "template": request.GET.get("template"),
+            "due_date": timezone.localdate(),
+        },
+    )
+    return render(
+        request,
+        "inspections/partials/visit/visit_create_modal.html",
+        {"folder": folder, "form": form},
+    )
 
 
 @login_required
@@ -381,13 +429,22 @@ def visit_update(request, pk):
             response = _render_visit_tab(request, visit.folder)
             response["HX-Trigger"] = "closeModal"
             return response
-        response = render(request, "inspections/partials/visit/visit_update_modal.html", {"visit": visit, "form": form}, status=422)
+        response = render(
+            request,
+            "inspections/partials/visit/visit_update_modal.html",
+            {"visit": visit, "form": form},
+            status=422,
+        )
         response["HX-Retarget"] = "#modal-container"
         response["HX-Reswap"] = "innerHTML"
         return response
 
     form = VisitInstanceUpdateForm(instance=visit)
-    return render(request, "inspections/partials/visit/visit_update_modal.html", {"visit": visit, "form": form})
+    return render(
+        request,
+        "inspections/partials/visit/visit_update_modal.html",
+        {"visit": visit, "form": form},
+    )
 
 
 @login_required
@@ -428,7 +485,6 @@ def visit_unarchive(request, pk):
     return redirect("inspections:folder_detail", pk=visit.folder_id)
 
 
-
 @login_required
 @require_http_methods(["GET", "POST"])
 def visit_delete(request, pk):
@@ -441,7 +497,8 @@ def visit_delete(request, pk):
 
     if request.method == "GET":
         return _delete_modal(
-            request, visit,
+            request,
+            visit,
             title="Supprimer définitivement cette visite ?",
             label=visit.display_template_name,
             post_url=reverse("inspections:visit_delete", args=[visit.pk]),
@@ -450,7 +507,9 @@ def visit_delete(request, pk):
         )
 
     if visit.is_active:
-        return HttpResponse("La visite doit être archivée avant d'être supprimée.", status=409)
+        return HttpResponse(
+            "La visite doit être archivée avant d'être supprimée.", status=409
+        )
 
     folder = visit.folder
     delete_archived_instance(visit)
@@ -463,6 +522,7 @@ def visit_delete(request, pk):
 # ==========================================
 # ==== RECOMMANDATION SECTION ==============
 # ==========================================
+
 
 @login_required
 @require_http_methods(["GET", "POST"])
@@ -538,7 +598,6 @@ def recommandation_unarchive(request, pk):
     return redirect("inspections:folder_detail", pk=rec.folder_id)
 
 
-
 @login_required
 @require_http_methods(["GET", "POST"])
 def recommandation_delete(request, pk):
@@ -551,7 +610,8 @@ def recommandation_delete(request, pk):
 
     if request.method == "GET":
         return _delete_modal(
-            request, rec,
+            request,
+            rec,
             title="Supprimer définitivement cette recommandation ?",
             label=f"REC-{rec.pk}",
             post_url=reverse("inspections:recommandation_delete", args=[rec.pk]),
@@ -560,7 +620,9 @@ def recommandation_delete(request, pk):
         )
 
     if rec.is_active:
-        return HttpResponse("La recommandation doit être archivée avant d'être supprimée.", status=409)
+        return HttpResponse(
+            "La recommandation doit être archivée avant d'être supprimée.", status=409
+        )
 
     folder = rec.folder
     delete_archived_instance(rec)
@@ -573,6 +635,7 @@ def recommandation_delete(request, pk):
 # ==========================================
 # ==== FOLDER TABS SECTION =================
 # ==========================================
+
 
 @login_required
 @require_GET
@@ -620,7 +683,9 @@ def _render_recommandations_tab(request, folder):
         request,
         "inspections/partials/tabs/tab_recommandations.html",
         {
-            "recommandations": folder.recommandations.select_related("created_by", "updated_by"),
+            "recommandations": folder.recommandations.select_related(
+                "created_by", "updated_by"
+            ),
             "active_count": folder.recommandations.filter(is_active=True).count(),
         },
     )

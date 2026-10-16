@@ -7,13 +7,33 @@ from inspections.models import InspectionFolder, VisitInstance
 from inspections.services.inspectionfolder import get_inspection_folders_by_user
 
 MONTHS_FR = [
-    "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
-    "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
+    "Janvier",
+    "Février",
+    "Mars",
+    "Avril",
+    "Mai",
+    "Juin",
+    "Juillet",
+    "Août",
+    "Septembre",
+    "Octobre",
+    "Novembre",
+    "Décembre",
 ]
 WEEKDAYS_FR = ["lun.", "mar.", "mer.", "jeu.", "ven.", "sam.", "dim."]
 MONTHS_SHORT_FR = [
-    "janv.", "févr.", "mars", "avr.", "mai", "juin",
-    "juil.", "août", "sept.", "oct.", "nov.", "déc.",
+    "janv.",
+    "févr.",
+    "mars",
+    "avr.",
+    "mai",
+    "juin",
+    "juil.",
+    "août",
+    "sept.",
+    "oct.",
+    "nov.",
+    "déc.",
 ]
 
 # Phases counted as "en cours" (CLOSED and ARCHIVED are out), with their chart color token.
@@ -78,14 +98,16 @@ def _phase_breakdown(folders):
     for phase, color in ONGOING_PHASES:
         count = counts.get(phase.value, 0)
         length = (count / total) * circumference if total else 0
-        phases.append({
-            "label": phase.label,
-            "count": count,
-            "pct": round(count / total * 100) if total else 0,
-            "color": color,
-            "dash": f"{max(length - DONUT_GAP, 0):.2f} {circumference:.2f}",
-            "offset": f"{-offset:.2f}",
-        })
+        phases.append(
+            {
+                "label": phase.label,
+                "count": count,
+                "pct": round(count / total * 100) if total else 0,
+                "color": color,
+                "dash": f"{max(length - DONUT_GAP, 0):.2f} {circumference:.2f}",
+                "offset": f"{-offset:.2f}",
+            }
+        )
         offset += length
     return phases
 
@@ -147,6 +169,8 @@ def get_dashboard_context(user, month=None, year=None, today=None):
         "ongoing_total": total,
         "ongoing_delta": total - previous_total,
         "phases": phases,
-        "last_folder": get_inspection_folders_by_user(user).order_by("-updated_at").first(),
+        "last_folder": get_inspection_folders_by_user(user)
+        .order_by("-updated_at")
+        .first(),
         "upcoming_visits": get_upcoming_visits(user, today),
     }

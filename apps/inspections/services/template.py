@@ -8,13 +8,17 @@ from django.shortcuts import get_object_or_404
 
 from core.services import delete_archived_instance
 from inspections.models import VisitTemplate
-from inspections.validators import get_default_template_structure, validate_template_schema
+from inspections.validators import (
+    get_default_template_structure,
+    validate_template_schema,
+)
 
 TEMPLATE_SCOPES = ("mine", "shared")
 FIELD_TYPES = ("boolean", "number", "select", "text")
 
 
 # ==== QUERIES ====
+
 
 def get_filtered_templates(user, scope="mine", query="", status="all"):
     """
@@ -23,7 +27,9 @@ def get_filtered_templates(user, scope="mine", query="", status="all"):
     - shared : active templates shared by the other users.
     """
     if scope == "shared":
-        templates = VisitTemplate.objects.filter(shared=True, is_active=True).exclude(created_by=user)
+        templates = VisitTemplate.objects.filter(shared=True, is_active=True).exclude(
+            created_by=user
+        )
     else:
         templates = VisitTemplate.objects.filter(created_by=user)
         if status == "archived":
@@ -33,9 +39,13 @@ def get_filtered_templates(user, scope="mine", query="", status="all"):
 
     query = (query or "").strip()
     if query:
-        templates = templates.filter(Q(name__icontains=query) | Q(description__icontains=query))
+        templates = templates.filter(
+            Q(name__icontains=query) | Q(description__icontains=query)
+        )
 
-    return templates.select_related("created_by", "updated_by").order_by("-is_active", "-updated_at")
+    return templates.select_related("created_by", "updated_by").order_by(
+        "-is_active", "-updated_at"
+    )
 
 
 def get_usable_templates(user):
@@ -50,22 +60,33 @@ def get_usable_templates(user):
 
 def get_template_by_id(pk, user):
     """A template can be read by its owner, and by everybody when it is shared and active."""
-    template = get_object_or_404(VisitTemplate.objects.select_related("created_by", "updated_by"), pk=pk)
-    if template.created_by_id != user.pk and not (template.shared and template.is_active):
+    template = get_object_or_404(
+        VisitTemplate.objects.select_related("created_by", "updated_by"), pk=pk
+    )
+    if template.created_by_id != user.pk and not (
+        template.shared and template.is_active
+    ):
         raise Http404
     return template
 
 
 def get_owned_template_by_id(pk, user):
     """Only the owner can change a template."""
-    return get_object_or_404(VisitTemplate.objects.select_related("created_by", "updated_by"), pk=pk, created_by=user)
+    return get_object_or_404(
+        VisitTemplate.objects.select_related("created_by", "updated_by"),
+        pk=pk,
+        created_by=user,
+    )
 
 
 def count_fields(schema):
-    return sum(len(section.get("fields", [])) for section in (schema or {}).get("sections", []))
+    return sum(
+        len(section.get("fields", [])) for section in (schema or {}).get("sections", [])
+    )
 
 
 # ==== WRITES ====
+
 
 def create_template(user, name, description="", shared=False, schema=None):
     template = VisitTemplate(
@@ -121,6 +142,7 @@ def delete_template(template):
 # The editor form is the state: each action posts the whole form, the structure is rebuilt from it,
 # one operation is applied, and the editor is rendered again.
 
+
 def _new_id(prefix):
     return f"{prefix}_{uuid.uuid4().hex[:8]}"
 
@@ -130,7 +152,13 @@ def new_section(title="Nouvelle section"):
 
 
 def new_field():
-    return {"id": _new_id("f"), "label": "", "type": "boolean", "required": False, "order": 0}
+    return {
+        "id": _new_id("f"),
+        "label": "",
+        "type": "boolean",
+        "required": False,
+        "order": 0,
+    }
 
 
 def structure_from_post(post):
@@ -156,17 +184,21 @@ def structure_from_post(post):
             }
             if field_type == "select":
                 raw = post.get(f"{prefix}-options", "")
-                field["options"] = [o.strip() for o in raw.replace("\n", ",").split(",") if o.strip()]
+                field["options"] = [
+                    o.strip() for o in raw.replace("\n", ",").split(",") if o.strip()
+                ]
             if field_type == "number" and post.get(f"{prefix}-unit", "").strip():
                 field["unit"] = post.get(f"{prefix}-unit").strip()
             fields.append(field)
             j += 1
-        sections.append({
-            "id": post.get(f"s{i}-id"),
-            "title": post.get(f"s{i}-title", "").strip(),
-            "order": i + 1,
-            "fields": fields,
-        })
+        sections.append(
+            {
+                "id": post.get(f"s{i}-id"),
+                "title": post.get(f"s{i}-title", "").strip(),
+                "order": i + 1,
+                "fields": fields,
+            }
+        )
         i += 1
     return {"version": "1.0", "sections": sections}
 
@@ -181,13 +213,19 @@ def apply_editor_operation(structure, op, section=None, field=None):
 
     if op == "add_section":
         sections.append(new_section())
-    elif op == "remove_section" and section is not None and 0 <= section < len(sections):
+    elif (
+        op == "remove_section" and section is not None and 0 <= section < len(sections)
+    ):
         sections.pop(section)
     elif op in ("move_section_up", "move_section_down") and section is not None:
         _move(sections, section, -1 if op.endswith("up") else 1)
     elif op == "add_field" and section is not None and 0 <= section < len(sections):
         sections[section]["fields"].append(new_field())
-    elif op in ("remove_field", "move_field_up", "move_field_down") and section is not None and field is not None:
+    elif (
+        op in ("remove_field", "move_field_up", "move_field_down")
+        and section is not None
+        and field is not None
+    ):
         if 0 <= section < len(sections):
             fields = sections[section]["fields"]
             if op == "remove_field" and 0 <= field < len(fields):
@@ -215,7 +253,9 @@ def validate_editor_structure(structure):
             raise ValidationError("Chaque section doit avoir un titre.")
         for field in section["fields"]:
             if not field["label"]:
-                raise ValidationError(f"Chaque champ de la section « {section['title']} » doit avoir un libellé.")
+                raise ValidationError(
+                    f"Chaque champ de la section « {section['title']} » doit avoir un libellé."
+                )
             if field["type"] not in FIELD_TYPES:
                 raise ValidationError("Type de champ inconnu.")
     return validate_template_schema(structure)
