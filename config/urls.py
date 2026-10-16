@@ -1,5 +1,4 @@
-"""
-URL configuration for config project.
+"""Root URL configuration: admin, apps and the browser reload route (DEBUG only).
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/6.0/topics/http/urls/

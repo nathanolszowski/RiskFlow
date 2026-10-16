@@ -1,3 +1,5 @@
+"""Production settings: DEBUG off, secrets and database required from the environment, HTTPS."""
+
 import os
 
 from .base import *

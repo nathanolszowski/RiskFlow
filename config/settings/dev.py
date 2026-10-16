@@ -1,3 +1,5 @@
+"""Development settings: DEBUG on, local database defaults and browser reload."""
+
 import os
 
 from .base import *
