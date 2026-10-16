@@ -58,12 +58,13 @@ Le choix d'HTMX permet de limiter le JavaScript au strict minimum : les listes, 
 ## Architecture
 
 ```
-accounts/      Utilisateur personnalisé et profil inspecteur
+apps/
+  accounts/    Utilisateur personnalisé et profil inspecteur
+  core/        Code commun : modèle de traçabilité, layout, dashboard, recherche, thème
+  crm/         Sociétés, contacts, client de l'API INSEE
+  inspections/ Dossiers, modèles et instances de visite, recommandations
+  theme/       Configuration Tailwind et tokens de thème
 config/        Settings et routage du projet
-core/          Code commun : modèle de traçabilité, layout, dashboard, recherche, thème
-crm/           Sociétés, contacts, client de l'API INSEE
-inspections/   Dossiers, modèles et instances de visite, recommandations
-theme/         Configuration Tailwind et tokens de thème
 ```
 
 Quelques principes :
