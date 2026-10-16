@@ -9,7 +9,7 @@ from django.http import HttpResponse
 from .forms import InspectionFolderForm, InspectionFolderUpdateForm, VisitInstanceUpdateForm, RecommandationUpdateForm
 from .models import InspectionFolder
 from crm.models import Company, Contact
-from inspections.services.inspectionfolder import get_filtered_folders, get_inspection_folder_by_id, create_tracked_instance
+from inspections.services.inspectionfolder import get_filtered_folders, get_company_folders, get_inspection_folder_by_id, create_tracked_instance
 from inspections.services.visit import get_visit_by_id
 from inspections.services.recommandation import get_recommandation_by_id
 
@@ -71,6 +71,7 @@ def folder_detail(request, pk):
 
     context = {
         "folder": folder,
+        "company_folders": get_company_folders(folder.company, request.user),
     }
     return render(request, "inspections/folder_detail.html", context)
 
@@ -544,7 +545,10 @@ def folder_tab_overview(request, pk):
     return render(
         request,
         "inspections/partials/tab_overview.html",
-        {"folder": folder},
+        {
+            "folder": folder,
+            "company_folders": get_company_folders(folder.company, request.user),
+        },
     )
 
 

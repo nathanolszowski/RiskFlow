@@ -10,14 +10,14 @@
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-    <div class="lg:col-span-2 space-y-6">
+    <div class="lg:col-span-2">
         {% include "inspections/partials/folder_read.html" %}
     </div>
 
     <div class="lg:col-span-1">
         <div
             class="rounded-2xl border border-border-default bg-surface-primary p-6 backdrop-blur-xs h-full transition-colors">
-            <h3 class="text-lg font-bold text-text-main mb-4">🏢 Informations Société</h3>
+            <h3 class="text-lg font-bold text-text-main mb-4">🏢 Informations Client</h3>
             <p class="text-sm text-text-main font-bold">{{ folder.company.name }}</p>
             <p class="text-sm text-text-main">{{ folder.company.business_line }}</p>
 
@@ -29,6 +29,28 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
                 </a>
+            </div>
+
+            <div class="pt-5 mt-5 border-t border-border-default">
+                <h4 class="text-xs font-bold uppercase tracking-wide text-text-main mb-2">Dossiers du client</h4>
+                <ul class="space-y-0.5">
+                    {% for f in company_folders %}
+                    <li>
+                        <a href="{% url 'inspections:folder_detail' f.pk %}"
+                            class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm hover:bg-surface-tertiary transition-colors {% if f.pk == folder.pk %}bg-brand-bg border border-brand-border{% endif %} {% if not f.is_active %}opacity-60{% endif %}">
+                            <span class="text-lg leading-none">{% if f.is_active %}📁{% else %}🗃️{% endif %}</span>
+                            <span class="min-w-0 flex-1">
+                                <span class="block truncate font-medium text-text-main">{{ f.reference }}</span>
+                                <span class="block truncate text-xs text-text-main opacity-70">
+                                    {{ f.get_current_phase_display }}{% if not f.is_active %} · archivé{% endif %}
+                                </span>
+                            </span>
+                        </a>
+                    </li>
+                    {% empty %}
+                    <li class="text-xs text-text-main opacity-70">Aucun dossier.</li>
+                    {% endfor %}
+                </ul>
             </div>
         </div>
     </div>

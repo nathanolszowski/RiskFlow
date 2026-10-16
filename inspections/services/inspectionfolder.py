@@ -12,6 +12,16 @@ def get_inspection_folders_by_user(user):
         is_active=True
     ).select_related("company")
 
+def get_company_folders(company, user):
+    """
+    Retrieve every folder (active or archived) of a company created by the user.
+    """
+    return InspectionFolder.objects.filter(
+        company=company,
+        created_by=user,
+    ).order_by("-created_at")
+
+
 def get_filtered_folders(request):
     """
     Filters and sorts inspection records based on the parameters 
