@@ -18,4 +18,17 @@ dependencies = [
 [dependency-groups]
 dev = [
     "django-stubs>=6.1.2",
+    "ruff>=0.17.1",
 ]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+extend-exclude = ["**/migrations/*"]   # migrations générées par Django, à ne pas reformater
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "RUF100"]     # erreurs, pyflakes, tri des imports, noqa inutiles
+ignore = ["E501"]                      # longueur de ligne : gérée par le formateur, il ne coupe pas les chaînes
+
+[tool.ruff.lint.per-file-ignores]
+"config/settings/*.py" = ["F403", "F405"]  # `from .base import *` voulu
