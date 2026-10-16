@@ -1,3 +1,5 @@
+"""URLs of the inspections app: folders, visits, recommendations, templates and the visit form."""
+
 from django.urls import path
 
 from . import views, views_templates, views_visit_form

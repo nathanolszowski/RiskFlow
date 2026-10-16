@@ -1,10 +1,15 @@
+"""Views of the inspections app: folders, visits, recommendations and folder tabs."""
+
+from typing import Any, Optional
+
+from core.models import TrackingModel
 from core.services import delete_archived_instance
 from crm.models import Company, Contact
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.forms import ModelChoiceField
-from django.http import HttpResponse
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -42,8 +47,16 @@ from .models import InspectionFolder
 
 @login_required
 @require_GET
-def folder_list(request):
-    """Render inspection folders list view (initial page load)."""
+def folder_list(request: HttpRequest) -> HttpResponse:
+    """Render the folders list page (initial page load).
+
+    Args:
+        request: Current request, with the ``q``, ``phase``, ``status``, ``company``
+            and ``sort`` filters.
+
+    Returns:
+        The full page, first page of the filtered list.
+    """
     companies = (
         Company.objects.filter(inspection_folders__isnull=False)
         .distinct()
@@ -68,8 +81,16 @@ def folder_list(request):
 
 @login_required
 @require_GET
-def folder_list_paginated(request, page=1):
-    """Render inspection folders list view with updated page / filters (HTMX)."""
+def folder_list_paginated(request: HttpRequest, page: int = 1) -> HttpResponse:
+    """Render only the folders grid of the given page and filters (HTMX).
+
+    Args:
+        request: Current request, with the same filters as ``folder_list``.
+        page: Page number, 15 folders per page.
+
+    Returns:
+        The grid partial.
+    """
     folders = get_filtered_folders(request)
 
     paginator = Paginator(folders, 15)
@@ -87,8 +108,20 @@ def folder_list_paginated(request, page=1):
 
 @login_required
 @require_GET
-def folder_detail(request, pk):
-    """Render main view for inspection folder detail data."""
+def folder_detail(request: HttpRequest, pk: int) -> HttpResponse:
+    """Render the detail page of a folder.
+
+    Args:
+        request: Current request. The ``tab`` GET parameter is the tab to open
+            (used by the visit form to come back to the visits).
+        pk: Primary key of the folder.
+
+    Returns:
+        The full page.
+
+    Raises:
+        Http404: If the folder does not exist or belongs to another user.
+    """
     folder = get_inspection_folder_by_id(pk, request.user)
 
     context = {
@@ -102,12 +135,20 @@ def folder_detail(request, pk):
 
 @login_required
 @require_http_methods(["GET", "POST"])
-def create_folder(request):
-    """HTMX view to create a new inspection folder
-    - GET  : Render the form in a modal (folder_form_modal.html).
-    - POST : Validate the form and create the folder.
-             If True -> Return 204 to close the modal and refresh the list.
-             If False -> Render the form with errors (folder_form_modal.html).
+def create_folder(request: HttpRequest) -> HttpResponse:
+    """Render and process the folder creation modal (HTMX).
+
+    The ``company`` parameter (GET or POST) pre-selects the company, limits the
+    contacts to its own and means the modal was opened from a company page.
+
+    Args:
+        request: Current request.
+
+    Returns:
+        On GET, the form modal (``folder_form_modal.html``). On a valid POST, a 204
+        with ``HX-Refresh`` when created from a company page, otherwise the folders
+        grid with ``HX-Trigger: closeModal``. On an invalid POST, the modal with its
+        errors (422).
     """
     company_id = request.GET.get("company") or request.POST.get("company")
     selected_company = (
@@ -174,13 +215,20 @@ def create_folder(request):
 
 @login_required
 @require_http_methods(["GET", "POST"])
-def folder_inline_update(request, pk):
-    """
-    HTMX view to edit folder data from the overview tab.
-    - GET  : Render auto-complete form (folder_update.html).
-    - POST : Update validation.
-             If True -> Render read view with data (folder_read.html).
-             If False -> Render form with errors (folder_update.html).
+def folder_inline_update(request: HttpRequest, pk: int) -> HttpResponse:
+    """Edit the data of a folder from the overview tab (HTMX).
+
+    Args:
+        request: Current request.
+        pk: Primary key of the folder.
+
+    Returns:
+        On GET, the pre-filled form (``folder_update.html``). On a valid POST, the
+        read fragment (``folder_read.html``). On an invalid POST, the form with its
+        errors (``folder_update.html``).
+
+    Raises:
+        Http404: If the folder does not exist or belongs to another user.
     """
     folder = get_inspection_folder_by_id(pk, request.user)
 
@@ -207,10 +255,18 @@ def folder_inline_update(request, pk):
 
 @login_required
 @require_GET
-def folder_inline_read(request, pk):
-    """
-    HTMX view to read only folder information from the overview tab.
-    Only fragment (folder_read.html).
+def folder_inline_read(request: HttpRequest, pk: int) -> HttpResponse:
+    """Render the read-only fragment of a folder in the overview tab (HTMX).
+
+    Args:
+        request: Current request.
+        pk: Primary key of the folder.
+
+    Returns:
+        The read fragment (``folder_read.html``).
+
+    Raises:
+        Http404: If the folder does not exist or belongs to another user.
     """
     folder = get_inspection_folder_by_id(pk, request.user)
     return render(
@@ -222,11 +278,21 @@ def folder_inline_read(request, pk):
 
 @login_required
 @require_http_methods(["GET", "POST"])
-def folder_archive(request, folder_id):
-    """
-    Archive a folder together with its visits and recommendations (not its company or contact).
-    - GET  : Render the confirmation modal listing the elements that will be archived.
-    - POST : Archive the folder.
+def folder_archive(request: HttpRequest, folder_id: int) -> HttpResponse:
+    """Archive a folder together with its visits and recommendations.
+
+    The company and the referent contact are not archived.
+
+    Args:
+        request: Current request.
+        folder_id: Primary key of the folder.
+
+    Returns:
+        On GET, the confirmation modal listing the elements that will be archived.
+        On POST, ``HX-Refresh`` for an HTMX request, otherwise a redirect to the folder.
+
+    Raises:
+        Http404: If the folder does not exist or belongs to another user.
     """
     folder = get_inspection_folder_by_id(folder_id, request.user)
 
@@ -267,7 +333,19 @@ def folder_archive(request, folder_id):
 
 @login_required
 @require_POST
-def folder_unarchive(request, folder_id):
+def folder_unarchive(request: HttpRequest, folder_id: int) -> HttpResponse:
+    """Unarchive a folder, with the visits and recommendations archived together with it.
+
+    Args:
+        request: Current request.
+        folder_id: Primary key of the folder.
+
+    Returns:
+        ``HX-Refresh`` for an HTMX request, otherwise a redirect to the folder.
+
+    Raises:
+        Http404: If the folder does not exist or belongs to another user.
+    """
     folder = get_inspection_folder_by_id(folder_id, request.user)
     folder.unarchive(user=request.user)
 
@@ -279,8 +357,29 @@ def folder_unarchive(request, folder_id):
     return redirect("inspections:folder_detail", pk=folder.pk)
 
 
-def _delete_modal(request, obj, *, title, label, post_url, sections, post_target=None):
-    """Render the permanent-deletion modal; it only offers confirmation once the object is archived."""
+def _delete_modal(
+    request: HttpRequest,
+    obj: TrackingModel,
+    *,
+    title: str,
+    label: str,
+    post_url: str,
+    sections: list[dict[str, Any]],
+    post_target: Optional[str] = None,
+) -> HttpResponse:
+    """Render the permanent-deletion modal.
+
+    It only offers the confirmation once the object is archived.
+
+    Args:
+        request: Current request.
+        obj: Object to delete.
+        title: Title of the modal.
+        label: Name of the object shown in the modal.
+        post_url: URL the confirmation is posted to.
+        sections: Sections of the modal (``title``, ``entries``, ``note``, ``warning``).
+        post_target: HTMX target of the confirmation, if not the default one.
+    """
     blocking = None
     if obj.is_active:
         blocking = {
@@ -306,11 +405,19 @@ def _delete_modal(request, obj, *, title, label, post_url, sections, post_target
 
 @login_required
 @require_http_methods(["GET", "POST"])
-def folder_delete(request, folder_id):
-    """
-    Permanently delete an archived folder with its visits and recommendations.
-    - GET  : Render the confirmation modal.
-    - POST : Delete the folder (409 if it is still active).
+def folder_delete(request: HttpRequest, folder_id: int) -> HttpResponse:
+    """Permanently delete an archived folder with its visits and recommendations.
+
+    Args:
+        request: Current request.
+        folder_id: Primary key of the folder.
+
+    Returns:
+        On GET, the confirmation modal. On POST, a 409 if the folder is still active,
+        otherwise ``HX-Redirect`` to the list for an HTMX request or a redirect to it.
+
+    Raises:
+        Http404: If the folder does not exist or belongs to another user.
     """
     folder = get_inspection_folder_by_id(folder_id, request.user)
 
@@ -357,13 +464,21 @@ def folder_delete(request, folder_id):
 
 @login_required
 @require_http_methods(["GET", "POST"])
-def visit_create(request, folder_id):
-    """
-    HTMX view to prepare a new visit from a template (own or shared) and a date.
-    - GET  : Render the modal (visit_create_modal.html), the template can be preselected with ?template=<pk>.
-    - POST : Validate the form and create the visit (snapshot of the template).
-             If True -> Render the visit tab with HX-Trigger: closeModal.
-             If False -> Render the modal with errors (422).
+def visit_create(request: HttpRequest, folder_id: int) -> HttpResponse:
+    """Prepare a new visit from a template (own or shared) and a date (HTMX).
+
+    Args:
+        request: Current request. On GET, ``template`` pre-selects a template.
+        folder_id: Primary key of the folder.
+
+    Returns:
+        A 409 if the folder is archived. On GET, the modal
+        (``visit_create_modal.html``). On a valid POST, the visit tab with
+        ``HX-Trigger: closeModal``; the visit holds a snapshot of the template. On an
+        invalid POST, the modal with its errors (422).
+
+    Raises:
+        Http404: If the folder does not exist or belongs to another user.
     """
     folder = get_inspection_folder_by_id(folder_id, request.user)
     if not folder.is_active:
@@ -412,13 +527,19 @@ def visit_create(request, folder_id):
 
 @login_required
 @require_http_methods(["GET", "POST"])
-def visit_update(request, pk):
-    """
-    HTMX view to edit the planning data of a visit (status, date, notes) in a modal.
-    - GET  : Render the form (visit_update_modal.html).
-    - POST : Update validation.
-             If True -> Render the visit tab with HX-Trigger: closeModal.
-             If False -> Render the form with errors (422).
+def visit_update(request: HttpRequest, pk: int) -> HttpResponse:
+    """Edit the planning data of a visit (date and notes) in a modal (HTMX).
+
+    Args:
+        request: Current request.
+        pk: Primary key of the visit.
+
+    Returns:
+        On GET, the form (``visit_update_modal.html``). On a valid POST, the visit tab
+        with ``HX-Trigger: closeModal``. On an invalid POST, the form with its errors (422).
+
+    Raises:
+        Http404: If the visit does not exist or belongs to another user.
     """
     visit = get_visit_by_id(pk, request.user)
 
@@ -451,8 +572,19 @@ def visit_update(request, pk):
 
 @login_required
 @require_POST
-def visit_toggle_done(request, pk):
-    """Tick / untick a visit as done from the visits tab (checkbox "done" present when ticked)."""
+def visit_toggle_done(request: HttpRequest, pk: int) -> HttpResponse:
+    """Tick or untick a visit as done from the visits tab.
+
+    Args:
+        request: Current request. The ``done`` checkbox is posted as ``on`` when ticked.
+        pk: Primary key of the visit.
+
+    Returns:
+        The visit tab, or a 409 if the visit is archived.
+
+    Raises:
+        Http404: If the visit does not exist or belongs to another user.
+    """
     visit = get_visit_by_id(pk, request.user)
     try:
         set_visit_done(visit, request.user, request.POST.get("done") == "on")
@@ -463,7 +595,19 @@ def visit_toggle_done(request, pk):
 
 @login_required
 @require_POST
-def visit_archive(request, pk):
+def visit_archive(request: HttpRequest, pk: int) -> HttpResponse:
+    """Archive a visit.
+
+    Args:
+        request: Current request.
+        pk: Primary key of the visit.
+
+    Returns:
+        The current tab for an HTMX request, otherwise a redirect to the folder.
+
+    Raises:
+        Http404: If the visit does not exist or belongs to another user.
+    """
     visit = get_visit_by_id(pk, request.user)
     visit.archive(user=request.user)
 
@@ -476,7 +620,19 @@ def visit_archive(request, pk):
 
 @login_required
 @require_POST
-def visit_unarchive(request, pk):
+def visit_unarchive(request: HttpRequest, pk: int) -> HttpResponse:
+    """Unarchive a visit.
+
+    Args:
+        request: Current request.
+        pk: Primary key of the visit.
+
+    Returns:
+        The current tab for an HTMX request, otherwise a redirect to the folder.
+
+    Raises:
+        Http404: If the visit does not exist or belongs to another user.
+    """
     visit = get_visit_by_id(pk, request.user)
     visit.unarchive(user=request.user)
 
@@ -489,11 +645,19 @@ def visit_unarchive(request, pk):
 
 @login_required
 @require_http_methods(["GET", "POST"])
-def visit_delete(request, pk):
-    """
-    Permanently delete an archived visit.
-    - GET  : Render the confirmation modal.
-    - POST : Delete the visit and re-render the visit tab (409 if it is still active).
+def visit_delete(request: HttpRequest, pk: int) -> HttpResponse:
+    """Permanently delete an archived visit.
+
+    Args:
+        request: Current request.
+        pk: Primary key of the visit.
+
+    Returns:
+        On GET, the confirmation modal. On POST, a 409 if the visit is still active,
+        otherwise the visit tab for an HTMX request or a redirect to the folder.
+
+    Raises:
+        Http404: If the visit does not exist or belongs to another user.
     """
     visit = get_visit_by_id(pk, request.user)
 
@@ -528,13 +692,21 @@ def visit_delete(request, pk):
 
 @login_required
 @require_http_methods(["GET", "POST"])
-def recommandation_inline_update(request, pk):
-    """
-    HTMX view to edit a recommendation from the recommendations tab.
-    - GET  : Render auto-complete form (recommandation_update.html).
-    - POST : Update validation.
-             If True -> Render read view with data (recommandation_read.html).
-             If False -> Render form with errors (recommandation_update.html).
+def recommandation_inline_update(request: HttpRequest, pk: int) -> HttpResponse:
+    """Edit a recommendation from the recommendations tab (HTMX).
+
+    Args:
+        request: Current request.
+        pk: Primary key of the recommendation.
+
+    Returns:
+        On GET, the pre-filled form (``recommandation_update.html``). On a valid POST,
+        the read fragment (``recommandation_read.html``). On an invalid POST, the form
+        with its errors (``recommandation_update.html``).
+
+    Raises:
+        Http404: If the recommendation does not exist or its folder belongs to
+            another user.
     """
     rec = get_recommandation_by_id(pk, request.user)
 
@@ -561,10 +733,19 @@ def recommandation_inline_update(request, pk):
 
 @login_required
 @require_GET
-def recommandation_inline_read(request, pk):
-    """
-    HTMX view to read only a recommendation from the recommendations tab.
-    Only fragment (recommandation_read.html).
+def recommandation_inline_read(request: HttpRequest, pk: int) -> HttpResponse:
+    """Render the read-only fragment of a recommendation (HTMX).
+
+    Args:
+        request: Current request.
+        pk: Primary key of the recommendation.
+
+    Returns:
+        The read fragment (``recommandation_read.html``).
+
+    Raises:
+        Http404: If the recommendation does not exist or its folder belongs to
+            another user.
     """
     rec = get_recommandation_by_id(pk, request.user)
     return render(
@@ -576,7 +757,20 @@ def recommandation_inline_read(request, pk):
 
 @login_required
 @require_POST
-def recommandation_archive(request, pk):
+def recommandation_archive(request: HttpRequest, pk: int) -> HttpResponse:
+    """Archive a recommendation.
+
+    Args:
+        request: Current request.
+        pk: Primary key of the recommendation.
+
+    Returns:
+        The current tab for an HTMX request, otherwise a redirect to the folder.
+
+    Raises:
+        Http404: If the recommendation does not exist or its folder belongs to
+            another user.
+    """
     rec = get_recommandation_by_id(pk, request.user)
     rec.archive(user=request.user)
 
@@ -589,7 +783,20 @@ def recommandation_archive(request, pk):
 
 @login_required
 @require_POST
-def recommandation_unarchive(request, pk):
+def recommandation_unarchive(request: HttpRequest, pk: int) -> HttpResponse:
+    """Unarchive a recommendation.
+
+    Args:
+        request: Current request.
+        pk: Primary key of the recommendation.
+
+    Returns:
+        The current tab for an HTMX request, otherwise a redirect to the folder.
+
+    Raises:
+        Http404: If the recommendation does not exist or its folder belongs to
+            another user.
+    """
     rec = get_recommandation_by_id(pk, request.user)
     rec.unarchive(user=request.user)
 
@@ -602,11 +809,21 @@ def recommandation_unarchive(request, pk):
 
 @login_required
 @require_http_methods(["GET", "POST"])
-def recommandation_delete(request, pk):
-    """
-    Permanently delete an archived recommendation.
-    - GET  : Render the confirmation modal.
-    - POST : Delete the recommendation and re-render the tab (409 if it is still active).
+def recommandation_delete(request: HttpRequest, pk: int) -> HttpResponse:
+    """Permanently delete an archived recommendation.
+
+    Args:
+        request: Current request.
+        pk: Primary key of the recommendation.
+
+    Returns:
+        On GET, the confirmation modal. On POST, a 409 if the recommendation is still
+        active, otherwise the recommendations tab for an HTMX request or a redirect to
+        the folder.
+
+    Raises:
+        Http404: If the recommendation does not exist or its folder belongs to
+            another user.
     """
     rec = get_recommandation_by_id(pk, request.user)
 
@@ -641,8 +858,19 @@ def recommandation_delete(request, pk):
 
 @login_required
 @require_GET
-def folder_tab_overview(request, pk):
-    """Show only the content of the overview tab."""
+def folder_tab_overview(request: HttpRequest, pk: int) -> HttpResponse:
+    """Render only the content of the overview tab.
+
+    Args:
+        request: Current request.
+        pk: Primary key of the folder.
+
+    Returns:
+        The tab fragment.
+
+    Raises:
+        Http404: If the folder does not exist or belongs to another user.
+    """
     folder = get_inspection_folder_by_id(pk, request.user)
     return render(
         request,
@@ -654,8 +882,17 @@ def folder_tab_overview(request, pk):
     )
 
 
-def _render_visit_tab(request, folder):
-    """Render the visit tab content: next visit, table of the visits (active or archived) and counters."""
+def _render_visit_tab(request: HttpRequest, folder: InspectionFolder) -> HttpResponse:
+    """Render the visit tab content: next visit, table of the visits and counters.
+
+    Args:
+        request: Current request. ``status=archived`` lists the archived visits instead
+            of the active ones.
+        folder: Folder of the visits.
+
+    Returns:
+        The tab fragment.
+    """
     status = "archived" if request.GET.get("status") == "archived" else "active"
     return render(
         request,
@@ -673,14 +910,35 @@ def _render_visit_tab(request, folder):
 
 @login_required
 @require_GET
-def folder_tab_visit(request, pk):
-    """Open the content of the visit tab."""
+def folder_tab_visit(request: HttpRequest, pk: int) -> HttpResponse:
+    """Render only the content of the visit tab.
+
+    Args:
+        request: Current request.
+        pk: Primary key of the folder.
+
+    Returns:
+        The tab fragment.
+
+    Raises:
+        Http404: If the folder does not exist or belongs to another user.
+    """
     folder = get_inspection_folder_by_id(pk, request.user)
     return _render_visit_tab(request, folder)
 
 
-def _render_recommandations_tab(request, folder):
-    """Render the recommendations tab content."""
+def _render_recommandations_tab(
+    request: HttpRequest, folder: InspectionFolder
+) -> HttpResponse:
+    """Render the recommendations tab content.
+
+    Args:
+        request: Current request.
+        folder: Folder of the recommendations.
+
+    Returns:
+        The tab fragment.
+    """
     return render(
         request,
         "inspections/partials/tabs/tab_recommandations.html",
@@ -695,7 +953,18 @@ def _render_recommandations_tab(request, folder):
 
 @login_required
 @require_GET
-def folder_tab_recommandations(request, pk):
-    """Show only the content of the recommendations tab."""
+def folder_tab_recommandations(request: HttpRequest, pk: int) -> HttpResponse:
+    """Render only the content of the recommendations tab.
+
+    Args:
+        request: Current request.
+        pk: Primary key of the folder.
+
+    Returns:
+        The tab fragment.
+
+    Raises:
+        Http404: If the folder does not exist or belongs to another user.
+    """
     folder = get_inspection_folder_by_id(pk, request.user)
     return _render_recommandations_tab(request, folder)

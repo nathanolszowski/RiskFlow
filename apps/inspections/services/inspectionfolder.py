@@ -1,21 +1,42 @@
-from django.db.models import Q
+"""Services of the inspection folders, always restricted to the user who created them."""
+
+from typing import TYPE_CHECKING
+
+from django.db.models import Q, QuerySet
+from django.forms import ModelForm
+from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 
 from inspections.models import InspectionFolder
 
+if TYPE_CHECKING:
+    from accounts.models import CustomUser
+    from crm.models import Company
 
-def get_inspection_folders_by_user(user):
-    """
-    Retrieve all active inspection folders created by a specific user, along with their associated client information.
+
+def get_inspection_folders_by_user(user: "CustomUser") -> QuerySet:
+    """Return the active folders created by the user, with their company.
+
+    Args:
+        user: Owner of the folders.
+
+    Returns:
+        The active folders, company already loaded.
     """
     return InspectionFolder.objects.filter(
         created_by=user, is_active=True
     ).select_related("company")
 
 
-def get_company_folders(company, user):
-    """
-    Retrieve every folder (active or archived) of a company created by the user.
+def get_company_folders(company: "Company", user: "CustomUser") -> QuerySet:
+    """Return every folder (active or archived) of a company created by the user.
+
+    Args:
+        company: Company of the folders.
+        user: Owner of the folders.
+
+    Returns:
+        The folders, newest first.
     """
     return InspectionFolder.objects.filter(
         company=company,
@@ -23,10 +44,18 @@ def get_company_folders(company, user):
     ).order_by("-created_at")
 
 
-def get_filtered_folders(request):
-    """
-    Filters and sorts inspection records based on the parameters
-    provided in the GET or POST request.
+def get_filtered_folders(request: HttpRequest) -> QuerySet:
+    """Return the folders of the logged-in user, filtered and sorted by the request.
+
+    Args:
+        request: Current request. Reads, from GET or POST, ``q`` (search on
+            reference and company name), ``phase``, ``status`` (``active`` or
+            ``archived``), ``company`` (company id) and ``sort`` (``-updated_at``,
+            ``-created_at``, ``reference`` or ``company__name``, anything else
+            falls back to ``-updated_at``).
+
+    Returns:
+        The filtered and sorted folders.
     """
     # 1. Base Queryset : created_by authorization
     folders = InspectionFolder.objects.filter(created_by=request.user)
@@ -64,10 +93,18 @@ def get_filtered_folders(request):
     return folders.order_by(sort_by)
 
 
-def get_inspection_folder_by_id(pk, user):
-    """
-    Retrieves a specific inspection record by its primary key (pk)
-    while ensuring that it was created by the logged-in user.
+def get_inspection_folder_by_id(pk: int, user: "CustomUser") -> InspectionFolder:
+    """Return a folder, ensuring that it was created by the user.
+
+    Args:
+        pk: Primary key of the folder.
+        user: Logged-in user, who must own the folder.
+
+    Returns:
+        The folder, with its company, contact and tracking users.
+
+    Raises:
+        Http404: If the folder does not exist or belongs to another user.
     """
     return get_object_or_404(
         InspectionFolder.objects.select_related(
@@ -78,9 +115,18 @@ def get_inspection_folder_by_id(pk, user):
     )
 
 
-def create_tracked_instance(form, user):
-    """
-    Sauve a ModelForm with created_by user
+def create_tracked_instance(form: ModelForm, user: "CustomUser") -> InspectionFolder:
+    """Save a model form, setting ``created_by`` if it is empty.
+
+    Unlike ``core.services.create_tracked_instance``, it also saves the
+    many-to-many data and keeps an existing ``created_by``.
+
+    Args:
+        form: Valid model form.
+        user: User recorded as ``created_by`` when the instance has none.
+
+    Returns:
+        The saved instance.
     """
     instance = form.save(commit=False)
     if hasattr(instance, "created_by") and not instance.created_by_id:

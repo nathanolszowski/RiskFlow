@@ -1,6 +1,9 @@
+"""Models of the inspections app: folders, visit templates, visits and recommendations."""
+
 import copy
 import uuid
-from typing import TYPE_CHECKING
+from datetime import date, datetime
+from typing import TYPE_CHECKING, Any, Optional
 
 from core.models import TrackingModel
 from django.core.exceptions import ValidationError
@@ -16,6 +19,7 @@ from .validators import (
 )
 
 if TYPE_CHECKING:
+    from accounts.models import CustomUser
     from django.db.models.fields.related_descriptors import RelatedManager
 """
 
@@ -25,6 +29,24 @@ if TYPE_CHECKING:
 
 
 class InspectionFolder(TrackingModel):
+    """Inspection folder: the mission of an inspector for a company.
+
+    A folder goes through the phases of ``Phase`` (creation, preparation, visit,
+    report, follow-up, closed). It owns its visits and recommendations: archiving
+    it archives them with the same date, and deleting it deletes them.
+
+    Attributes:
+        reference: Unique reference, generated as ``DOS-<year>-<6 hex>`` when empty.
+        current_phase: Current phase of the mission.
+        notes: Internal notes.
+        inspection_site_address: Address of the inspected site.
+        company: Inspected company (cannot be deleted while it has folders).
+        contact: Optional referent contact.
+        visits: Reverse relation to the visits of the folder.
+        recommandations: Reverse relation to the recommendations of the folder.
+        PROGRESS_PHASES: Ordered phases shown in the progress bar.
+    """
+
     class Phase(models.TextChoices):
         CREATION = "CREATION", "Création"
         PREPARATION = "PREPARATION", "Préparation"
@@ -85,12 +107,19 @@ class InspectionFolder(TrackingModel):
         verbose_name_plural = "Dossiers d'inspection"
         ordering = ["-updated_at"]
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Return the reference, the company and the current phase."""
         return f"{self.reference} - {self.company} {self.current_phase}"
 
-    def cascade_archive(self, user=None):
-        """
-        Properly archive the inspection folder and all its associated visits and recommendations. This method sets the `is_active` field to False and records the current timestamp in the `archived_at` field for the folder and its children. If a user is provided, it also records who performed the archiving action.
+    def cascade_archive(self, user: Optional["CustomUser"] = None) -> None:
+        """Archive the active visits and recommendations of the folder.
+
+        They receive the same ``archived_at`` as the folder, so that
+        ``cascade_unarchive()`` can restore only these ones.
+
+        Args:
+            user: User performing the action, recorded as ``archived_by`` and
+                ``updated_by`` of the children.
         """
         update_data = {
             "is_active": False,
@@ -104,10 +133,20 @@ class InspectionFolder(TrackingModel):
         self.visits.filter(is_active=True).update(**update_data)
         self.recommandations.filter(is_active=True).update(**update_data)
 
-    def cascade_unarchive(self, archived_at=None, user=None):
-        """
-        Restore the visits and recommendations archived together with the inspection folder (same archive date). Items archived
-        on their own beforehand stay archived.
+    def cascade_unarchive(
+        self,
+        archived_at: Optional[datetime] = None,
+        user: Optional["CustomUser"] = None,
+    ) -> None:
+        """Restore the visits and recommendations archived together with the folder.
+
+        Items archived on their own beforehand (different archive date) stay
+        archived.
+
+        Args:
+            archived_at: Archive date of the folder before it was unarchived. Nothing
+                is restored without it.
+            user: User performing the action, recorded as ``updated_by``.
         """
         if not archived_at:
             return
@@ -127,10 +166,14 @@ class InspectionFolder(TrackingModel):
             **update_data
         )
 
-    def generate_unique_reference(self):
-        """
-        Génère un format métier type DOS-ANNEE-HEXALÉATOIRE (ex: DOS-2026-A8F3B2).
-        Garantit l'unicité via une boucle de vérification.
+    def generate_unique_reference(self) -> str:
+        """Generate a reference such as ``DOS-2026-A8F3B2``.
+
+        The year is followed by six random hexadecimal characters. Uniqueness is
+        guaranteed by checking the database in a loop.
+
+        Returns:
+            A reference not used by any folder yet.
         """
         year = timezone.now().year
         while True:
@@ -142,35 +185,39 @@ class InspectionFolder(TrackingModel):
             if not InspectionFolder.objects.filter(reference=ref).exists():
                 return ref
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """Save the folder, generating its reference when empty.
+
+        Args:
+            *args: Positional arguments passed to ``Model.save()``.
+            **kwargs: Keyword arguments passed to ``Model.save()``.
+        """
         if not self.reference:
             self.reference = self.generate_unique_reference()
         super().save(*args, **kwargs)
 
     @property
-    def count_all_recommandations(self):
-        """
-        Return the total number of recommendation instances associated with this inspection folder.
-        """
+    def count_all_recommandations(self) -> int:
+        """Return the total number of recommendations of the folder, archived ones included."""
         return self.recommandations.count()
 
     @property
-    def count_all_visits(self):
-        """
-        Return the total number of visit instances associated with this inspection folder.
-        """
+    def count_all_visits(self) -> int:
+        """Return the total number of visits of the folder, archived ones included."""
         return self.visits.count()
 
     @property
-    def get_latest_visit(self):
-        """
-        Return the latest visit instance associated with this inspection folder, ordered by creation date in descending order.
-        """
+    def get_latest_visit(self) -> Optional["VisitInstance"]:
+        """Return the most recently created visit of the folder, or None if it has none."""
         return self.visits.order_by("-created_at").first()
 
     @property
-    def next_visit_date(self):
-        """Return the date of the next scheduled visit for this inspection folder, or None if there are no upcoming visits."""
+    def next_visit_date(self) -> Optional[date]:
+        """Return the date of the next scheduled visit of the folder.
+
+        Returns:
+            The earliest due date from today on, or None if there is no upcoming visit.
+        """
         from django.utils import timezone
 
         # First upcoming visit with a due date greater than or equal to today
@@ -183,9 +230,13 @@ class InspectionFolder(TrackingModel):
         return next_visit.due_date if next_visit else None
 
     @property
-    def phase_progress(self):
-        """
-        Return the progress of the folder through its phases for the progress bar, or None if the folder is archived.
+    def phase_progress(self) -> Optional[dict[str, Any]]:
+        """Return the progress of the folder through its phases, for the progress bar.
+
+        Returns:
+            A dict with the ``style`` of the filled bar and the ``steps``, each with
+            its ``label``, ``state`` (``done``, ``current`` or ``todo``) and
+            ``style``. None if the phase is not part of the progression (archived).
         """
         if self.current_phase not in self.PROGRESS_PHASES:
             return None
@@ -222,6 +273,20 @@ class InspectionFolder(TrackingModel):
 
 
 class VisitTemplate(TrackingModel):
+    """Template describing a visit form in JSON.
+
+    A visit takes a snapshot of the template when it is created, so editing,
+    archiving or deleting a template never changes existing visits. Only its owner
+    can edit it, a shared template can be consulted and copied.
+
+    Attributes:
+        name: Name of the template.
+        description: Optional description.
+        shared: Whether all users can use the template.
+        schema: Structure of the form, validated by ``VisitTemplateSchema``.
+        instances: Reverse relation to the visits created from the template.
+    """
+
     name = models.CharField(max_length=255, verbose_name="Nom du template")
     description = models.TextField(blank=True, verbose_name="Description")
     shared = models.BooleanField(
@@ -236,21 +301,55 @@ class VisitTemplate(TrackingModel):
         verbose_name = "Modèle de visite"
         verbose_name_plural = "Modèles de visite"
 
-    def clean(self):
+    def clean(self) -> None:
+        """Validate the structure of the template.
+
+        Raises:
+            django.core.exceptions.ValidationError: If the schema is invalid.
+        """
         super().clean()
         validate_template_schema(self.schema)
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """Save the template, validating it first with ``full_clean()``.
+
+        The validation is skipped when only some fields are written
+        (``update_fields``, e.g. archive metadata), as the schema is then untouched.
+
+        Args:
+            *args: Positional arguments passed to ``Model.save()``.
+            **kwargs: Keyword arguments passed to ``Model.save()``.
+        """
         # Skipped when only some fields are written (e.g. archive metadata), as the schema is then untouched
         if kwargs.get("update_fields") is None:
             self.full_clean()
         super().save(*args, **kwargs)
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Return the name of the template."""
         return self.name
 
 
 class VisitInstance(TrackingModel):
+    """Visit of a folder, filled by the inspector on its own copy of a template.
+
+    The form, the progress and the validation only read ``instance_schema``. The
+    answers are stored as ``{"answers": {"<field id>": value}}``. A visit marked
+    ``VALIDATED`` or archived is read-only.
+
+    Attributes:
+        folder: Folder the visit belongs to.
+        template: Template the visit comes from (None if it was deleted).
+        template_name: Name of the template when the visit was created.
+        instance_schema: Snapshot of the template structure.
+        data: Answers of the visit.
+        revision: Counter incremented each time answers are saved.
+        completed_at: Optional date the visit was finished.
+        current_status: Status, see ``Status``.
+        due_date: Optional planned date.
+        notes: Notes on the visit.
+    """
+
     class Status(models.TextChoices):
         SCHEDULED = "SCHEDULED", "Planifiée"
         DELAY = "DELAY", "En retard"
@@ -309,16 +408,22 @@ class VisitInstance(TrackingModel):
         verbose_name_plural = "Instances de visite"
         ordering = ["-created_at"]
 
-    def snapshot_template(self):
-        """Freeze the structure of the template into the visit."""
+    def snapshot_template(self) -> None:
+        """Freeze the structure and the name of the template into the visit."""
         if self.template:
             self.instance_schema = copy.deepcopy(self.template.schema)
             self.template_name = self.template.name
 
-    def clean(self):
-        """
-        Snapshot of the template if the visit has no structure yet, then validation of the structure
-        and of the answers against it (required fields are only enforced once the visit is done).
+    def clean(self) -> None:
+        """Validate the visit.
+
+        Takes the template snapshot if the visit has no structure yet, then validates
+        the structure and the answers against it. Required fields are not enforced
+        here, only when the visit is finished (``complete_visit``).
+
+        Raises:
+            django.core.exceptions.ValidationError: If the structure is invalid, the
+                data is not a JSON object or an answer is invalid.
         """
         super().clean()
 
@@ -342,23 +447,37 @@ class VisitInstance(TrackingModel):
             )
         self.data = {**self.data, "answers": cleaned}
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """Save the visit, validating it first with ``full_clean()``.
+
+        The validation is skipped when only some fields are written
+        (``update_fields``): the answers are validated by the service that writes them.
+
+        Args:
+            *args: Positional arguments passed to ``Model.save()``.
+            **kwargs: Keyword arguments passed to ``Model.save()``.
+        """
         # Skipped when only some fields are written: the answers are validated by the service that writes them
         if kwargs.get("update_fields") is None:
             self.full_clean()
         super().save(*args, **kwargs)
 
     @property
-    def answers(self):
+    def answers(self) -> dict[str, Any]:
+        """Return the answers of the visit, ``{field id: value}``, empty if there is none."""
         return self.data.get("answers", {}) if isinstance(self.data, dict) else {}
 
     @property
-    def progress(self):
+    def progress(self) -> dict[str, Any]:
+        """Return the progress of the visit, see ``compute_progress()``."""
         return compute_progress(self.instance_schema, self.answers)
 
     @property
-    def is_late(self):
-        """A planned visit whose date is over (the stored DELAY status is kept for the existing records)."""
+    def is_late(self) -> bool:
+        """Tell whether the visit is late: planned and its date is over.
+
+        The stored ``DELAY`` status is still considered late, for existing records.
+        """
         if self.current_status == self.Status.DELAY:
             return True
         return (
@@ -368,23 +487,30 @@ class VisitInstance(TrackingModel):
         )
 
     @property
-    def days_until_due(self):
-        """Days left before the visit date (negative when over), or None without date."""
+    def days_until_due(self) -> Optional[int]:
+        """Return the days left before the visit date.
+
+        Returns:
+            The number of days (negative when the date is over), or None without date.
+        """
         if not self.due_date:
             return None
         return (self.due_date - timezone.localdate()).days
 
     @property
-    def display_template_name(self):
+    def display_template_name(self) -> str:
+        """Return the template name to display, even if the template was deleted."""
         return self.template_name or (
             self.template.name if self.template else "Template supprimé"
         )
 
     @property
-    def template_is_available(self):
+    def template_is_available(self) -> bool:
+        """Tell whether the origin template still exists and is active."""
         return self.template is not None and self.template.is_active
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Return the template name and the reference of the folder."""
         return f"Visite {self.display_template_name} - Dossier {self.folder.reference}"
 
 
@@ -396,9 +522,16 @@ class VisitInstance(TrackingModel):
 
 
 class Recommandation(TrackingModel):
-    """
-    Model representing a recommendation associated with an inspection folder. Each recommendation has a description, priority, status, and
-    an optional due date. The model also includes relationships to the InspectionFolder model.
+    """Recommendation made to the company after an inspection.
+
+    Attributes:
+        folder: Folder the recommendation belongs to.
+        description: Text of the recommendation.
+        priority: Priority, see ``Priority``.
+        current_status: Status, see ``Status``.
+        due_date: Optional deadline for the execution.
+        topic: Optional subject.
+        notes: Notes on the recommendation.
     """
 
     class Priority(models.TextChoices):
@@ -453,13 +586,16 @@ class Recommandation(TrackingModel):
         ordering = ["due_date", "-priority"]
 
     @property
-    def days_until_due(self):
-        """
-        Days left before the due date (negative when overdue), or None without due date.
+    def days_until_due(self) -> Optional[int]:
+        """Return the days left before the due date.
+
+        Returns:
+            The number of days (negative when overdue), or None without due date.
         """
         if not self.due_date:
             return None
         return (self.due_date - timezone.localdate()).days
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Return the folder reference, the start of the description and the status."""
         return f"Rec #{self.folder.reference} - {self.description[:50]} : ({self.current_status})"

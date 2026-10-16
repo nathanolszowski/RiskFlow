@@ -1,10 +1,22 @@
+"""Forms of the inspections app: folders, visits and recommendations."""
+
+from typing import TYPE_CHECKING, Any
+
 from django import forms
 
 from .models import InspectionFolder, Recommandation, VisitInstance, VisitTemplate
 from .services.template import get_usable_templates
 
+if TYPE_CHECKING:
+    from accounts.models import CustomUser
+
 
 class InspectionFolderForm(forms.ModelForm):
+    """Create a folder: company, referent contact, site address and notes.
+
+    A new folder skips the ``CREATION`` phase and starts at ``PREPARATION``.
+    """
+
     class Meta:
         model = InspectionFolder
         fields = [
@@ -14,7 +26,13 @@ class InspectionFolderForm(forms.ModelForm):
             "notes",
         ]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Set the initial phase of a new folder and style the widgets.
+
+        Args:
+            *args: Positional arguments passed to ``ModelForm``.
+            **kwargs: Keyword arguments passed to ``ModelForm``.
+        """
         super().__init__(*args, **kwargs)
 
         # A new folder skips the CREATION phase and starts directly at PREPARATION
@@ -30,7 +48,11 @@ class InspectionFolderForm(forms.ModelForm):
 
 
 class InspectionFolderUpdateForm(InspectionFolderForm):
-    """Edit form for an existing folder: company is fixed, contact limited to its contacts."""
+    """Edit form for an existing folder.
+
+    The company is fixed and the contact is limited to the contacts of the company.
+    The transient ``CREATION`` phase is not selectable.
+    """
 
     class Meta(InspectionFolderForm.Meta):
         fields = [
@@ -40,7 +62,13 @@ class InspectionFolderUpdateForm(InspectionFolderForm):
             "notes",
         ]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Restrict the phase choices and the contact queryset.
+
+        Args:
+            *args: Positional arguments passed to ``InspectionFolderForm``.
+            **kwargs: Keyword arguments passed to ``InspectionFolderForm``.
+        """
         super().__init__(*args, **kwargs)
 
         # CREATION is only a transient phase: not selectable (unless the folder is still in it)
@@ -61,7 +89,10 @@ class InspectionFolderUpdateForm(InspectionFolderForm):
 
 
 class VisitInstanceUpdateForm(forms.ModelForm):
-    """Edit form for the planning data of a visit (the status is not edited: see set_visit_done)."""
+    """Edit form for the planning data of a visit: date and notes.
+
+    The status is not edited here: see ``set_visit_done``.
+    """
 
     class Meta:
         model = VisitInstance
@@ -74,7 +105,13 @@ class VisitInstanceUpdateForm(forms.ModelForm):
             "notes": forms.Textarea(attrs={"rows": 3}),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Style the widgets.
+
+        Args:
+            *args: Positional arguments passed to ``ModelForm``.
+            **kwargs: Keyword arguments passed to ``ModelForm``.
+        """
         super().__init__(*args, **kwargs)
 
         for name, field in self.fields.items():
@@ -82,7 +119,12 @@ class VisitInstanceUpdateForm(forms.ModelForm):
 
 
 class VisitCreateForm(forms.Form):
-    """Preparation of a visit: a usable template (own or shared) and a date."""
+    """Preparation of a visit: a usable template (own or shared) and a date.
+
+    Attributes:
+        template: Template to start from, among the ones the user can use.
+        due_date: Planned date of the visit.
+    """
 
     template = forms.ModelChoiceField(
         queryset=VisitTemplate.objects.none(),
@@ -101,12 +143,21 @@ class VisitCreateForm(forms.Form):
         error_messages={"required": "Indiquez la date de la visite."},
     )
 
-    def __init__(self, *args, user, **kwargs):
+    def __init__(self, *args: Any, user: "CustomUser", **kwargs: Any) -> None:
+        """Limit the template choices to the ones usable by the user.
+
+        Args:
+            *args: Positional arguments passed to ``Form``.
+            user: User preparing the visit.
+            **kwargs: Keyword arguments passed to ``Form``.
+        """
         super().__init__(*args, **kwargs)
         self.fields["template"].queryset = get_usable_templates(user)
 
 
 class RecommandationUpdateForm(forms.ModelForm):
+    """Create or edit a recommendation: topic, description, priority, status, date and notes."""
+
     class Meta:
         model = Recommandation
         fields = [
@@ -123,7 +174,13 @@ class RecommandationUpdateForm(forms.ModelForm):
             "notes": forms.Textarea(attrs={"rows": 3}),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Style the widgets.
+
+        Args:
+            *args: Positional arguments passed to ``ModelForm``.
+            **kwargs: Keyword arguments passed to ``ModelForm``.
+        """
         super().__init__(*args, **kwargs)
 
         for name, field in self.fields.items():

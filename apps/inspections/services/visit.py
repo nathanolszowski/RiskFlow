@@ -1,25 +1,48 @@
+"""Services of the visits: creation, on-the-fly saving of answers, completion and form context.
+
+The form, the progress and the validation only read ``VisitInstance.instance_schema``,
+the snapshot of the template, never the template itself.
+"""
+
+from datetime import date
+from typing import TYPE_CHECKING, Any, Optional
+
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import F
+from django.db.models import F, QuerySet
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
-from inspections.models import VisitInstance
+from inspections.models import InspectionFolder, VisitInstance, VisitTemplate
 from inspections.validators import (
     compute_progress,
     iter_schema_fields,
     validate_answers,
 )
 
+if TYPE_CHECKING:
+    from accounts.models import CustomUser
+
 
 class VisitLockedError(Exception):
-    """The visit cannot be changed any more (done or archived)."""
+    """The visit cannot be changed any more (done or archived).
 
-
-def get_visit_by_id(pk, user):
+    Answered with a 409 by the views.
     """
-    Retrieves a specific visit instance by its primary key (pk)
-    while ensuring that its inspection folder was created by the logged-in user.
+
+
+def get_visit_by_id(pk: int, user: "CustomUser") -> VisitInstance:
+    """Return a visit, ensuring that its folder was created by the user.
+
+    Args:
+        pk: Primary key of the visit.
+        user: Logged-in user, who must own the folder.
+
+    Returns:
+        The visit, with its folder, template and tracking users.
+
+    Raises:
+        Http404: If the visit does not exist or its folder belongs to another user.
     """
     return get_object_or_404(
         VisitInstance.objects.select_related(
@@ -30,15 +53,30 @@ def get_visit_by_id(pk, user):
     )
 
 
-def get_visits_for_folder(folder, status="active"):
-    """Visits of a folder: active ones by default, archived ones with status='archived'."""
+def get_visits_for_folder(folder: InspectionFolder, status: str = "active") -> QuerySet:
+    """Return the visits of a folder, by date then by creation (newest first).
+
+    Args:
+        folder: Folder of the visits.
+        status: ``"active"`` for the active visits, ``"archived"`` for the archived ones.
+
+    Returns:
+        The visits, those without a date last.
+    """
     visits = folder.visits.select_related("template", "created_by", "updated_by")
     visits = visits.filter(is_active=(status != "archived"))
     return visits.order_by(F("due_date").desc(nulls_last=True), "-created_at")
 
 
-def get_next_visit(folder):
-    """The visit to do next: the active, not yet done visit with the earliest date."""
+def get_next_visit(folder: InspectionFolder) -> Optional[VisitInstance]:
+    """Return the visit to do next: the active, not yet done visit with the earliest date.
+
+    Args:
+        folder: Folder of the visits.
+
+    Returns:
+        The visit, or None if there is none.
+    """
     return (
         folder.visits.filter(is_active=True)
         .exclude(current_status=VisitInstance.Status.VALIDATED)
@@ -47,10 +85,29 @@ def get_next_visit(folder):
     )
 
 
-def create_visit(folder, template, due_date, user):
-    """
-    Create a visit from a template. The structure of the template is frozen in the visit (snapshot),
-    so the visit does not depend on the template afterwards.
+def create_visit(
+    folder: InspectionFolder,
+    template: VisitTemplate,
+    due_date: Optional[date],
+    user: "CustomUser",
+) -> VisitInstance:
+    """Create a visit from a template.
+
+    The structure of the template is frozen in the visit (snapshot), so the visit
+    does not depend on the template afterwards.
+
+    Args:
+        folder: Folder the visit belongs to.
+        template: Template to start from.
+        due_date: Planned date, if any.
+        user: User creating the visit.
+
+    Returns:
+        The saved visit.
+
+    Raises:
+        django.core.exceptions.ValidationError: If the template is archived, or
+            neither owned by the user nor shared.
     """
     if not template.is_active:
         raise ValidationError(
@@ -72,13 +129,27 @@ def create_visit(folder, template, due_date, user):
     return visit
 
 
-def save_answers(visit_id, user, changes):
-    """
-    Save one or several answers of a visit ({field_id: value}, an empty value removes the answer).
-    Called on the fly while the inspector fills the form, so it only touches the answers it receives:
-    concurrent saves of different fields never overwrite each other. Required fields are not enforced here.
-    Raise VisitLockedError (done or archived visit) or AnswersValidationError (invalid value).
-    Return the visit with its up to date progress.
+def save_answers(
+    visit_id: int, user: "CustomUser", changes: dict[str, Any]
+) -> VisitInstance:
+    """Save one or several answers of a visit.
+
+    Called on the fly while the inspector fills the form, so it only touches the
+    answers it receives: concurrent saves of different fields never overwrite each
+    other. The visit row is locked during the save. Required fields are not enforced
+    here, and the ``revision`` counter is incremented.
+
+    Args:
+        visit_id: Primary key of the visit.
+        user: User saving the answers.
+        changes: New answers, ``{field_id: value}``. An empty value removes the answer.
+
+    Returns:
+        The visit, with its up to date progress.
+
+    Raises:
+        VisitLockedError: If the visit is done or archived.
+        AnswersValidationError: If a value is invalid.
     """
     with transaction.atomic():
         visit = VisitInstance.objects.select_for_update().get(pk=visit_id)
@@ -103,11 +174,23 @@ def save_answers(visit_id, user, changes):
     return visit
 
 
-def complete_visit(visit_id, user):
-    """
-    Check the visit at the end of the filling: every required field must be answered, otherwise
-    AnswersValidationError is raised with the fields to fix. The status is not changed: the visit is only
-    marked as done by the "done" checkbox of its planning (set_visit_done).
+def complete_visit(visit_id: int, user: "CustomUser") -> VisitInstance:
+    """Check the visit at the end of the filling.
+
+    Every required field must be answered. The status is not changed: the visit is
+    only marked as done by the "done" checkbox of its planning (``set_visit_done``).
+
+    Args:
+        visit_id: Primary key of the visit.
+        user: User finishing the visit.
+
+    Returns:
+        The visit.
+
+    Raises:
+        VisitLockedError: If the visit is archived.
+        AnswersValidationError: With the fields to fix, if a required field is
+            not answered.
     """
     with transaction.atomic():
         visit = VisitInstance.objects.select_for_update().get(pk=visit_id)
@@ -117,10 +200,25 @@ def complete_visit(visit_id, user):
     return visit
 
 
-def set_visit_done(visit, user, done):
-    """
-    Tick or untick a visit as done from its planning. Unlike complete_visit, required fields are not enforced
-    (the visit can have been filled elsewhere). Unticked, the visit is planned again (late once its date is over).
+def set_visit_done(
+    visit: VisitInstance, user: "CustomUser", done: bool
+) -> VisitInstance:
+    """Tick or untick a visit as done from its planning.
+
+    Unlike ``complete_visit``, required fields are not enforced (the visit can have
+    been filled elsewhere). Unticked, the visit is planned again (late once its
+    date is over).
+
+    Args:
+        visit: Visit to update.
+        user: User performing the action.
+        done: True to mark the visit as done, False to plan it again.
+
+    Returns:
+        The updated visit.
+
+    Raises:
+        VisitLockedError: If the visit is archived.
     """
     if not visit.is_active:
         raise VisitLockedError()
@@ -138,8 +236,19 @@ def set_visit_done(visit, user, done):
     return visit
 
 
-def reopen_visit(visit, user):
-    """Make a done visit editable again."""
+def reopen_visit(visit: VisitInstance, user: "CustomUser") -> VisitInstance:
+    """Make a done visit editable again, by planning it again.
+
+    Args:
+        visit: Visit to reopen.
+        user: User performing the action.
+
+    Returns:
+        The updated visit.
+
+    Raises:
+        VisitLockedError: If the visit is archived.
+    """
     if not visit.is_active:
         raise VisitLockedError()
     visit.current_status = VisitInstance.Status.SCHEDULED
@@ -151,18 +260,34 @@ def reopen_visit(visit, user):
     return visit
 
 
-def get_first_incomplete_section(visit):
-    """Id of the first section that still has a required field to answer, or None."""
+def get_first_incomplete_section(visit: VisitInstance) -> Optional[str]:
+    """Return the id of the first section that still has a required field to answer.
+
+    Args:
+        visit: Visit to inspect.
+
+    Returns:
+        The section id, or None if every required field is answered.
+    """
     for section in compute_progress(visit.instance_schema, visit.answers)["by_section"]:
         if section["missing_required"]:
             return section["id"]
     return None
 
 
-def coerce_input(field, raw):
-    """
-    Convert the raw string posted by the form into the JSON value of the field.
-    An empty string means "no answer". Raise ValidationError when the string cannot be read.
+def coerce_input(field: dict, raw: Optional[str]) -> Any:
+    """Convert the raw string posted by the form into the JSON value of the field.
+
+    Args:
+        field: Field definition, from the snapshot.
+        raw: Posted string. None or an empty string means "no answer".
+
+    Returns:
+        None for no answer, a bool for a boolean field, an int or float for a number
+        field (a comma is accepted as decimal separator), the string otherwise.
+
+    Raises:
+        django.core.exceptions.ValidationError: If the string cannot be read.
     """
     if raw is None or raw == "":
         return None
@@ -180,17 +305,41 @@ def coerce_input(field, raw):
     return raw
 
 
-def get_form_field(visit, field_id):
+def get_form_field(visit: VisitInstance, field_id: str) -> Optional[dict]:
+    """Return the definition of a field from the snapshot of the visit.
+
+    Args:
+        visit: Visit holding the snapshot.
+        field_id: Id of the field.
+
+    Returns:
+        The field definition, or None if the snapshot has no such field.
+    """
     for _, field in iter_schema_fields(visit.instance_schema):
         if field["id"] == field_id:
             return field
     return None
 
 
-def build_form_context(visit, section_id=None, errors=None):
-    """
-    Everything the visit form needs: progress, navigation, and the fields of the current section
-    with their answer and error. The structure comes from the snapshot of the visit, never from the template.
+def build_form_context(
+    visit: VisitInstance,
+    section_id: Optional[str] = None,
+    errors: Optional[dict[str, str]] = None,
+) -> dict[str, Any]:
+    """Build everything the visit form needs.
+
+    The structure comes from the snapshot of the visit, never from the template.
+
+    Args:
+        visit: Visit being filled.
+        section_id: Id of the section to show, the first one by default.
+        errors: Error message by field id, shown next to the fields.
+
+    Returns:
+        The template context: ``progress``, the ``nav`` of sections, the current
+        ``section`` and its ``fields`` (with their ``value`` and ``error``), the ids
+        of the previous and next sections, and ``readonly`` for a done or archived
+        visit.
     """
     errors = errors or {}
     progress = visit.progress
