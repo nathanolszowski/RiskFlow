@@ -1,20 +1,32 @@
+"""Company services: INSEE Sirene API client, getters and filtered lists."""
+
 import os
 
 import requests
 from django.conf import settings
-from django.db.models import Count, Q
+from django.db.models import Count, Q, QuerySet
+from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 
 from crm.models import Company
 
 
 class INSEEApiClient:
-    """Client to interact with the INSEE SIRENE API for company data retrieval."""
+    """Client of the INSEE Sirene API, used to retrieve company data.
+
+    Attributes:
+        BASE_URL: Root URL of the Sirene API.
+    """
 
     BASE_URL = "https://api.insee.fr/api-sirene/3.11"
 
     @classmethod
     def get_headers(cls) -> dict:
+        """Build the request headers, with the API key from the settings or the environment.
+
+        Returns:
+            The headers to send to the Sirene API.
+        """
         api_key = getattr(settings, "INSEE_API_KEY", None) or os.getenv(
             "INSEE_API_KEY", ""
         )
@@ -26,7 +38,17 @@ class INSEEApiClient:
 
     @classmethod
     def fetch_by_siret(cls, siret: str) -> dict | None:
-        """Interroge l'API INSEE par SIRET et retourne un dictionnaire nettoyé ou None."""
+        """Query the INSEE API by SIRET and return cleaned company data.
+
+        Network errors and unsuccessful responses are swallowed.
+
+        Args:
+            siret: SIRET number of the establishment (14 digits).
+
+        Returns:
+            The data formatted by ``_format_etablissement_data``, or None if the
+            establishment is not found or the API cannot be reached.
+        """
         url = f"{cls.BASE_URL}/siret/{siret}"
         try:
             response = requests.get(url, headers=cls.get_headers(), timeout=5)
@@ -46,7 +68,20 @@ class INSEEApiClient:
 
     @staticmethod
     def _format_etablissement_data(etab: dict, siret_fallback: str) -> dict:
-        """Méthode privée servant à transformer le JSON brut INSEE en un dictionnaire propre."""
+        """Turn the raw INSEE establishment JSON into a clean dictionary.
+
+        Builds the company name and the full address, and computes the VAT number
+        from the SIREN.
+
+        Args:
+            etab: Establishment as returned by the Sirene API.
+            siret_fallback: SIRET used when the response does not contain one.
+
+        Returns:
+            A dict with ``name``, ``siren``, ``siret``, ``vat_number``,
+            ``legal_structure``, ``company_size_category``, ``business_line``,
+            ``address`` and ``creation_date``.
+        """
         unit = etab.get("uniteLegale", {})
         address = etab.get("adresseEtablissement", {})
         periodes = etab.get("periodesEtablissement", [{}])
@@ -91,19 +126,38 @@ class INSEEApiClient:
         }
 
 
-def get_company_by_id(pk):
-    """Return a company with its tracking users, or raise a 404."""
+def get_company_by_id(pk: int) -> Company:
+    """Return a company with its tracking users.
+
+    Not yet filtered by user.
+
+    Args:
+        pk: Primary key of the company.
+
+    Returns:
+        The company.
+
+    Raises:
+        Http404: If the company does not exist.
+    """
     return get_object_or_404(
         Company.objects.select_related("created_by", "updated_by", "archived_by"), pk=pk
     )
 
 
-def get_company_archive_impact(company):
-    """
-    Describe what archiving a company does:
-    - contacts: active contacts that will be archived with it,
-    - kept_contacts: active contacts left active because an active folder references them,
-    - folders: active folders of the company, which are not archived.
+def get_company_archive_impact(company: Company) -> dict[str, QuerySet]:
+    """Describe what archiving a company does.
+
+    Args:
+        company: Company about to be archived.
+
+    Returns:
+        A dict with:
+
+        - ``contacts``: active contacts that will be archived with it,
+        - ``kept_contacts``: active contacts left active because an active folder
+          references them,
+        - ``folders``: active folders of the company, which are not archived.
     """
     active_contacts = company.contacts.filter(is_active=True)
     kept_contacts = active_contacts.filter(
@@ -116,8 +170,18 @@ def get_company_archive_impact(company):
     }
 
 
-def get_filtered_companies(request):
-    """Extrait les paramètres GET et renvoie le QuerySet de sociétés filtré et trié."""
+def get_filtered_companies(request: HttpRequest) -> QuerySet:
+    """Return the companies filtered and sorted by the GET parameters.
+
+    Args:
+        request: Current request. Reads ``q`` (search on name, SIREN, SIRET and
+            reference), ``status`` (``active`` by default, or ``archived``) and
+            ``sort`` (``name``, ``-created_at`` or ``-inspection_folders_count``,
+            anything else falls back to ``name``).
+
+    Returns:
+        The companies, annotated with ``inspection_folders_count``.
+    """
     companies = Company.objects.annotate(
         inspection_folders_count=Count("inspection_folders")
     )

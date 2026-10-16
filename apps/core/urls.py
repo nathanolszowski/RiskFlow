@@ -1,3 +1,5 @@
+"""URLs of the core app: dashboard, session heartbeat, theme and global search."""
+
 from django.urls import path
 
 from . import views

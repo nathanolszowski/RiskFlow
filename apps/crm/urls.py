@@ -1,3 +1,5 @@
+"""URLs of the crm app: companies, contacts and the INSEE search."""
+
 from django.urls import path
 
 from . import views

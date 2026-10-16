@@ -1,9 +1,27 @@
+"""Generic helpers for tracked models (create, update, archive, delete) and template context."""
+
+from typing import TYPE_CHECKING, Any
+
+from django.forms import ModelForm
+from django.http import HttpRequest
 from django.utils import timezone
 
+from core.models import TrackingModel
 
-def create_tracked_instance(form, user):
-    """
-    Create a new instance of a tracked model from a form, associating it with the user who created it.
+if TYPE_CHECKING:
+    from accounts.models import CustomUser
+
+
+def create_tracked_instance(form: ModelForm, user: "CustomUser") -> TrackingModel:
+    """Create an instance of a tracked model from a valid form.
+
+    Args:
+        form: Valid model form of a ``TrackingModel`` subclass.
+        user: User creating the instance, recorded as ``created_by`` and
+            ``updated_by``.
+
+    Returns:
+        The saved instance.
     """
     instance = form.save(commit=False)
     instance.created_by = user
@@ -12,9 +30,21 @@ def create_tracked_instance(form, user):
     return instance
 
 
-def update_tracked_instance(instance, user, **fields_to_update):
-    """
-    Update a tracked instance with the provided fields and associate the update with the user.
+def update_tracked_instance(
+    instance: TrackingModel, user: "CustomUser", **fields_to_update: Any
+) -> TrackingModel:
+    """Update a tracked instance with the provided fields.
+
+    Only these fields, ``updated_by`` and ``updated_at`` are written to the
+    database.
+
+    Args:
+        instance: Instance to update.
+        user: User performing the update, recorded as ``updated_by``.
+        **fields_to_update: New values, by field name.
+
+    Returns:
+        The updated instance.
     """
     for field_name, value in fields_to_update.items():
         setattr(instance, field_name, value)
@@ -27,9 +57,19 @@ def update_tracked_instance(instance, user, **fields_to_update):
     return instance
 
 
-def archive_tracked_instance(instance, user):
-    """
-    Archived a tracked instance, setting its active status to False and recording the archive metadata.
+def archive_tracked_instance(
+    instance: TrackingModel, user: "CustomUser"
+) -> TrackingModel:
+    """Archive a tracked instance, without cascading to its related records.
+
+    Sets ``is_active`` to False and records the archive date and user.
+
+    Args:
+        instance: Instance to archive.
+        user: User performing the action.
+
+    Returns:
+        The archived instance.
     """
     instance.is_active = False
     instance.archived_at = timezone.now()
@@ -39,15 +79,19 @@ def archive_tracked_instance(instance, user):
     return instance
 
 
-def unarchive_tracked_instance(instance, user):
-    """Unarchived a tracked instance, restoring its active status and clearing archive metadata.
+def unarchive_tracked_instance(
+    instance: TrackingModel, user: "CustomUser"
+) -> TrackingModel:
+    """Unarchive a tracked instance, without cascading to its related records.
+
+    Restores ``is_active`` and clears the archive date and user.
 
     Args:
-        instance (TrackingModel): The instance to unarchive.
-        user (User): The user performing the unarchive action.
+        instance: Instance to unarchive.
+        user: User performing the action.
 
     Returns:
-        TrackingModel: The unarchived instance.
+        The unarchived instance.
     """
     instance.is_active = True
     instance.archived_at = None
@@ -57,22 +101,39 @@ def unarchive_tracked_instance(instance, user):
     return instance
 
 
-def hard_delete_instance(instance):
-    """
-    Delete permanently any model instance. Use with caution, as this action is irreversible.
+def hard_delete_instance(instance: Any) -> None:
+    """Delete permanently any model instance.
+
+    Use with caution, as this action is irreversible. For tracked models, prefer
+    ``delete_archived_instance()``.
+
+    Args:
+        instance: Model instance to delete.
     """
     instance.delete()
 
 
-def delete_archived_instance(instance):
-    """
-    Delete permanently a tracked instance, only if it has been archived first.
-    Raises ValueError for an active instance.
+def delete_archived_instance(instance: TrackingModel) -> None:
+    """Delete permanently a tracked instance, only if it has been archived first.
+
+    Args:
+        instance: Archived instance to delete.
+
+    Raises:
+        ValueError: If the instance is still active.
     """
     if instance.is_active:
         raise ValueError("Only an archived object can be deleted permanently.")
     hard_delete_instance(instance)
 
 
-def theme_processor(request):
+def theme_processor(request: HttpRequest) -> dict[str, str]:
+    """Template context processor exposing the theme stored in the session.
+
+    Args:
+        request: Current request.
+
+    Returns:
+        A dict with ``current_theme`` (``"dark"`` by default).
+    """
     return {"current_theme": request.session.get("theme", "dark")}

@@ -1,7 +1,9 @@
+"""Core views: dashboard, session heartbeat, theme toggle and global search."""
+
 from crm.models import Company, Contact
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-from django.http import HttpResponse
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_GET
@@ -13,7 +15,19 @@ from core.services.dashboard import get_dashboard_context, parse_period
 
 @login_required
 @require_GET
-def dashboard(request):
+def dashboard(request: HttpRequest) -> HttpResponse:
+    """Render the dashboard of the logged-in user.
+
+    The ``month`` and ``year`` GET parameters filter the period (invalid values
+    fall back to the current one). On an HTMX request only the content partial
+    is returned.
+
+    Args:
+        request: Current request.
+
+    Returns:
+        The full page or the dashboard content partial.
+    """
     month, year = parse_period(request.GET.get("month"), request.GET.get("year"))
     context = get_dashboard_context(request.user, month, year)
     context["today"] = timezone.localdate()
@@ -27,12 +41,31 @@ def dashboard(request):
 
 @htmx_login_required(redirect=False)
 @require_GET
-def session_ping(request):
-    """Heartbeat: SESSION_SAVE_EVERY_REQUEST restarts the session countdown on each call."""
+def session_ping(request: HttpRequest) -> HttpResponse:
+    """Heartbeat that keeps the session alive.
+
+    ``SESSION_SAVE_EVERY_REQUEST`` restarts the session countdown on each call.
+    Answers 401 without redirect when the session has expired.
+
+    Args:
+        request: Current request.
+
+    Returns:
+        An empty 204 response.
+    """
     return HttpResponse(status=204)
 
 
-def toggle_theme(request):
+def toggle_theme(request: HttpRequest) -> HttpResponse:
+    """Switch the theme stored in the session between dark and light.
+
+    Args:
+        request: Current request.
+
+    Returns:
+        A response with ``HX-Refresh`` on an HTMX request, otherwise a redirect to
+        the referring page.
+    """
     current_theme = request.session.get("theme", "dark")
     new_theme = "light" if current_theme == "dark" else "dark"
     request.session["theme"] = new_theme
@@ -44,7 +77,18 @@ def toggle_theme(request):
     return redirect(request.META.get("HTTP_REFERER", "/"))
 
 
-def global_search(request):
+def global_search(request: HttpRequest) -> HttpResponse:
+    """Search folders, companies and contacts matching the ``q`` GET parameter.
+
+    The search starts at two characters and returns at most five results per
+    category. It is not yet filtered by user.
+
+    Args:
+        request: Current request.
+
+    Returns:
+        The search results partial.
+    """
     query = request.GET.get("q", "").strip()
     folders = []
     companies = []

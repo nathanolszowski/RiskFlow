@@ -1,11 +1,26 @@
-from django.db.models import Q
+"""Contact services: getters and filtered list."""
+
+from django.db.models import Q, QuerySet
+from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 
 from crm.models import Contact
 
 
-def get_contact_by_id(pk):
-    """Return a contact with its company, or raise a 404."""
+def get_contact_by_id(pk: int) -> Contact:
+    """Return a contact with its company and tracking users.
+
+    Not yet filtered by user.
+
+    Args:
+        pk: Primary key of the contact.
+
+    Returns:
+        The contact.
+
+    Raises:
+        Http404: If the contact does not exist.
+    """
     return get_object_or_404(
         Contact.objects.select_related(
             "company", "created_by", "updated_by", "archived_by"
@@ -14,13 +29,29 @@ def get_contact_by_id(pk):
     )
 
 
-def get_contact_archive_impact(contact):
-    """Return the active inspection folders that reference this contact."""
+def get_contact_archive_impact(contact: Contact) -> QuerySet:
+    """Return the active inspection folders that reference this contact.
+
+    Args:
+        contact: Contact about to be archived.
+
+    Returns:
+        The active folders, which block the archiving when there are some.
+    """
     return contact.inspection_folders.filter(is_active=True)
 
 
-def get_filtered_contacts(request):
-    """Extrait les paramètres de recherche de la requête et renvoie le QuerySet filtré."""
+def get_filtered_contacts(request: HttpRequest) -> QuerySet:
+    """Return the contacts filtered by the GET parameters, newest first.
+
+    Args:
+        request: Current request. Reads ``q`` (search on name, email and company
+            name), ``company`` (company id), and ``status`` (``active`` by
+            default, ``archived``, or any other value for all contacts).
+
+    Returns:
+        The filtered contacts.
+    """
     query = request.GET.get("q", "").strip()
     company_id = request.GET.get("company", "").strip()
     status = request.GET.get("status", "active").strip()

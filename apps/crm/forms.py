@@ -1,9 +1,19 @@
+"""Forms of the crm app: company and contact."""
+
+from typing import Any
+
 from django import forms
 
 from .models import Company, Contact
 
 
 class CompanyForm(forms.ModelForm):
+    """Create or edit a company.
+
+    Optional fields are declared as not required, and every widget gets the
+    ``form-input`` class and an example placeholder.
+    """
+
     vat_number = forms.CharField(required=False)
     legal_structure = forms.CharField(required=False)
     nb_employees = forms.IntegerField(required=False)
@@ -38,7 +48,13 @@ class CompanyForm(forms.ModelForm):
             "executive_board": forms.Textarea(attrs={"rows": 2}),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Style the widgets and set the placeholders.
+
+        Args:
+            *args: Positional arguments passed to ``ModelForm``.
+            **kwargs: Keyword arguments passed to ``ModelForm``.
+        """
         super().__init__(*args, **kwargs)
 
         for field in self.fields.values():
@@ -66,6 +82,12 @@ class CompanyForm(forms.ModelForm):
 
 
 class ContactForm(forms.ModelForm):
+    """Create or edit a contact.
+
+    Optional fields are declared as not required, and every widget gets the
+    ``form-input`` class and an example placeholder.
+    """
+
     email = forms.EmailField(required=False)
     phone_number_fix = forms.CharField(required=False)
     phone_number_mobile = forms.CharField(required=False)
@@ -82,7 +104,13 @@ class ContactForm(forms.ModelForm):
             "position",
         ]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Style the widgets, set the company empty label and the placeholders.
+
+        Args:
+            *args: Positional arguments passed to ``ModelForm``.
+            **kwargs: Keyword arguments passed to ``ModelForm``.
+        """
         super().__init__(*args, **kwargs)
 
         for name, field in self.fields.items():

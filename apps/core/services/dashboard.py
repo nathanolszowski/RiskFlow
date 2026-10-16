@@ -1,9 +1,16 @@
-import math
+"""Data of the dashboard: ongoing folders per phase (donut chart) and upcoming visits."""
 
-from django.db.models import Count, Q
+import math
+from datetime import date
+from typing import TYPE_CHECKING, Any, Optional
+
+from django.db.models import Count, Q, QuerySet
 from django.utils import timezone
 from inspections.models import InspectionFolder, VisitInstance
 from inspections.services.inspectionfolder import get_inspection_folders_by_user
+
+if TYPE_CHECKING:
+    from accounts.models import CustomUser
 
 MONTHS_FR = [
     "Janvier",
@@ -49,9 +56,21 @@ DONUT_RADIUS = 76
 DONUT_GAP = 3
 
 
-def parse_period(month_raw, year_raw, today=None):
-    """
-    Return a valid (month, year) from raw GET values, falling back to the current month/year.
+def parse_period(
+    month_raw: Optional[str], year_raw: Optional[str], today: Optional[date] = None
+) -> tuple[int, int]:
+    """Return a valid ``(month, year)`` from raw GET values.
+
+    Each invalid value falls back to the current month or year. The year must be
+    within the last three years (current year included).
+
+    Args:
+        month_raw: Raw month value (1 to 12).
+        year_raw: Raw year value.
+        today: Reference date, the current local date by default.
+
+    Returns:
+        The month and the year.
     """
     today = today or timezone.localdate()
     try:
@@ -69,14 +88,13 @@ def parse_period(month_raw, year_raw, today=None):
     return month, year
 
 
-def _previous_period(month, year):
+def _previous_period(month: int, year: int) -> tuple[int, int]:
+    """Return the ``(month, year)`` preceding the given one."""
     return (12, year - 1) if month == 1 else (month - 1, year)
 
 
-def _ongoing_folders(user, month, year):
-    """
-    Folders of the user still in progress that were modified during the given month.
-    """
+def _ongoing_folders(user: "CustomUser", month: int, year: int) -> QuerySet:
+    """Return the folders of the user still in progress and modified during the given month."""
     return get_inspection_folders_by_user(user).filter(
         current_phase__in=[phase for phase, _ in ONGOING_PHASES],
         updated_at__year=year,
@@ -84,9 +102,16 @@ def _ongoing_folders(user, month, year):
     )
 
 
-def _phase_breakdown(folders):
-    """
-    Count the folders per ongoing phase, with the SVG donut geometry (stroke-dasharray/offset) of each slice.
+def _phase_breakdown(folders: QuerySet) -> list[dict[str, Any]]:
+    """Count the folders per ongoing phase, with the SVG donut geometry of each slice.
+
+    Args:
+        folders: Ongoing folders to count.
+
+    Returns:
+        One dict per phase of ``ONGOING_PHASES`` with ``label``, ``count``, ``pct``,
+        ``color`` and the ``dash`` / ``offset`` values (stroke-dasharray and
+        stroke-dashoffset) of its slice.
     """
     counts = dict(
         folders.order_by().values_list("current_phase").annotate(total=Count("pk"))
@@ -111,9 +136,20 @@ def _phase_breakdown(folders):
     return phases
 
 
-def get_upcoming_visits(user, today=None):
-    """
-    The next visits of the user: planned from today on, plus any overdue one, ordered by date.
+def get_upcoming_visits(
+    user: "CustomUser", today: Optional[date] = None
+) -> list[dict[str, Any]]:
+    """Return the next visits of the user, ordered by date.
+
+    These are the active visits planned from today on, plus any overdue one, up to
+    ``UPCOMING_VISITS_LIMIT``.
+
+    Args:
+        user: Owner of the folders.
+        today: Reference date, the current local date by default.
+
+    Returns:
+        One dict per visit with ``visit``, ``weekday`` and ``month_short``.
     """
     today = today or timezone.localdate()
     visits = (
@@ -142,11 +178,27 @@ def get_upcoming_visits(user, today=None):
     ]
 
 
-def get_dashboard_context(user, month=None, year=None, today=None):
-    """
-    Build the dashboard data for a user.
+def get_dashboard_context(
+    user: "CustomUser",
+    month: Optional[int] = None,
+    year: Optional[int] = None,
+    today: Optional[date] = None,
+) -> dict[str, Any]:
+    """Build the dashboard data for a user.
+
     The month/year filter applies to the ongoing-folders KPI and the status chart;
     the last modified folder and the upcoming visits are always current.
+
+    Args:
+        user: Owner of the folders.
+        month: Month of the period, the current one by default.
+        year: Year of the period, the current one by default.
+        today: Reference date, the current local date by default.
+
+    Returns:
+        The template context: period and labels, ``ongoing_total`` and its delta
+        with the previous month, ``phases``, ``last_folder`` and
+        ``upcoming_visits``.
     """
     today = today or timezone.localdate()
     month = month or today.month

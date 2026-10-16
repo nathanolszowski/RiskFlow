@@ -1,9 +1,11 @@
-from typing import Any
+"""Views of the crm app: companies, contacts, archiving, deletion and INSEE search."""
+
+from typing import Any, Optional
 
 from core.services import delete_archived_instance
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.http import HttpResponse
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import (
@@ -34,8 +36,15 @@ from .models import Company, Contact
 
 @login_required
 @require_GET
-def company_list(request):
-    """Render companies list view."""
+def company_list(request: HttpRequest) -> HttpResponse:
+    """Render the companies list page, first page of the filtered list.
+
+    Args:
+        request: Current request, with the ``q``, ``status`` and ``sort`` filters.
+
+    Returns:
+        The full page.
+    """
     companies = get_filtered_companies(request)
 
     paginator = Paginator(companies, 15)
@@ -53,8 +62,16 @@ def company_list(request):
 
 @login_required
 @require_GET
-def company_list_paginated(request, page=1):
-    """Render companies list view with update page."""
+def company_list_paginated(request: HttpRequest, page: int = 1) -> HttpResponse:
+    """Render only the companies grid of the given page (HTMX).
+
+    Args:
+        request: Current request, with the ``q``, ``status`` and ``sort`` filters.
+        page: Page number, 15 companies per page.
+
+    Returns:
+        The grid partial.
+    """
     companies = get_filtered_companies(request)
 
     paginator = Paginator(companies, 15)
@@ -72,8 +89,19 @@ def company_list_paginated(request, page=1):
 
 @login_required
 @require_GET
-def company_detail(request, pk):
-    """Render main view for company detail data."""
+def company_detail(request: HttpRequest, pk: int) -> HttpResponse:
+    """Render the detail page of a company.
+
+    Args:
+        request: Current request.
+        pk: Primary key of the company.
+
+    Returns:
+        The full page.
+
+    Raises:
+        Http404: If the company does not exist.
+    """
     company = get_object_or_404(
         Company.objects.select_related("created_by", "updated_by"), pk=pk
     )
@@ -86,8 +114,16 @@ def company_detail(request, pk):
 
 @login_required
 @require_http_methods(["GET", "POST"])
-def create_company(request):
-    """HTMX modal view to render the creation window for companies."""
+def create_company(request: HttpRequest) -> HttpResponse:
+    """Render and process the company creation modal (HTMX).
+
+    Args:
+        request: Current request.
+
+    Returns:
+        On GET, the form modal. On a valid POST, the companies grid with
+        ``HX-Trigger: closeModal``. On an invalid POST, the modal with a 422 status.
+    """
     if request.method == "POST":
         form = CompanyForm(request.POST)
         if form.is_valid():
@@ -122,13 +158,20 @@ def create_company(request):
 
 @login_required
 @require_http_methods(["GET", "POST"])
-def company_inline_update(request, pk):
-    """
-    HTMX modal view to edit company data.
-    - GET  : Render auto-complete form (company_update.html).
-    - POST : Update validation.
-             If True -> Render read view with data (company_read.html).
-             If False -> Render form with errors (company_update.html).
+def company_inline_update(request: HttpRequest, pk: int) -> HttpResponse:
+    """Edit the data of a company from its detail page (HTMX).
+
+    Args:
+        request: Current request.
+        pk: Primary key of the company.
+
+    Returns:
+        On GET, the pre-filled form (``company_update.html``). On a valid POST,
+        the read fragment (``company_read.html``). On an invalid POST, the form
+        with its errors (``company_update.html``).
+
+    Raises:
+        Http404: If the company does not exist.
     """
     company = get_object_or_404(Company, pk=pk)
 
@@ -155,10 +198,18 @@ def company_inline_update(request, pk):
 
 @login_required
 @require_GET
-def company_inline_read(request, pk):
-    """
-    HTMX view to read only company view from detail view.
-    Only fragment (company_read.html).
+def company_inline_read(request: HttpRequest, pk: int) -> HttpResponse:
+    """Render the read-only fragment of a company (HTMX).
+
+    Args:
+        request: Current request.
+        pk: Primary key of the company.
+
+    Returns:
+        The read fragment (``company_read.html``).
+
+    Raises:
+        Http404: If the company does not exist.
     """
     company = get_object_or_404(Company, pk=pk)
     return render(
@@ -168,8 +219,8 @@ def company_inline_read(request, pk):
     )
 
 
-def _refresh_response():
-    """HTMX response asking the browser to reload the current page."""
+def _refresh_response() -> HttpResponse:
+    """Return an HTMX response asking the browser to reload the current page."""
     response = HttpResponse()
     response["HX-Refresh"] = "true"
     return response
@@ -177,11 +228,20 @@ def _refresh_response():
 
 @login_required
 @require_http_methods(["GET", "POST"])
-def company_archive(request, pk):
-    """
-    Archive a company and its active contacts.
-    - GET  : Render the confirmation modal, listing the impacted contacts and active folders.
-    - POST : Archive the company.
+def company_archive(request: HttpRequest, pk: int) -> HttpResponse:
+    """Archive a company and its active contacts.
+
+    Args:
+        request: Current request.
+        pk: Primary key of the company.
+
+    Returns:
+        On GET, the confirmation modal listing the impacted contacts and active
+        folders. On POST, ``HX-Refresh`` for an HTMX request, otherwise a redirect
+        to the company page.
+
+    Raises:
+        Http404: If the company does not exist.
     """
     company = get_company_by_id(pk)
 
@@ -242,8 +302,19 @@ def company_archive(request, pk):
 
 @login_required
 @require_POST
-def company_unarchive(request, pk):
-    """Unarchive a company. Its contacts stay archived."""
+def company_unarchive(request: HttpRequest, pk: int) -> HttpResponse:
+    """Unarchive a company. Its contacts stay archived.
+
+    Args:
+        request: Current request.
+        pk: Primary key of the company.
+
+    Returns:
+        ``HX-Refresh`` for an HTMX request, otherwise a redirect to the company page.
+
+    Raises:
+        Http404: If the company does not exist.
+    """
     company = get_company_by_id(pk)
     company.unarchive(user=request.user)
 
@@ -255,8 +326,16 @@ def company_unarchive(request, pk):
 
 @login_required
 @require_GET
-def search_siret_api(request):
-    """Request data from INSEE API and auto-complete the company creation form"""
+def search_siret_api(request: HttpRequest) -> HttpResponse:
+    """Query the INSEE API to auto-complete the company creation form (HTMX).
+
+    Args:
+        request: Current request. ``siret_search`` holds the SIRET, spaces and
+            dashes are ignored.
+
+    Returns:
+        The result partial, or an empty response if the SIRET is not 14 digits.
+    """
     siret_query = (
         request.GET.get("siret_search", "").strip().replace(" ", "").replace("-", "")
     )
@@ -281,8 +360,15 @@ def search_siret_api(request):
 
 @login_required
 @require_GET
-def contact_list(request):
-    """Render contacts list view"""
+def contact_list(request: HttpRequest) -> HttpResponse:
+    """Render the contacts list page, first page of the filtered list.
+
+    Args:
+        request: Current request, with the ``q``, ``company`` and ``status`` filters.
+
+    Returns:
+        The full page.
+    """
     companies = Company.objects.all().order_by("name")
     contacts = get_filtered_contacts(request)
 
@@ -302,8 +388,16 @@ def contact_list(request):
 
 @login_required
 @require_GET
-def contact_list_paginated(request, page=1):
-    """Render contacts list view with update page"""
+def contact_list_paginated(request: HttpRequest, page: int = 1) -> HttpResponse:
+    """Render only the contacts grid of the given page (HTMX).
+
+    Args:
+        request: Current request, with the ``q``, ``company`` and ``status`` filters.
+        page: Page number, 15 contacts per page.
+
+    Returns:
+        The grid partial.
+    """
     contacts = get_filtered_contacts(request)
 
     paginator = Paginator(contacts, 15)
@@ -321,8 +415,19 @@ def contact_list_paginated(request, page=1):
 
 @login_required
 @require_GET
-def contact_detail(request, pk):
-    """Render the detail view for a contact"""
+def contact_detail(request: HttpRequest, pk: int) -> HttpResponse:
+    """Render the detail page of a contact.
+
+    Args:
+        request: Current request.
+        pk: Primary key of the contact.
+
+    Returns:
+        The full page.
+
+    Raises:
+        Http404: If the contact does not exist.
+    """
     contact = get_object_or_404(
         Contact.objects.select_related("company", "created_by", "updated_by"), pk=pk
     )
@@ -331,8 +436,20 @@ def contact_detail(request, pk):
 
 @login_required
 @require_http_methods(["GET", "POST"])
-def create_contact(request):
-    """HTMX view to render and process the creation form for contacts."""
+def create_contact(request: HttpRequest) -> HttpResponse:
+    """Render and process the contact creation modal (HTMX).
+
+    The ``company`` parameter (GET or POST) pre-fills the company and means the
+    modal was opened from a company page.
+
+    Args:
+        request: Current request.
+
+    Returns:
+        On GET, the form modal. On a valid POST, a 204 with ``HX-Refresh`` when
+        created from a company page, otherwise the contacts grid with
+        ``HX-Trigger: closeModal``. On an invalid POST, the modal with a 422 status.
+    """
     # Retrieve company_id from query parameters (GET) or form submission (POST)
     company_id = request.GET.get("company") or request.POST.get("company")
 
@@ -380,13 +497,20 @@ def create_contact(request):
 
 @login_required
 @require_http_methods(["GET", "POST"])
-def contact_inline_update(request, pk):
-    """
-    HTMX view to edit contact data from detail view.
-    - GET  : Render auto-complete form (contact_update.html).
-    - POST : Update validation.
-             If True -> Render read view with data (contact_read.html).
-             If False -> Render form with errors (contact_update.html).
+def contact_inline_update(request: HttpRequest, pk: int) -> HttpResponse:
+    """Edit the data of a contact from its detail page (HTMX).
+
+    Args:
+        request: Current request.
+        pk: Primary key of the contact.
+
+    Returns:
+        On GET, the pre-filled form (``contact_update.html``). On a valid POST,
+        the read fragment (``contact_read.html``). On an invalid POST, the form
+        with its errors (``contact_update.html``).
+
+    Raises:
+        Http404: If the contact does not exist.
     """
     contact = get_object_or_404(
         Contact.objects.select_related("company", "created_by", "updated_by"), pk=pk
@@ -415,10 +539,18 @@ def contact_inline_update(request, pk):
 
 @login_required
 @require_GET
-def contact_inline_read(request, pk):
-    """
-    HTMX view to read only contact view from detail view.
-    Only fragment (contact_read.html).
+def contact_inline_read(request: HttpRequest, pk: int) -> HttpResponse:
+    """Render the read-only fragment of a contact (HTMX).
+
+    Args:
+        request: Current request.
+        pk: Primary key of the contact.
+
+    Returns:
+        The read fragment (``contact_read.html``).
+
+    Raises:
+        Http404: If the contact does not exist.
     """
     contact = get_object_or_404(
         Contact.objects.select_related("company", "created_by", "updated_by"), pk=pk
@@ -432,11 +564,20 @@ def contact_inline_read(request, pk):
 
 @login_required
 @require_http_methods(["GET", "POST"])
-def contact_archive(request, pk):
-    """
-    Archive a contact, unless an active folder still references it as referent contact.
-    - GET  : Render the confirmation modal (blocking message when active folders reference the contact).
-    - POST : Archive the contact, or refuse with a 409 if active folders reference it.
+def contact_archive(request: HttpRequest, pk: int) -> HttpResponse:
+    """Archive a contact, unless an active folder still references it as referent.
+
+    Args:
+        request: Current request.
+        pk: Primary key of the contact.
+
+    Returns:
+        On GET, the confirmation modal, with a blocking message when active folders
+        reference the contact. On POST, a 409 if active folders reference it,
+        otherwise ``HX-Refresh`` for an HTMX request or a redirect to the contact.
+
+    Raises:
+        Http404: If the contact does not exist.
     """
     contact = get_contact_by_id(pk)
     folders = get_contact_archive_impact(contact)
@@ -473,8 +614,19 @@ def contact_archive(request, pk):
 
 @login_required
 @require_POST
-def contact_unarchive(request, pk):
-    """Unarchive a contact."""
+def contact_unarchive(request: HttpRequest, pk: int) -> HttpResponse:
+    """Unarchive a contact.
+
+    Args:
+        request: Current request.
+        pk: Primary key of the contact.
+
+    Returns:
+        ``HX-Refresh`` for an HTMX request, otherwise a redirect to the contact.
+
+    Raises:
+        Http404: If the contact does not exist.
+    """
     contact = get_contact_by_id(pk)
     contact.unarchive(user=request.user)
 
@@ -484,13 +636,26 @@ def contact_unarchive(request, pk):
     return redirect("crm:contact_detail", pk=contact.pk)
 
 
-def _plural(n, singular, plural=None):
-    """Return '<n> <word>' with the word pluralized for n > 1."""
+def _plural(n: int, singular: str, plural: Optional[str] = None) -> str:
+    """Return ``'<n> <word>'``, with the word pluralized for n > 1.
+
+    Args:
+        n: Quantity.
+        singular: Singular form of the word.
+        plural: Plural form, ``singular`` followed by ``s`` by default.
+
+    Returns:
+        The quantity and the word.
+    """
     return f"{n} {singular if n < 2 else plural or singular + 's'}"
 
 
-def _redirect_response(url):
-    """HTMX response asking the browser to navigate to the given URL."""
+def _redirect_response(url: str) -> HttpResponse:
+    """Return an HTMX response asking the browser to navigate to the given URL.
+
+    Args:
+        url: Destination, sent in the ``HX-Redirect`` header.
+    """
     response = HttpResponse()
     response["HX-Redirect"] = url
     return response
@@ -498,12 +663,22 @@ def _redirect_response(url):
 
 @login_required
 @require_http_methods(["GET", "POST"])
-def company_delete(request, pk):
-    """
-    Permanently delete an archived company and its contacts.
+def company_delete(request: HttpRequest, pk: int) -> HttpResponse:
+    """Permanently delete an archived company and its contacts.
+
     Refused while the company is active or still has inspection folders.
-    - GET  : Render the confirmation modal (blocking message when deletion is refused).
-    - POST : Delete the company.
+
+    Args:
+        request: Current request.
+        pk: Primary key of the company.
+
+    Returns:
+        On GET, the confirmation modal, with a blocking message when the deletion
+        is refused. On POST, a 409 when refused, otherwise ``HX-Redirect`` to the
+        list for an HTMX request or a redirect to it.
+
+    Raises:
+        Http404: If the company does not exist.
     """
     company = get_company_by_id(pk)
     folders = company.inspection_folders.all()
@@ -562,12 +737,22 @@ def company_delete(request, pk):
 
 @login_required
 @require_http_methods(["GET", "POST"])
-def contact_delete(request, pk):
-    """
-    Permanently delete an archived contact.
+def contact_delete(request: HttpRequest, pk: int) -> HttpResponse:
+    """Permanently delete an archived contact.
+
     Refused while the contact is active or still referenced by an inspection folder.
-    - GET  : Render the confirmation modal (blocking message when deletion is refused).
-    - POST : Delete the contact.
+
+    Args:
+        request: Current request.
+        pk: Primary key of the contact.
+
+    Returns:
+        On GET, the confirmation modal, with a blocking message when the deletion
+        is refused. On POST, a 409 when refused, otherwise ``HX-Redirect`` to the
+        list for an HTMX request or a redirect to it.
+
+    Raises:
+        Http404: If the contact does not exist.
     """
     contact = get_contact_by_id(pk)
     folders = contact.inspection_folders.all()

@@ -1,15 +1,42 @@
-from typing import TYPE_CHECKING
+"""Models of the crm app: companies (clients) and their contacts."""
+
+from typing import TYPE_CHECKING, Any, Optional
 
 from core.models import TrackingModel
 from django.db import models
 from django.utils import timezone
 
 if TYPE_CHECKING:
+    from accounts.models import CustomUser
     from django.db.models.fields.related_descriptors import RelatedManager
     from inspections.models import InspectionFolder
 
 
 class Company(TrackingModel):
+    """Client company inspected by the user.
+
+    Archiving a company archives its active contacts (see ``cascade_archive``).
+    A company with inspection folders, even archived ones, cannot be deleted.
+
+    Attributes:
+        reference: Unique reference, generated as ``SOC-<year>-<number>`` when empty.
+        name: Company name.
+        address: Postal address.
+        siret: Unique SIRET number (14 digits).
+        siren: SIREN number (9 digits).
+        vat_number: Optional VAT number.
+        business_line: Business sector.
+        company_size_category: Size category (SME, ETI, large company...).
+        legal_structure: Optional legal structure.
+        nb_employees: Number of employees.
+        creation_date: Date the company was created.
+        labels: Optional certifications and labels.
+        executive_board: Optional board of directors.
+        website: Optional website.
+        contacts: Reverse relation to the company's contacts.
+        inspection_folders: Reverse relation to the company's inspection folders.
+    """
+
     reference = models.CharField(
         max_length=50, unique=True, verbose_name="Référence Société"
     )
@@ -45,14 +72,20 @@ class Company(TrackingModel):
         verbose_name_plural = "Sociétés"
         ordering = ["name"]
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Return the company name."""
         return f"{self.name}"
 
-    def cascade_archive(self, user=None):
+    def cascade_archive(self, user: Optional["CustomUser"] = None) -> None:
         """Archive the active contacts with the company's archive date.
 
-        Contacts still referenced by an active folder are skipped, like a direct contact archive would be refused.
-        Unarchiving a company intentionally leaves its contacts archived.
+        Contacts still referenced by an active folder are skipped, like a direct
+        contact archive would be refused. Unarchiving a company intentionally
+        leaves its contacts archived.
+
+        Args:
+            user: User performing the action, recorded as ``archived_by`` and
+                ``updated_by`` of the contacts.
         """
         update_data = {
             "is_active": False,
@@ -67,7 +100,16 @@ class Company(TrackingModel):
             inspection_folders__is_active=True
         ).update(**update_data)
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """Save the company, generating its reference when empty.
+
+        The reference is ``SOC-<year>-<number>``: the number follows the last
+        reference of the year, on four digits.
+
+        Args:
+            *args: Positional arguments passed to ``Model.save()``.
+            **kwargs: Keyword arguments passed to ``Model.save()``.
+        """
         if not self.reference:
             current_year = timezone.now().year
             prefix = f"SOC-{current_year}-"
@@ -91,6 +133,22 @@ class Company(TrackingModel):
 
 
 class Contact(TrackingModel):
+    """Person to contact in a company.
+
+    A contact referenced by an inspection folder, even archived, can be neither
+    deleted nor archived while the folder is active.
+
+    Attributes:
+        company: Company the contact belongs to.
+        first_name: First name.
+        last_name: Last name.
+        email: Optional email address.
+        phone_number_fix: Optional landline number.
+        phone_number_mobile: Optional mobile number.
+        position: Job title.
+        inspection_folders: Reverse relation to the folders referencing the contact.
+    """
+
     company = models.ForeignKey(
         Company,
         on_delete=models.CASCADE,
@@ -117,5 +175,6 @@ class Contact(TrackingModel):
         verbose_name_plural = "Contacts"
         ordering = ["last_name", "first_name"]
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Return the full name followed by the company name."""
         return f"{self.first_name} {self.last_name} - {self.company.name}"

@@ -1,3 +1,5 @@
+"""Admin of the accounts app: users with their inspector profile."""
+
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
@@ -5,6 +7,8 @@ from .models import CustomUser, Inspector
 
 
 class InspectorInline(admin.StackedInline):
+    """Inspector profile edited inside the user page."""
+
     model = Inspector
     can_delete = False
     verbose_name_plural = "Détails de l'Inspecteur"
@@ -14,6 +18,8 @@ class InspectorInline(admin.StackedInline):
 
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
+    """Admin of ``CustomUser``, with the phone number and the inspector profile."""
+
     # Manage the inline for the Inspector model
     inlines = [InspectorInline]
 
