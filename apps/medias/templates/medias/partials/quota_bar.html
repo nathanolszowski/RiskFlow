@@ -1,0 +1,20 @@
+{# Storage used by the folder against its approximate quota. Context: usage (used_bytes, quota_bytes, percent, level). #}
+{% load medias_extras %}
+<div class="min-w-0 flex-1" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ usage.percent }}"
+  aria-label="Stockage du dossier">
+  <div class="mb-1.5 flex items-baseline justify-between gap-3 text-xs">
+    <span class="font-semibold text-text-main">Stockage du dossier</span>
+    <span class="tabular-nums {% if usage.level == 'full' %}font-semibold text-status-danger{% elif usage.level == 'warning' %}font-semibold text-status-warning{% else %}text-text-subtle{% endif %}">
+      {{ usage.used_bytes|filesize_fr }} / {{ usage.quota_bytes|filesize_fr }}
+    </span>
+  </div>
+  <div class="h-2.5 w-full overflow-hidden rounded-full bg-surface-tertiary">
+    <div class="h-full rounded-full transition-all {% if usage.level == 'full' %}bg-status-danger{% elif usage.level == 'warning' %}bg-status-warning{% else %}bg-brand-primary{% endif %}"
+      style="width: {{ usage.percent }}%"></div>
+  </div>
+  {% if usage.level == 'full' %}
+  <p class="mt-1.5 text-xs text-status-danger">Quota atteint : supprimez des médias pour en ajouter.</p>
+  {% elif usage.level == 'warning' %}
+  <p class="mt-1.5 text-xs text-status-warning">Le quota du dossier est presque atteint.</p>
+  {% endif %}
+</div>

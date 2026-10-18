@@ -78,6 +78,12 @@
                 {% include "core/partials/tracking/tracking_line.html" with object=rec %}
 
                 <div class="flex flex-wrap items-center gap-2">
+                    <button type="button" hx-get="{% url 'medias:folder_tab_medias' rec.folder_id %}?target=recommandation:{{ rec.pk }}" hx-target="#tab-content" hx-swap="innerHTML"
+                        hx-on::before-request="activateFolderTab(document.querySelector('.tab-btn[data-medias]'))"
+                        class="inline-flex items-center gap-1.5 rounded-lg border border-border-default px-3.5 py-2 text-xs font-semibold text-text-main transition-colors hover:bg-surface-hover cursor-pointer whitespace-nowrap">
+                        <svg class="size-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="m21.4 11-9.2 9.2a5.5 5.5 0 0 1-7.8-7.8l9.2-9.2a3.7 3.7 0 0 1 5.2 5.2l-9.2 9.2a1.8 1.8 0 0 1-2.6-2.6l8.5-8.5"/></svg>
+                        Médias
+                    </button>
                     {% if not rec.is_active %}
                     <button type="button" hx-get="{% url 'inspections:recommandation_delete' rec.pk %}" hx-target="#modal-container" hx-swap="innerHTML"
                         class="inline-flex items-center gap-1.5 rounded-lg border border-border-default bg-surface-tertiary px-3.5 py-2 text-xs font-semibold text-status-danger transition-colors hover:bg-status-danger-bg hover:border-status-danger-border cursor-pointer whitespace-nowrap"

@@ -36,3 +36,21 @@ DATABASES = {
         "OPTIONS": {"sslmode": os.getenv("DB_SSLMODE", "require")},
     }
 }
+
+# Private S3-compatible storage (Cloudflare R2 speaks the standard S3 protocol).
+# Removing AWS_S3_ENDPOINT_URL is enough to switch to AWS S3.
+STORAGES = {
+    "default": {"BACKEND": "storages.backends.s3.S3Storage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+}
+AWS_STORAGE_BUCKET_NAME = os.environ["AWS_STORAGE_BUCKET_NAME"]
+AWS_S3_ENDPOINT_URL = os.getenv("AWS_S3_ENDPOINT_URL") or None
+AWS_ACCESS_KEY_ID = os.environ["AWS_ACCESS_KEY_ID"]
+AWS_SECRET_ACCESS_KEY = os.environ["AWS_SECRET_ACCESS_KEY"]
+AWS_S3_SIGNATURE_VERSION = "s3v4"
+AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME", "auto")
+# Private bucket: URLs are signed and expire after 5 minutes
+AWS_QUERYSTRING_AUTH = True
+AWS_QUERYSTRING_EXPIRE = 300
+AWS_DEFAULT_ACL = None
+AWS_S3_FILE_OVERWRITE = False

@@ -21,6 +21,7 @@ from .validators import (
 if TYPE_CHECKING:
     from accounts.models import CustomUser
     from django.db.models.fields.related_descriptors import RelatedManager
+    from medias.models import Media
 """
 
 ==== INSPECTION FOLDER SECTION ====
@@ -101,6 +102,7 @@ class InspectionFolder(TrackingModel):
         # Reverse relations (related_name), declared for Pylance only
         visits: "RelatedManager[VisitInstance]"
         recommandations: "RelatedManager[Recommandation]"
+        medias: "RelatedManager[Media]"
 
     class Meta(TrackingModel.Meta):
         verbose_name = "Dossier d'inspection"
@@ -112,7 +114,7 @@ class InspectionFolder(TrackingModel):
         return f"{self.reference} - {self.company} {self.current_phase}"
 
     def cascade_archive(self, user: Optional["CustomUser"] = None) -> None:
-        """Archive the active visits and recommendations of the folder.
+        """Archive the active visits, recommendations and medias of the folder.
 
         They receive the same ``archived_at`` as the folder, so that
         ``cascade_unarchive()`` can restore only these ones.
@@ -132,13 +134,14 @@ class InspectionFolder(TrackingModel):
 
         self.visits.filter(is_active=True).update(**update_data)
         self.recommandations.filter(is_active=True).update(**update_data)
+        self.medias.filter(is_active=True).update(**update_data)
 
     def cascade_unarchive(
         self,
         archived_at: Optional[datetime] = None,
         user: Optional["CustomUser"] = None,
     ) -> None:
-        """Restore the visits and recommendations archived together with the folder.
+        """Restore the visits, recommendations and medias archived together with the folder.
 
         Items archived on their own beforehand (different archive date) stay
         archived.
@@ -163,6 +166,9 @@ class InspectionFolder(TrackingModel):
             **update_data
         )
         self.recommandations.filter(is_active=False, archived_at=archived_at).update(
+            **update_data
+        )
+        self.medias.filter(is_active=False, archived_at=archived_at).update(
             **update_data
         )
 

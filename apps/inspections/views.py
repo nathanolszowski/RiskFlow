@@ -1,8 +1,8 @@
 """Views of the inspections app: folders, visits, recommendations and folder tabs."""
 
-from typing import Any, Optional
+from typing import Any
 
-from core.models import TrackingModel
+from core.modals import delete_confirm_modal
 from core.services import delete_archived_instance
 from crm.models import Company, Contact
 from django.contrib.auth.decorators import login_required
@@ -299,9 +299,11 @@ def folder_archive(request: HttpRequest, folder_id: int) -> HttpResponse:
     if request.method == "GET":
         visits = folder.visits.filter(is_active=True).count()
         recs = folder.recommandations.filter(is_active=True).count()
+        medias = folder.medias.filter(is_active=True).count()
         items = [
             f"{visits} visite{'s' if visits > 1 else ''}",
             f"{recs} recommandation{'s' if recs > 1 else ''}",
+            f"{medias} média{'s' if medias > 1 else ''}",
         ]
         return render(
             request,
@@ -357,50 +359,22 @@ def folder_unarchive(request: HttpRequest, folder_id: int) -> HttpResponse:
     return redirect("inspections:folder_detail", pk=folder.pk)
 
 
-def _delete_modal(
-    request: HttpRequest,
-    obj: TrackingModel,
-    *,
-    title: str,
-    label: str,
-    post_url: str,
-    sections: list[dict[str, Any]],
-    post_target: Optional[str] = None,
-) -> HttpResponse:
-    """Render the permanent-deletion modal.
-
-    It only offers the confirmation once the object is archived.
+def _kept_medias_entries(obj: Any) -> list[str]:
+    """Return the popup line telling that the medias of a visit/recommendation stay on the folder.
 
     Args:
-        request: Current request.
-        obj: Object to delete.
-        title: Title of the modal.
-        label: Name of the object shown in the modal.
-        post_url: URL the confirmation is posted to.
-        sections: Sections of the modal (``title``, ``entries``, ``note``, ``warning``).
-        post_target: HTMX target of the confirmation, if not the default one.
+        obj: Visit or recommendation about to be deleted.
+
+    Returns:
+        One entry for the popup, empty if the object has no media.
     """
-    blocking = None
-    if obj.is_active:
-        blocking = {
-            "title": "Suppression impossible : cet élément n'est pas archivé.",
-            "note": "Archivez-le d'abord, puis supprimez-le.",
-        }
-    return render(
-        request,
-        "core/partials/modal/archive_confirm_modal.html",
-        {
-            "title": title,
-            "object_label": label,
-            "action_verb": "supprimer définitivement",
-            "confirm_label": "Supprimer définitivement",
-            "danger": True,
-            "post_url": post_url,
-            "post_target": post_target,
-            "blocking": blocking,
-            "sections": sections,
-        },
-    )
+    count = obj.medias.count()
+    if not count:
+        return []
+    return [
+        f"{count} média{'s' if count > 1 else ''} rattaché{'s' if count > 1 else ''} "
+        "conservé" + ("s" if count > 1 else "") + " dans le dossier"
+    ]
 
 
 @login_required
@@ -424,7 +398,8 @@ def folder_delete(request: HttpRequest, folder_id: int) -> HttpResponse:
     if request.method == "GET":
         visits = folder.visits.count()
         recs = folder.recommandations.count()
-        return _delete_modal(
+        medias = folder.medias.count()
+        return delete_confirm_modal(
             request,
             folder,
             title="Supprimer définitivement ce dossier ?",
@@ -437,6 +412,7 @@ def folder_delete(request: HttpRequest, folder_id: int) -> HttpResponse:
                     "entries": [
                         f"{visits} visite{'s' if visits > 1 else ''}",
                         f"{recs} recommandation{'s' if recs > 1 else ''}",
+                        f"{medias} média{'s' if medias > 1 else ''} (fichiers supprimés du stockage)",
                     ],
                     "note": "Le client et le contact référent sont conservés. Cette action est irréversible.",
                 }
@@ -662,14 +638,20 @@ def visit_delete(request: HttpRequest, pk: int) -> HttpResponse:
     visit = get_visit_by_id(pk, request.user)
 
     if request.method == "GET":
-        return _delete_modal(
+        return delete_confirm_modal(
             request,
             visit,
             title="Supprimer définitivement cette visite ?",
             label=visit.display_template_name,
             post_url=reverse("inspections:visit_delete", args=[visit.pk]),
             post_target="#tab-content",
-            sections=[{"warning": True, "title": "Cette action est irréversible."}],
+            sections=[
+                {
+                    "warning": True,
+                    "title": "Cette action est irréversible.",
+                    "entries": _kept_medias_entries(visit),
+                }
+            ],
         )
 
     if visit.is_active:
@@ -828,14 +810,20 @@ def recommandation_delete(request: HttpRequest, pk: int) -> HttpResponse:
     rec = get_recommandation_by_id(pk, request.user)
 
     if request.method == "GET":
-        return _delete_modal(
+        return delete_confirm_modal(
             request,
             rec,
             title="Supprimer définitivement cette recommandation ?",
             label=f"REC-{rec.pk}",
             post_url=reverse("inspections:recommandation_delete", args=[rec.pk]),
             post_target="#tab-content",
-            sections=[{"warning": True, "title": "Cette action est irréversible."}],
+            sections=[
+                {
+                    "warning": True,
+                    "title": "Cette action est irréversible.",
+                    "entries": _kept_medias_entries(rec),
+                }
+            ],
         )
 
     if rec.is_active:

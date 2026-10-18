@@ -1,0 +1,46 @@
+{# Edition of a media. Context: media, form. #}
+<div id="media-update-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+
+  <div class="fixed inset-0 bg-black/70 backdrop-blur-xs transition-opacity"
+    onclick="document.getElementById('media-update-modal').remove()"></div>
+
+  <div class="relative flex max-h-[90vh] w-full max-w-xl flex-col rounded-xl border border-border-default bg-surface-primary shadow-2xl">
+
+    <div class="flex items-center justify-between border-b border-border-default px-6 py-4">
+      <h3 class="truncate text-lg font-semibold text-text-main">Modifier « {{ media.original_name }} »</h3>
+      <button type="button" onclick="document.getElementById('media-update-modal').remove()" aria-label="Fermer"
+        class="cursor-pointer text-text-subtle transition-colors hover:text-text-main">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+      </button>
+    </div>
+
+    <form hx-post="{% url 'medias:media_update' media.pk %}" hx-target="#tab-content" hx-swap="innerHTML"
+      hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' class="flex flex-col overflow-hidden">
+      {% csrf_token %}
+      <div class="space-y-5 overflow-y-auto p-6">
+        {% for field in form %}
+        {% if field.name != 'existing_tags' and field.name != 'new_tags' %}
+        <div>
+          <label for="{{ field.id_for_label }}" class="mb-2 block text-xs font-semibold uppercase tracking-wider text-brand-light">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}<p class="mt-1 text-xs text-status-danger">{{ field.errors.0 }}</p>{% endif %}
+        </div>
+        {% endif %}
+        {% endfor %}
+        {% include "medias/partials/media_tags_field.html" %}
+      </div>
+      <div class="flex justify-end space-x-3 border-t border-border-default bg-surface-primary/50 px-6 py-4">
+        <button type="button" onclick="document.getElementById('media-update-modal').remove()"
+          class="cursor-pointer rounded-lg border border-border-default bg-surface-tertiary px-4 py-2.5 text-xs font-medium text-text-body transition-colors hover:bg-surface-secondary">Annuler</button>
+        <button type="submit"
+          class="cursor-pointer rounded-lg bg-brand-primary px-4 py-2.5 text-xs font-medium text-brand-on shadow-xs transition-colors hover:bg-brand-hover">Enregistrer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  document.body.addEventListener("closeModal", function () {
+    document.getElementById("media-update-modal")?.remove();
+  }, { once: true });
+</script>

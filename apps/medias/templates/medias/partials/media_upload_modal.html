@@ -1,0 +1,160 @@
+{# Upload of files. Context: folder, form, usage, accept, limits_mb, file_errors. #}
+{% load medias_extras %}
+<div id="media-upload-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+
+  <!-- Backdrop -->
+  <div class="fixed inset-0 bg-black/70 backdrop-blur-xs transition-opacity"
+    onclick="document.getElementById('media-upload-modal').remove()"></div>
+
+  <div class="relative flex max-h-[90vh] w-full max-w-xl flex-col rounded-xl border border-border-default bg-surface-primary shadow-2xl">
+
+    <div class="flex items-center justify-between border-b border-border-default px-6 py-4">
+      <h3 class="text-lg font-semibold text-text-main">Ajouter des médias</h3>
+      <button type="button" onclick="document.getElementById('media-upload-modal').remove()" aria-label="Fermer"
+        class="cursor-pointer text-text-subtle transition-colors hover:text-text-main">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+      </button>
+    </div>
+
+    <form id="media-upload-form" hx-post="{% url 'medias:media_upload' folder.id %}" hx-target="#tab-content" hx-swap="innerHTML"
+      hx-encoding="multipart/form-data" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' class="flex flex-col overflow-hidden"
+      data-remaining="{{ usage.remaining_bytes }}"
+      data-limits='{"image": {{ limits_mb.image }}, "pdf": {{ limits_mb.pdf }}, "excel": {{ limits_mb.excel }}, "word": {{ limits_mb.word }}, "powerpoint": {{ limits_mb.powerpoint }}, "video": {{ limits_mb.video }}}'>
+      {% csrf_token %}
+
+      <div class="space-y-5 overflow-y-auto p-6">
+        {% include "medias/partials/quota_bar.html" %}
+
+        {% if file_errors %}
+        <div class="space-y-1 rounded-lg border border-status-danger-border bg-status-danger-bg p-3 text-xs text-status-danger">
+          <p class="font-semibold">Certains fichiers n'ont pas été ajoutés :</p>
+          <ul class="list-disc pl-5">
+            {% for name, message in file_errors %}<li><span class="font-semibold">{{ name }}</span> : {{ message }}</li>{% endfor %}
+          </ul>
+          <p>Les autres fichiers ont bien été ajoutés au dossier.</p>
+        </div>
+        {% endif %}
+
+        <div>
+          <label for="{{ form.files.id_for_label }}" class="mb-2 block text-xs font-semibold uppercase tracking-wider text-brand-light">Fichiers</label>
+          <input type="file" name="files" id="{{ form.files.id_for_label }}" multiple accept="{{ accept }}"
+            class="block w-full cursor-pointer rounded-lg border border-border-default bg-surface-secondary p-3 text-sm text-text-body file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-brand-primary file:px-4 file:py-2.5 file:text-sm file:font-semibold file:text-brand-on">
+          <p class="mt-2 text-xs text-text-muted">
+            Images, PDF, Excel, Word, PowerPoint, vidéos. Maximum : {{ limits_mb.image }} Mo par fichier, {{ limits_mb.video }} Mo pour une vidéo. Les images sont compressées automatiquement.
+          </p>
+          {% if form.files.errors %}<p class="mt-2 text-xs text-status-danger">{{ form.files.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.target.id_for_label }}" class="mb-2 block text-xs font-semibold uppercase tracking-wider text-brand-light">Rattacher à</label>
+          {{ form.target }}
+          {% if form.target.errors %}<p class="mt-1 text-xs text-status-danger">{{ form.target.errors.0 }}</p>{% endif %}
+        </div>
+
+        {% include "medias/partials/media_tags_field.html" %}
+
+        <div>
+          <label for="{{ form.notes.id_for_label }}" class="mb-2 block text-xs font-semibold uppercase tracking-wider text-brand-light">Notes (facultatif)</label>
+          {{ form.notes }}
+        </div>
+      </div>
+
+      <div class="flex justify-end space-x-3 border-t border-border-default bg-surface-primary/50 px-6 py-4">
+        <button type="button" onclick="document.getElementById('media-upload-modal').remove()"
+          class="cursor-pointer rounded-lg border border-border-default bg-surface-tertiary px-4 py-2.5 text-xs font-medium text-text-body transition-colors hover:bg-surface-secondary">Annuler</button>
+        <button type="submit" id="media-upload-submit" {% if usage.level == 'full' %}disabled{% endif %}
+          class="cursor-pointer rounded-lg bg-brand-primary px-4 py-2.5 text-xs font-medium text-brand-on shadow-xs transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-50">Envoyer</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Pop-up shown when files are refused (format, size, quota) -->
+  <div id="media-upload-alert" class="fixed inset-0 z-[60] hidden items-center justify-center p-4" role="alertdialog"
+    aria-modal="true" aria-labelledby="media-upload-alert-title">
+    <div class="fixed inset-0 bg-black/70"></div>
+    <div class="relative w-full max-w-md rounded-xl border border-status-danger-border bg-surface-primary p-6 shadow-2xl">
+      <div class="flex items-start gap-3">
+        <svg class="mt-0.5 h-6 w-6 shrink-0 text-status-danger" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+        <div class="min-w-0 flex-1">
+          <h4 id="media-upload-alert-title" class="text-base font-semibold text-text-main">Fichiers non acceptés</h4>
+          <ul id="media-upload-alert-list" class="mt-3 list-disc space-y-1.5 pl-5 text-sm text-text-body"></ul>
+        </div>
+      </div>
+      <div class="mt-6 flex justify-end">
+        <button type="button" id="media-upload-alert-close"
+          class="h-12 cursor-pointer rounded-lg bg-brand-primary px-6 text-sm font-semibold text-brand-on transition-colors hover:bg-brand-hover">J'ai compris</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{ file_errors_json|json_script:"media-upload-server-errors" }}
+<script>
+  (function () {
+    var form = document.getElementById("media-upload-form");
+    var input = form.querySelector('input[type="file"]');
+    var limits = JSON.parse(form.dataset.limits);
+    var remaining = parseInt(form.dataset.remaining, 10);
+    var types = {
+      jpg: "image", jpeg: "image", png: "image", webp: "image", pdf: "pdf",
+      xls: "excel", xlsx: "excel", doc: "word", docx: "word", ppt: "powerpoint", pptx: "powerpoint",
+      mp4: "video", mov: "video", webm: "video"
+    };
+
+    var alertBox = document.getElementById("media-upload-alert");
+    var alertList = document.getElementById("media-upload-alert-list");
+
+    function showAlert(problems) {
+      alertList.replaceChildren();
+      problems.forEach(function (text) {
+        var li = document.createElement("li");
+        li.textContent = text;
+        alertList.appendChild(li);
+      });
+      alertBox.classList.remove("hidden");
+      alertBox.classList.add("flex");
+      document.getElementById("media-upload-alert-close").focus();
+    }
+    document.getElementById("media-upload-alert-close").addEventListener("click", function () {
+      alertBox.classList.add("hidden");
+      alertBox.classList.remove("flex");
+    });
+
+    function mo(bytes) { return (bytes / 1048576).toFixed(1).replace(".", ",") + " Mo"; }
+
+    // Immediate check before sending: format, size per type, then the room left in the folder.
+    // Refused selections are emptied and explained in a pop-up. The server checks again
+    // (images are compressed there, so only the other types count against the quota here).
+    function check() {
+      var problems = [];
+      var total = 0;
+      Array.prototype.forEach.call(input.files, function (f) {
+        var type = types[(f.name.split(".").pop() || "").toLowerCase()];
+        if (!type) { problems.push("« " + f.name + " » : format non géré (images, PDF, Excel, Word, PowerPoint ou vidéos uniquement)."); return; }
+        if (f.size > limits[type] * 1048576) problems.push("« " + f.name + " » est trop volumineux (" + mo(f.size) + ", maximum " + limits[type] + " Mo).");
+        if (type !== "image") total += f.size;
+      });
+      if (!problems.length && total > remaining) {
+        problems.push("Ces fichiers (" + mo(total) + ") dépassent la place restante dans le dossier (" + mo(remaining) + "). Supprimez des médias ou choisissez des fichiers plus légers.");
+      }
+      if (problems.length) {
+        input.value = "";
+        showAlert(problems);
+        return false;
+      }
+      return true;
+    }
+    input.addEventListener("change", check);
+    form.addEventListener("htmx:confirm", function (evt) {
+      if (!check()) evt.preventDefault();
+    });
+
+    // Refusals decided by the server (quota with compressed images, corrupted file...)
+    var serverErrors = JSON.parse(document.getElementById("media-upload-server-errors").textContent);
+    if (serverErrors.length) showAlert(serverErrors);
+  })();
+
+  document.body.addEventListener("closeModal", function () {
+    document.getElementById("media-upload-modal")?.remove();
+  }, { once: true });
+</script>

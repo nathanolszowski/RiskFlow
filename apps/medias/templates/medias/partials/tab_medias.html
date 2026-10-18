@@ -1,0 +1,72 @@
+{# Medias tab. Context: folder, status, q, media_type, target, tag, tags, media_types, targets, medias, usage, active_count, archived_count. #}
+<span id="media-tab-badge" hx-swap-oob="innerHTML">{{ active_count|add:archived_count }}</span>
+
+<div class="space-y-6">
+  <!-- Quota and main action -->
+  <div class="flex flex-col gap-4 rounded-2xl border border-border-default bg-surface-primary p-4 sm:flex-row sm:items-center">
+    {% include "medias/partials/quota_bar.html" %}
+    {% if folder.is_active %}
+    <button type="button" {% if usage.level == 'full' %}disabled{% endif %}
+      hx-get="{% url 'medias:media_upload' folder.id %}{% if target %}?target={{ target|urlencode }}{% endif %}" hx-target="#modal-container" hx-swap="innerHTML"
+      class="inline-flex h-14 shrink-0 cursor-pointer items-center justify-center gap-2.5 rounded-xl bg-brand-primary px-6 text-base font-bold text-brand-on shadow-xs transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-50">
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      Ajouter des médias
+    </button>
+    {% endif %}
+  </div>
+
+  <!-- Filters -->
+  <form hx-get="{% url 'medias:folder_tab_medias' folder.id %}" hx-target="#tab-content" hx-swap="innerHTML"
+    hx-trigger="change" class="flex flex-col gap-3 sm:flex-row">
+    <input type="hidden" name="status" value="{{ status }}">
+    <input type="search" name="q" value="{{ q }}" placeholder="Rechercher un média" class="form-input sm:flex-1"
+      hx-get="{% url 'medias:folder_tab_medias' folder.id %}" hx-include="closest form" hx-trigger="keyup changed delay:400ms"
+      hx-target="#tab-content" hx-swap="innerHTML">
+    <select name="media_type" class="form-input sm:w-44" aria-label="Type">
+      <option value="">Tous les types</option>
+      {% for value, label in media_types %}<option value="{{ value }}" {% if media_type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+    {% if tags %}
+    <select name="tag" class="form-input sm:w-44" aria-label="Tag">
+      <option value="">Tous les tags</option>
+      {% for t in tags %}<option value="{{ t.name }}" {% if tag|lower == t.name|lower %}selected{% endif %}>#{{ t.name }}</option>{% endfor %}
+    </select>
+    {% endif %}
+    <select name="target" class="form-input sm:w-64" aria-label="Rattachement">
+      <option value="">Tous les rattachements</option>
+      <option value="folder" {% if target == 'folder' %}selected{% endif %}>Dossier (général)</option>
+      {% for group, options in targets|slice:"1:" %}
+      <optgroup label="{{ group }}">
+        {% for value, label in options %}<option value="{{ value }}" {% if target == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </optgroup>
+      {% endfor %}
+    </select>
+  </form>
+
+  <div class="flex items-center justify-between gap-3">
+    <h3 class="text-lg font-semibold text-text-main">{% if status == 'archived' %}Médias archivés{% else %}Médias{% endif %}</h3>
+    {% if status == 'archived' %}
+    <button type="button" hx-get="{% url 'medias:folder_tab_medias' folder.id %}" hx-target="#tab-content" hx-swap="innerHTML"
+      class="cursor-pointer text-sm font-semibold text-brand-light hover:underline">Retour aux médias actifs</button>
+    {% elif archived_count %}
+    <button type="button" hx-get="{% url 'medias:folder_tab_medias' folder.id %}?status=archived" hx-target="#tab-content" hx-swap="innerHTML"
+      class="cursor-pointer text-sm font-semibold text-brand-light hover:underline">Afficher les archivés ({{ archived_count }})</button>
+    {% endif %}
+  </div>
+
+  {% if medias %}
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+    {% for media in medias %}
+    {% include "medias/partials/media_card.html" %}
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="rounded-2xl border border-dashed border-border-default bg-surface-primary py-14 text-center">
+    <svg class="mx-auto h-12 w-12 text-text-faded" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Z" />
+    </svg>
+    <p class="mt-4 text-sm font-semibold text-text-subtle">{% if status == 'archived' %}Aucun média archivé{% else %}Aucun média{% endif %}</p>
+    {% if status != 'archived' %}<p class="mt-1 text-xs text-text-muted">Ajoutez des photos, PDF, documents Office ou vidéos à toutes les étapes du dossier.</p>{% endif %}
+  </div>
+  {% endif %}
+</div>

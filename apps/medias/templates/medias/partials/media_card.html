@@ -1,0 +1,76 @@
+{# One media of the grid. Context: media, folder, csrf_token. #}
+{% load medias_extras %}
+<article class="flex flex-col overflow-hidden rounded-xl border border-border-default bg-surface-primary {% if not media.is_active %}opacity-70{% endif %}">
+  <a href="{% url 'medias:media_file' media.pk %}" target="_blank" rel="noopener"
+    class="flex aspect-[4/3] items-center justify-center bg-surface-secondary">
+    {% if media.is_image and media.thumbnail %}
+    <img src="{% url 'medias:media_thumbnail' media.pk %}" alt="{{ media.display_name }}" loading="lazy" class="h-full w-full object-cover">
+    {% else %}
+    <span class="flex flex-col items-center gap-2 text-text-subtle">
+      {% if media.is_video %}
+      <svg class="h-12 w-12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3z"/></svg>
+      {% else %}
+      <svg class="h-12 w-12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>
+      {% endif %}
+      <span class="rounded-full border border-border-default bg-surface-primary px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider">{{ media.get_media_type_display }}</span>
+    </span>
+    {% endif %}
+  </a>
+
+  <div class="flex flex-1 flex-col gap-2 p-3.5">
+    <div class="min-w-0">
+      <p class="truncate text-sm font-semibold text-text-main" title="{{ media.display_name }}">{{ media.display_name }}</p>
+      <p class="text-xs text-text-subtle">{{ media.size|filesize_fr }} · {{ media.created_at|date:"d/m/Y" }}</p>
+    </div>
+    <p class="flex flex-wrap items-center gap-1.5 text-xs">
+      {% if media.visit %}
+      <span class="rounded-full bg-brand-bg px-2 py-0.5 font-semibold text-brand-light">Visite{% if media.visit.due_date %} du {{ media.visit.due_date|date:"d/m/Y" }}{% endif %}</span>
+      {% elif media.recommandation %}
+      <span class="rounded-full bg-brand-bg px-2 py-0.5 font-semibold text-brand-light">REC-{{ media.recommandation.pk }}</span>
+      {% else %}
+      <span class="rounded-full bg-surface-tertiary px-2 py-0.5 text-text-subtle">Dossier</span>
+      {% endif %}
+      {% if not media.is_active %}<span class="rounded-full border border-status-warning-border bg-status-warning-bg px-2 py-0.5 text-[10px] font-semibold text-status-warning">Archivé</span>{% endif %}
+    </p>
+    {% if media.taken_at or media.location_url %}
+    <p class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-text-subtle">
+      {% if media.taken_at %}<span>Pris le {{ media.taken_at|date:"d/m/Y à H:i" }}</span>{% endif %}
+      {% if media.location_url %}<a href="{{ media.location_url }}" target="_blank" rel="noopener noreferrer" class="font-semibold text-brand-light hover:underline">Voir le lieu</a>{% endif %}
+    </p>
+    {% endif %}
+    {% if media.tags.all %}
+    <p class="flex flex-wrap gap-1.5">
+      {% for tag in media.tags.all %}
+      <button type="button" hx-get="{% url 'medias:folder_tab_medias' media.folder_id %}?tag={{ tag.name|urlencode }}" hx-target="#tab-content" hx-swap="innerHTML"
+        title="Filtrer sur ce tag"
+        class="cursor-pointer rounded-full border border-border-default bg-surface-secondary px-2.5 py-0.5 text-[11px] font-medium text-text-body transition-colors hover:border-brand-primary hover:text-brand-light">#{{ tag.name }}</button>
+      {% endfor %}
+    </p>
+    {% endif %}
+    {% if media.notes %}<p class="line-clamp-2 text-xs text-text-muted">{{ media.notes }}</p>{% endif %}
+
+    <div class="mt-auto flex flex-wrap items-center gap-2 pt-1">
+      <a href="{% url 'medias:media_file' media.pk %}?download=1"
+        class="inline-flex h-10 items-center rounded-lg border border-border-default px-3 text-xs font-semibold text-text-main transition-colors hover:bg-surface-hover">Télécharger</a>
+      {% if media.is_active %}
+      <button type="button" hx-get="{% url 'medias:media_update' media.pk %}" hx-target="#modal-container" hx-swap="innerHTML"
+        class="inline-flex h-10 cursor-pointer items-center rounded-lg border border-border-default px-3 text-xs font-semibold text-text-main transition-colors hover:bg-surface-hover">Modifier</button>
+      <button type="button" hx-post="{% url 'medias:media_archive' media.pk %}" hx-target="#tab-content" hx-swap="innerHTML"
+        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' hx-confirm="Êtes-vous sûr de vouloir archiver ce média ?"
+        aria-label="Archiver" title="Archiver"
+        class="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-border-default text-text-muted transition-colors hover:bg-surface-hover hover:text-text-main">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10h14V9M10 13h4"/></svg>
+      </button>
+      {% else %}
+      <button type="button" hx-post="{% url 'medias:media_unarchive' media.pk %}" hx-target="#tab-content" hx-swap="innerHTML"
+        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' hx-confirm="Voulez-vous vraiment désarchiver ce média ?"
+        class="inline-flex h-10 cursor-pointer items-center rounded-lg border border-border-default bg-surface-secondary px-3 text-xs font-semibold text-text-main transition-colors hover:bg-surface-tertiary">Désarchiver</button>
+      <button type="button" hx-get="{% url 'medias:media_delete' media.pk %}" hx-target="#modal-container" hx-swap="innerHTML"
+        aria-label="Supprimer définitivement" title="Supprimer définitivement"
+        class="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-status-danger-border text-status-danger transition-colors hover:bg-status-danger-bg">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>
+      </button>
+      {% endif %}
+    </div>
+  </div>
+</article>

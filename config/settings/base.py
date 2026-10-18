@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "django_htmx",
     "accounts",
     "inspections",
+    "medias",
     "crm",
     "core",
 ]
@@ -117,6 +118,42 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = "static/"
+
+# Media files (uploads). Local filesystem by default, S3-compatible storage in prod.
+# There is no MEDIA_URL on purpose: files are never reachable by a public URL, the
+# medias:media_file / media_thumbnail views check the owner first.
+MEDIA_ROOT = BASE_DIR / "media"
+
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+}
+
+
+def _env_int(name, default):
+    return int(os.getenv(name, default))
+
+
+# Files per request (Django has no limit on the total size: set client_max_body_size on the proxy)
+DATA_UPLOAD_MAX_NUMBER_FILES = 20
+
+# Maximum size of a received file, in MB, per media type
+MEDIA_MAX_SIZE_BY_TYPE = {
+    "image": _env_int("MEDIA_MAX_IMAGE_MB", 25),
+    "pdf": _env_int("MEDIA_MAX_PDF_MB", 25),
+    "excel": _env_int("MEDIA_MAX_OFFICE_MB", 25),
+    "word": _env_int("MEDIA_MAX_OFFICE_MB", 25),
+    "powerpoint": _env_int("MEDIA_MAX_OFFICE_MB", 25),
+    "video": _env_int("MEDIA_MAX_VIDEO_MB", 100),
+}
+# Approximate storage quota per inspection folder, in MB
+MEDIA_FOLDER_QUOTA_MB = _env_int("MEDIA_FOLDER_QUOTA_MB", 500)
+# Image compression: longest side in pixels, JPEG quality, thumbnail longest side
+# Images above this definition are refused before being decoded (memory protection)
+MEDIA_IMAGE_MAX_PIXELS = 50_000_000
+MEDIA_IMAGE_MAX_DIMENSION = 2000
+MEDIA_IMAGE_QUALITY = 80
+MEDIA_THUMBNAIL_SIZE = 400
 
 TAILWIND_APP_NAME = "theme"
 

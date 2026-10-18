@@ -23,7 +23,7 @@
       <option value="{% url 'inspections:folder_tab_overview' folder.id %}">Vue d'ensemble</option>
       <option value="{% url 'inspections:folder_tab_visit' folder.id %}">Formulaire de visite</option>
       <option value="{% url 'inspections:folder_tab_recommandations' folder.id %}">Recommandations</option>
-      <option value="{% url 'inspections:folder_tab_overview' folder.id %}">Médias</option>
+      <option value="{% url 'medias:folder_tab_medias' folder.id %}">Médias</option>
       <option value="{% url 'inspections:folder_tab_overview' folder.id %}">Rapports</option>
     </select>
   </div>
@@ -60,24 +60,7 @@
 </div>
 
 <!-- Desktop Tab Bar with Right-aligned Status & Action -->
-<div class="hidden sm:block mb-6" hx-on:click="
-        let currentTab = event.target.closest('.tab-btn');
-        if (currentTab && currentTab.dataset.fallbackOverview !== undefined) currentTab = document.querySelector('.tab-btn[data-overview]');
-        if (currentTab) {
-            document.querySelectorAll('.tab-btn').forEach(t => {
-                t.classList.remove('border-brand-primary', 'text-brand-light');
-                t.classList.add('border-transparent', 'text-text-subtle');
-                t.querySelector('svg')?.classList.replace('text-brand-light', 'text-text-faded');
-                let b = t.querySelector('.tab-badge');
-                if(b) b.className = 'tab-badge ml-3 rounded-full bg-surface-secondary px-2.5 py-0.5 text-xs font-semibold text-text-subtle border border-border-default';
-            });
-            currentTab.classList.replace('border-transparent', 'border-brand-primary');
-            currentTab.classList.replace('text-text-subtle', 'text-brand-light');
-            currentTab.querySelector('svg')?.classList.replace('text-text-faded', 'text-brand-light');
-            let ab = currentTab.querySelector('.tab-badge');
-            if(ab) ab.className = 'tab-badge ml-3 rounded-full bg-brand-bg px-2.5 py-0.5 text-xs font-semibold text-brand-light border border-brand-border';
-        }
-     ">
+<div class="hidden sm:block mb-6" hx-on:click="activateFolderTab(event.target.closest('.tab-btn'))">
   <div class="border-b border-border-default flex items-center justify-between">
     <nav class="-mb-px flex space-x-8" aria-label="Tabs" hx-target="#tab-content" hx-swap="innerHTML">
 
@@ -124,7 +107,7 @@
       </button>
 
       <!-- Médias -->
-      <button hx-get="{% url 'inspections:folder_tab_overview' folder.id %}" data-fallback-overview
+      <button hx-get="{% url 'medias:folder_tab_medias' folder.id %}" data-medias
         class="tab-btn group inline-flex items-center border-b-2 border-transparent px-1 pb-4 text-sm font-medium text-text-subtle hover:border-border-hover hover:text-text-main transition-colors cursor-pointer">
         <svg class="mr-2 h-5 w-5 text-text-faded transition-colors" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
           stroke="currentColor">
@@ -132,6 +115,10 @@
             d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
         </svg>
         <span>Médias</span>
+        <span
+          class="tab-badge ml-3 rounded-full bg-surface-secondary px-2.5 py-0.5 text-xs font-semibold text-text-subtle border border-border-default transition-colors">
+          <span id="media-tab-badge">{{ folder.medias.all|length }}</span>
+        </span>
       </button>
 
       <!-- Rapports -->
@@ -179,6 +166,27 @@
     </div>
   </div>
 </div>
+
+
+<script>
+  // Highlights a tab button (also used when a tab is opened from a row, e.g. the medias of a visit)
+  function activateFolderTab(currentTab) {
+    if (currentTab && currentTab.dataset.fallbackOverview !== undefined) currentTab = document.querySelector('.tab-btn[data-overview]');
+    if (!currentTab) return;
+    document.querySelectorAll('.tab-btn').forEach(function (t) {
+      t.classList.remove('border-brand-primary', 'text-brand-light');
+      t.classList.add('border-transparent', 'text-text-subtle');
+      t.querySelector('svg')?.classList.replace('text-brand-light', 'text-text-faded');
+      var b = t.querySelector('.tab-badge');
+      if (b) b.className = 'tab-badge ml-3 rounded-full bg-surface-secondary px-2.5 py-0.5 text-xs font-semibold text-text-subtle border border-border-default';
+    });
+    currentTab.classList.replace('border-transparent', 'border-brand-primary');
+    currentTab.classList.replace('text-text-subtle', 'text-brand-light');
+    currentTab.querySelector('svg')?.classList.replace('text-text-faded', 'text-brand-light');
+    var ab = currentTab.querySelector('.tab-badge');
+    if (ab) ab.className = 'tab-badge ml-3 rounded-full bg-brand-bg px-2.5 py-0.5 text-xs font-semibold text-brand-light border border-brand-border';
+  }
+</script>
 
 <div id="tab-content" class="min-h-[400px] mt-6">
   {% include 'inspections/partials/tabs/tab_overview.html' %}
