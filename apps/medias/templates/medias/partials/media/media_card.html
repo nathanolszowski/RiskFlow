@@ -1,12 +1,12 @@
-{# One media of the grid. Context: media, folder, csrf_token. #}
+{# One media of the grid. Context: media, folder, csrf_token. The preview is a fixed 4/3 box: the image fills it (cropped), whatever its own size. #}
 {% load medias_extras %}
 <article class="flex flex-col overflow-hidden rounded-xl border border-border-default bg-surface-primary {% if not media.is_active %}opacity-70{% endif %}">
   <a href="{% url 'medias:media_file' media.pk %}" target="_blank" rel="noopener"
-    class="flex aspect-[4/3] items-center justify-center bg-surface-secondary">
+    class="relative block aspect-[4/3] w-full shrink-0 overflow-hidden bg-surface-secondary">
     {% if media.is_image and media.thumbnail %}
-    <img src="{% url 'medias:media_thumbnail' media.pk %}" alt="{{ media.display_name }}" loading="lazy" class="h-full w-full object-cover">
+    <img src="{% url 'medias:media_thumbnail' media.pk %}" alt="{{ media.display_name }}" loading="lazy" class="absolute inset-0 h-full w-full object-cover">
     {% else %}
-    <span class="flex flex-col items-center gap-2 text-text-subtle">
+    <span class="absolute inset-0 flex flex-col items-center justify-center gap-2 text-text-subtle">
       {% if media.is_video %}
       <svg class="h-12 w-12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3z"/></svg>
       {% else %}
