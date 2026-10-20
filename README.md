@@ -169,3 +169,51 @@ uv run python manage.py tailwind build   # compiler le CSS
 uv run python manage.py test             # lancer les tests
 ```
 
+
+## Recette manuelle
+
+Les tests automatisés ne couvrent pas ce qui dépend du navigateur, du réseau et de l'appareil. Cette liste se déroule à la main, de préférence sur une tablette (iPad/Safari) et sur un poste avec les outils de développement (DevTools) ouverts. Cocher chaque ligne avant une livraison.
+
+Préparation : un compte inspecteur, un dossier avec une visite préparée à partir d'un modèle contenant au moins un champ de chaque type (oui/non, texte, choix, nombre).
+
+### Enregistrement à la volée hors ligne
+
+- [ ] Ouvrir le formulaire de la visite, répondre à un champ : l'indicateur passe par « Enregistrement… » puis « Enregistré ».
+- [ ] DevTools > Réseau > « Hors connexion » (ou mode avion sur la tablette), répondre à deux champs : les réponses restent affichées, l'indicateur affiche « Non enregistré · nouvelle tentative » et un bandeau « Connexion perdue » apparaît (les réponses sont gardées dans `localStorage`, DevTools > Application).
+- [ ] Rétablir le réseau sans recharger la page : les réponses sont renvoyées d'elles-mêmes dans l'ordre (nouvelle tentative automatique ou événement « online »), le bandeau disparaît et l'indicateur repasse à « Enregistré ». Recharger la page : les réponses sont toujours là.
+- [ ] Refaire l'étape hors ligne, puis tenter de **fermer l'onglet** sans rétablir le réseau : le navigateur demande confirmation (réponses non enregistrées). Fermer quand même, puis rouvrir le formulaire avec le réseau : les réponses gardées dans `localStorage` (clé `visit-<id>-pending`) sont renvoyées, puis la clé est vidée.
+- [ ] Hors ligne, saisir une valeur que le serveur refusera (nombre hors des bornes) puis revenir en ligne : au renvoi, le message d'erreur s'affiche sous le champ, la valeur n'est pas enregistrée et elle ne reste pas en attente.
+- [ ] Terminer ou archiver la visite depuis un autre onglet, puis répondre dans le premier : bandeau « Cette visite est terminée ou archivée » et réponse abandonnée.
+
+### File d'attente des enregistrements
+
+- [ ] Saisir rapidement dans plusieurs champs à la suite (tabulation entre champs, sans attendre) : aucune réponse n'est perdue ni enregistrée dans le désordre (la dernière valeur d'un champ est celle qui reste).
+- [ ] Avec la limitation du réseau sur « 3G lent » (DevTools), répéter : la file ne bloque pas la saisie.
+- [ ] Le compteur de la révision augmente à chaque enregistrement (vérifiable dans l'administration, champ « Révision des réponses »).
+
+### Expiration de session
+
+- [ ] Ouvrir le formulaire de visite et rester inactif plus de 5 minutes : la page continue de signaler sa présence (appels `session/ping/` toutes les 5 minutes dans l'onglet Réseau) et la session reste ouverte.
+- [ ] Dans l'administration Django, supprimer la session de l'utilisateur (ou vider le cookie `sessionid`), puis répondre à un champ : l'application répond 401 sans rediriger, l'indicateur affiche « Non enregistré · session expirée », la réponse reste dans `localStorage` et un bandeau invite à se reconnecter dans un autre onglet.
+- [ ] Se reconnecter dans un autre onglet, revenir au formulaire : la réponse en attente est renvoyée à la nouvelle tentative suivante.
+- [ ] Sur une autre page (liste des dossiers), laisser la session expirer puis cliquer : la page de connexion s'affiche, et après connexion on revient à la page demandée.
+
+### Fichiers refusés
+
+- [ ] Envoyer un fichier d'un format non accepté (`.exe`, `.heic`) : un pop-up explicatif s'affiche avant l'envoi, rien n'est enregistré.
+- [ ] Envoyer un PDF au-delà de la limite (`MEDIA_MAX_PDF_MB` réduite dans `.env` pour le test) : le pop-up donne la limite.
+- [ ] Envoyer un lot mêlant un fichier valide et un fichier refusé : le fichier valide apparaît dans l'onglet Médias, le refus est expliqué.
+- [ ] Renommer un fichier texte en `.pdf` et l'envoyer : refus (contenu différent de l'extension).
+- [ ] Remplir le quota du dossier (`MEDIA_FOLDER_QUOTA_MB` réduit) : la barre passe à l'orange puis au rouge, et un nouvel envoi est refusé avec le message de quota.
+- [ ] Envoyer une photo prise avec l'appareil de la tablette : orientation correcte, miniature présente, date et position affichées.
+
+### Lecture vidéo sur Safari / iPad
+
+- [ ] Envoyer une vidéo `.mp4` et une `.mov` filmées avec l'iPad, puis les ouvrir depuis l'onglet Médias : la lecture démarre.
+- [ ] Se déplacer dans la vidéo (barre de progression) : la lecture reprend à l'endroit choisi (le serveur répond en `206 Partial Content`, onglet Réseau).
+- [ ] Même vérification avec le stockage S3/R2 en préproduction (redirection vers l'URL signée).
+
+### Autres contrôles sur tablette
+
+- [ ] Les boutons restent utilisables au doigt (formulaire de visite, modales, onglets).
+- [ ] Le thème clair / sombre persiste après un rechargement et une navigation.
