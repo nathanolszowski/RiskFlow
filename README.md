@@ -26,9 +26,9 @@ RiskFlow vise à rassembler ce flux de travail, aujourd'hui éclaté entre table
 ### Disponibles
 
 - **Authentification** : utilisateur personnalisé et profil inspecteur, sessions expirant après 60 minutes d'inactivité.
-- **CRM** : clients et contacts, avec pré-remplissage d'un client à partir de son SIRET via l'**API Sirene de l'INSEE**.
+- **CRM** : clients et contacts, avec pré-remplissage d'un client à partir de son SIRET via l'**API Sirene de l'INSEE** (forme juridique, activité NAF 2025, siège social). Une alerte signale un établissement fermé ou une entreprise cessée, et un bouton « Actualiser (Sirene) » compare la fiche aux données de l'API et applique, champ par champ, ce que l'utilisateur accepte.
 - **Dossiers d'inspection** : création, suivi de l'avancement par phase, référence générée automatiquement (`DOS-<année>-<hex>`), filtres, tri et pagination.
-- **Visites dynamiques** : les modèles de visite sont décrits en JSON (sections et champs `boolean`, `text`, `select`, `number`), leur structure est validée avec **Pydantic**, et chaque visite d'un dossier est instanciée à partir d'un modèle.
+- **Visites dynamiques** : les modèles de visite sont décrits en JSON (sections et champs `boolean`, `text`, `select`, `number`), leur structure est validée avec **Pydantic**, et chaque visite d'un dossier travaille sur sa propre copie du modèle. Les réponses sont validées et enregistrées à la volée, champ par champ, y compris après une coupure réseau.
 - **Recommandations de prévention** rattachées à un dossier.
 - **Médias** : photos, PDF, Excel, Word, PowerPoint et vidéos rattachés à un dossier, une visite ou une recommandation, à toutes les étapes de la mission. Images compressées avec Pillow (miniature, EXIF conservé : date, GPS, appareil), tags libres par utilisateur, limites de taille par type, quota approximatif par dossier avec barre de remplissage, fichiers privés servis uniquement à leur propriétaire. Voir [Gestion des médias](#gestion-des-médias-développement-et-production).
 - **Archivage (soft delete) et suppression définitive** de tous les objets métier, avec cascades (dossier → visites, recommandations et médias, client → contacts), popups de confirmation et règles de protection (on n'efface qu'un objet préalablement archivé).
@@ -39,8 +39,7 @@ RiskFlow vise à rassembler ce flux de travail, aujourd'hui éclaté entre table
 
 - Rapport de visite : interface en écran partagé, export PDF.
 - Cloisonnement complet des données par inspecteur.
-- Validation des réponses d'une visite contre son modèle.
-- Tests automatisés, séparation des environnements dev / prod, CI GitHub Actions et déploiement.
+- Tests automatisés, CI GitHub Actions et déploiement.
 - À plus long terme : notifications, tableau de bord analytique, portail client, base de connaissances avec recherche sémantique (RAG avec `pgvector`), dont une interrogation des documents d'un dossier (Gemini, Celery + Redis).
 
 ## Stack technique
@@ -52,7 +51,7 @@ RiskFlow vise à rassembler ce flux de travail, aujourd'hui éclaté entre table
 | Front-end | Templates Django, HTMX (`django-htmx`), Tailwind CSS v4 (`django-tailwind`, binaire standalone, sans npm) |
 | Validation | Pydantic 2 |
 | Fichiers | Système de fichiers en dev, stockage S3 (Cloudflare R2) via `django-storages` en prod, Pillow pour les images |
-| Intégrations | API Sirene (INSEE) |
+| Intégrations | API Sirene (INSEE), référentiel de nomenclatures `id.insee.fr` (libellés NAF 2025) |
 | Outillage | `uv` |
 
 Le choix d'HTMX permet de limiter le JavaScript au strict minimum : les listes, formulaires en modale, onglets et confirmations sont des fragments HTML renvoyés par le serveur.
@@ -63,7 +62,7 @@ Le choix d'HTMX permet de limiter le JavaScript au strict minimum : les listes, 
 apps/
   accounts/    Utilisateur personnalisé et profil inspecteur
   core/        Code commun : modèle de traçabilité, layout, dashboard, recherche, thème
-  crm/         Clients, contacts, client de l'API INSEE
+  crm/         Clients, contacts, client de l'API Sirene (siège, état administratif, NAF 2025)
   inspections/ Dossiers, modèles et instances de visite, recommandations
   medias/      Fichiers joints (images, documents, vidéos), tags, quota, stockage
   theme/       Configuration Tailwind et tokens de thème

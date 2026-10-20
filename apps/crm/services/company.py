@@ -1,4 +1,10 @@
-"""Company services: INSEE Sirene API client, getters and filtered lists."""
+"""Company services: INSEE Sirene API client and update, getters and filtered lists.
+
+The Sirene part reads an establishment by SIRET (with its head office and its NAF 2025
+activity), lists the differences with a client (``get_sirene_changes``), applies the ones
+the user accepts (``apply_sirene_changes``) and tells whether the establishment is closed
+or the company ceased (``get_cessation_alert``). Nothing there writes without the user.
+"""
 
 import os
 from datetime import date
@@ -48,6 +54,9 @@ SIRENE_STATE_FIELD = "administrative_state"
 
 class INSEEApiClient:
     """Client of the INSEE Sirene API, used to retrieve company data.
+
+    ``fetch_by_siret`` returns the establishment, its administrative state, its head
+    office (second request when it is another establishment) and its NAF 2025 activity.
 
     Attributes:
         BASE_URL: Root URL of the Sirene API.
@@ -393,14 +402,17 @@ def get_sirene_changes(company: Company, data: dict) -> list[dict[str, str]]:
     """List the fields whose Sirene value differs from the one of the company.
 
     Only the fields coming from the API are compared, and a field the API returns
-    empty is ignored: an empty answer never blanks a value.
+    empty is ignored: an empty answer never blanks a value. Fields with choices (head
+    office state), the legal form and the NAF 2025 activity are shown with their label.
+    The administrative state is added as one more line (``administrative_state``).
 
     Args:
         company: Company to compare.
         data: Data returned by the Sirene API.
 
     Returns:
-        One dict per changed field, with ``field``, ``label``, ``current`` and ``new``.
+        One dict per changed field, with ``field``, ``label``, ``current`` and ``new``
+        (texts to display, not the stored values).
     """
     changes = []
     for field in SIRENE_FIELDS:
@@ -472,9 +484,11 @@ def apply_sirene_changes(
 ) -> list[str]:
     """Update the selected fields of a company with Sirene data.
 
-    The selection is checked against ``SIRENE_FIELDS`` and against the fields that
-    really changed, and the values come from ``data``, never from the request: no
-    other field can be written through this.
+    The selection is checked against ``SIRENE_FIELDS`` (plus the administrative state)
+    and against the fields that really changed, and the values come from ``data``,
+    never from the request: no other field can be written through this. Accepting the
+    state also writes the closing date, accepting the NAF 2025 code also writes its
+    label.
 
     Args:
         company: Company to update.

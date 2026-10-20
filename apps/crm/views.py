@@ -127,6 +127,9 @@ def create_company(request: HttpRequest) -> HttpResponse:
     Args:
         request: Current request.
 
+    Once the company is saved, the Sirene state, head office and NAF 2025 activity are
+    read again from its SIRET and stored on it (never taken from the form).
+
     Returns:
         On GET, the form modal. On a valid POST, the companies grid with
         ``HX-Trigger: closeModal``. On an invalid POST, the modal with a 422 status.
@@ -343,7 +346,10 @@ def search_siret_api(request: HttpRequest) -> HttpResponse:
             dashes are ignored.
 
     Returns:
-        The result partial, or an empty response if the SIRET is not 14 digits.
+        The result partial (data injected in the form, legal form, NAF 2025 activity,
+        head office and a cessation alert if Sirene reports the establishment closed),
+        or an empty response if the SIRET is not 14 digits. The Sirene answer is reused
+        for a few minutes (``get_sirene_data_cached``).
     """
     siret_query = (
         request.GET.get("siret_search", "").strip().replace(" ", "").replace("-", "")
