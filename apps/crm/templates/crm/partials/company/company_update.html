@@ -24,7 +24,7 @@
     <!-- Reference -->
     <div class="grid grid-cols-3 gap-2.5">
       <div>
-        <label class="block text-xs font-medium text-text-subtle mb-1">Réf. Société</label>
+        <label class="block text-xs font-medium text-text-subtle mb-1">Réf. client</label>
         {{ form.reference }}
       </div>
       <div class="col-span-2">
@@ -39,6 +39,7 @@
       <div>
         <label class="block text-xs font-medium text-text-subtle mb-1">Forme juridique</label>
         {{ form.legal_structure }}
+        {% if company.legal_structure_display != company.legal_structure %}<p class="text-[11px] text-text-faded mt-1">{{ company.legal_structure_display }}</p>{% endif %}
       </div>
       <div>
         <label class="block text-xs font-medium text-text-subtle mb-1">Secteur d'activité</label>

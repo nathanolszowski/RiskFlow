@@ -86,7 +86,7 @@ class InspectionFolder(TrackingModel):
         "crm.Company",
         on_delete=models.PROTECT,
         related_name="inspection_folders",
-        verbose_name="Société",
+        verbose_name="Client",
     )
     # --- CONTACT RELATIONSHIP ---
     contact = models.ForeignKey(
@@ -204,7 +204,7 @@ class InspectionFolder(TrackingModel):
             and self.contact.company_id != self.company_id
         ):
             raise ValidationError(
-                {"contact": "Ce contact n'appartient pas à la société du dossier."}
+                {"contact": "Ce contact n'appartient pas au client du dossier."}
             )
 
     def save(self, *args: Any, **kwargs: Any) -> None:

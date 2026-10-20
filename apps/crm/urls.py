@@ -25,12 +25,17 @@ urlpatterns = [
         views.company_inline_read,
         name="company_inline_read",
     ),
-    path("clients/nouvelle-societe/", views.create_company, name="create_company"),
+    path("clients/nouveau-client/", views.create_company, name="create_company"),
     path("client/<int:pk>/archive/", views.company_archive, name="company_archive"),
     path(
         "client/<int:pk>/desarchive/", views.company_unarchive, name="company_unarchive"
     ),
     path("client/<int:pk>/supprimer/", views.company_delete, name="company_delete"),
+    path(
+        "client/<int:pk>/actualiser-sirene/",
+        views.company_sirene_refresh,
+        name="company_sirene_refresh",
+    ),
     path(
         "clients/recherche-siret/",
         views.search_siret_api,

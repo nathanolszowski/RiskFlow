@@ -53,7 +53,7 @@ class InspectionFolderForm(forms.ModelForm):
 
         company_field = self.fields.get("company")
         if isinstance(company_field, forms.ModelChoiceField):
-            company_field.empty_label = "Sélectionnez une société"
+            company_field.empty_label = "Sélectionnez un client"
 
 
 class InspectionFolderUpdateForm(InspectionFolderForm):

@@ -80,7 +80,7 @@
         <div class="space-y-6">
             <div class="bg-surface-primary shadow-xs rounded-xl p-6 border border-border-default">
                 <h2 class="text-lg font-semibold text-text-main mb-4 border-b border-border-default pb-2">
-                    Entreprise
+                    Client
                 </h2>
 
                 {% if contact.company %}
@@ -102,7 +102,7 @@
                     <div class="pt-2">
                         <a href="{% url 'crm:company_detail' contact.company.pk %}"
                             class="inline-flex items-center w-full justify-center px-3 py-2 text-xs font-medium text-brand-light bg-brand-bg border border-brand-border rounded-lg hover:bg-surface-tertiary transition-colors">
-                            Voir la fiche entreprise
+                            Voir la fiche client
                             <svg class="w-3.5 h-3.5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M9 5l7 7-7 7" />
@@ -112,7 +112,7 @@
                 </div>
                 {% else %}
                 <div class="text-center py-4">
-                    <p class="text-sm text-text-faded italic">Aucune entreprise rattachée.</p>
+                    <p class="text-sm text-text-faded italic">Aucun client rattaché.</p>
                 </div>
                 {% endif %}
             </div>

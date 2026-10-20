@@ -2,7 +2,27 @@
 <!-- Visual confirmation -->
 <div class="rounded-lg border border-emerald-500/30 bg-emerald-950/20 p-3 text-xs text-emerald-400">
        ✓ Données de <strong>{{ name }}</strong> récupérées et injectées dans le formulaire !
+       {% if legal_structure_label and legal_structure_label != legal_structure %}<br>Forme juridique ({{ legal_structure }}) : {{ legal_structure_label }}{% endif %}
 </div>
+
+{% if activity_naf25 %}
+<div class="rounded-lg border border-border-default bg-surface-secondary p-3 text-xs text-text-body">
+       <strong>Activité principale (NAF 2025)</strong> : {% if activity_naf25_label %}{{ activity_naf25_label }} ({{ activity_naf25 }}){% else %}{{ activity_naf25 }}{% endif %}
+</div>
+{% endif %}
+
+{% if headquarters_siret and headquarters_siret != siret %}
+<div class="rounded-lg border border-border-default bg-surface-secondary p-3 text-xs text-text-body">
+       <strong>Siège social</strong> (SIRET {{ headquarters_siret }}){% if headquarters_address %} : {{ headquarters_address }}{% endif %}
+       {% if headquarters_state == "A" %}<span class="font-semibold text-status-success"> · en activité</span>{% elif headquarters_state == "F" %}<span class="font-semibold text-status-danger"> · fermé</span>{% endif %}
+</div>
+{% elif headquarters_siret == siret %}
+<div class="rounded-lg border border-border-default bg-surface-secondary p-3 text-xs text-text-body">Cet établissement est le <strong>siège social</strong>.</div>
+{% endif %}
+
+{% if alert %}
+{% include "crm/partials/company/company_cessation_alert.html" with company_name=name siret=siret note="Information indicative : le client peut quand même être créé, l'état sera indiqué sur sa fiche." %}
+{% endif %}
 
 <!-- Swaps HTMX Out-Of-Band (hx-swap-oob="true") : Replace the content of the inputs by their ID -->
 <input type="text" id="id_name" name="name" value="{{ name }}" hx-swap-oob="true"

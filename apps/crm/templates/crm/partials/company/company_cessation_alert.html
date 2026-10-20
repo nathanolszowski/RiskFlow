@@ -1,0 +1,21 @@
+{# Cessation alert (informative). Context: alert (kind, since), company_name, siret, note. #}
+<div role="alert" class="flex items-start gap-3 rounded-lg border border-status-danger-border bg-status-danger-bg p-4 text-status-danger">
+  <svg class="mt-0.5 h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+  </svg>
+  <div class="space-y-1">
+    {% if alert.kind == "ceased" %}
+    <p class="font-semibold">Entreprise cessée selon Sirene</p>
+    <p class="text-xs">L'unité légale de <strong>{{ company_name }}</strong> a cessé son activité. Vérifiez avant d'ouvrir ou de poursuivre un dossier.</p>
+    {% else %}
+    <p class="font-semibold">Établissement fermé selon Sirene</p>
+    <p class="text-xs">L'établissement SIRET {{ siret }} est fermé{% if alert.since %} depuis le {{ alert.since|date:"d/m/Y" }}{% endif %}. Vérifiez que le site à inspecter est toujours exploité.</p>
+    {% endif %}
+    {% if alert.kind == "closed" and alert.hq_state == "A" %}
+    <p class="text-xs font-semibold">Le siège social est toujours en activité{% if alert.hq_address %} : {{ alert.hq_address }}{% endif %}.</p>
+    {% elif alert.kind == "closed" and alert.hq_state == "F" %}
+    <p class="text-xs font-semibold">Le siège social est lui aussi fermé : l'entreprise a probablement cessé son activité.</p>
+    {% endif %}
+    {% if note %}<p class="text-xs opacity-80">{{ note }}</p>{% endif %}
+  </div>
+</div>

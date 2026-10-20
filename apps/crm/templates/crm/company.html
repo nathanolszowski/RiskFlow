@@ -1,7 +1,7 @@
 {% extends "core/app_layout.html" %}
 
 {% block page_title %}Clients{% endblock page_title %}
-{% block page_subtitle %}Gestion de votre portefeuille clients et entreprises.{% endblock page_subtitle %}
+{% block page_subtitle %}Gestion de votre portefeuille de clients.{% endblock page_subtitle %}
 
 {% block app_content %}
 <div class="w-full max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -55,7 +55,7 @@
         <select name="status" id="status" hx-get="{% url 'crm:company_list_paginated' page=1 %}"
           hx-target="#company-grid-container" hx-include="[name='q'], [name='sort']"
           class="bg-surface-secondary border border-border-default text-text-main text-xs rounded-lg focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary block px-3 py-2 cursor-pointer transition-colors w-full">
-          <option value="">Toutes les sociétés</option>
+          <option value="">Tous les clients</option>
           <option value="active" {% if request.GET.status == 'active' or not request.GET.status %}selected{% endif %}>Actives uniquement</option>
           <option value="archived" {% if request.GET.status == 'archived' %}selected{% endif %}>Archivées uniquement</option>
         </select>

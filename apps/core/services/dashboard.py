@@ -166,7 +166,9 @@ def get_upcoming_visits(
             | Q(current_status=VisitInstance.Status.SCHEDULED, due_date__lt=today)
         )
         .select_related("folder__company")
-        .order_by("due_date", F("due_time").asc(nulls_last=True), "pk")[:UPCOMING_VISITS_LIMIT]
+        .order_by("due_date", F("due_time").asc(nulls_last=True), "pk")[
+            :UPCOMING_VISITS_LIMIT
+        ]
     )
     return [
         {

@@ -79,7 +79,7 @@ def get_filtered_folders(request: HttpRequest) -> QuerySet:
     elif status == "archived":
         folders = folders.filter(is_active=False)
 
-    # Filtre par Entreprise / Client
+    # Filtre par client
     company_id = request.GET.get("company") or request.POST.get("company", "").strip()
     if company_id:
         folders = folders.filter(company_id=company_id)

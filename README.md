@@ -13,7 +13,7 @@ Projet personnel en cours de développement, réalisé par sprints : fondations,
 
 L'inspecteur de risques intervient **en amont de la souscription** d'un contrat d'assurance (ce n'est pas de l'expertise sinistre). Il évalue un site industriel ou commercial, identifie les risques (incendie, intrusion, process…) et formule des recommandations de prévention. Une mission suit cinq étapes :
 
-1. **Préparation** : collecte des informations sur l'entreprise et le site.
+1. **Préparation** : collecte des informations sur le client et le site.
 2. **Entretien** avec les interlocuteurs du client.
 3. **Visite terrain** guidée par un questionnaire structuré.
 4. **Rapport** consolidant les observations.
@@ -26,12 +26,12 @@ RiskFlow vise à rassembler ce flux de travail, aujourd'hui éclaté entre table
 ### Disponibles
 
 - **Authentification** : utilisateur personnalisé et profil inspecteur, sessions expirant après 60 minutes d'inactivité.
-- **CRM** : sociétés et contacts, avec pré-remplissage d'une société à partir de son SIRET via l'**API Sirene de l'INSEE**.
+- **CRM** : clients et contacts, avec pré-remplissage d'un client à partir de son SIRET via l'**API Sirene de l'INSEE**.
 - **Dossiers d'inspection** : création, suivi de l'avancement par phase, référence générée automatiquement (`DOS-<année>-<hex>`), filtres, tri et pagination.
 - **Visites dynamiques** : les modèles de visite sont décrits en JSON (sections et champs `boolean`, `text`, `select`, `number`), leur structure est validée avec **Pydantic**, et chaque visite d'un dossier est instanciée à partir d'un modèle.
 - **Recommandations de prévention** rattachées à un dossier.
 - **Médias** : photos, PDF, Excel, Word, PowerPoint et vidéos rattachés à un dossier, une visite ou une recommandation, à toutes les étapes de la mission. Images compressées avec Pillow (miniature, EXIF conservé : date, GPS, appareil), tags libres par utilisateur, limites de taille par type, quota approximatif par dossier avec barre de remplissage, fichiers privés servis uniquement à leur propriétaire. Voir [Gestion des médias](#gestion-des-médias-développement-et-production).
-- **Archivage (soft delete) et suppression définitive** de tous les objets métier, avec cascades (dossier → visites, recommandations et médias, société → contacts), popups de confirmation et règles de protection (on n'efface qu'un objet préalablement archivé).
+- **Archivage (soft delete) et suppression définitive** de tous les objets métier, avec cascades (dossier → visites, recommandations et médias, client → contacts), popups de confirmation et règles de protection (on n'efface qu'un objet préalablement archivé).
 - **Traçabilité** : date et auteur de la création, de la dernière modification et de l'archivage.
 - **Tableau de bord**, **recherche globale** et **thème clair / sombre**.
 
@@ -63,7 +63,7 @@ Le choix d'HTMX permet de limiter le JavaScript au strict minimum : les listes, 
 apps/
   accounts/    Utilisateur personnalisé et profil inspecteur
   core/        Code commun : modèle de traçabilité, layout, dashboard, recherche, thème
-  crm/         Sociétés, contacts, client de l'API INSEE
+  crm/         Clients, contacts, client de l'API INSEE
   inspections/ Dossiers, modèles et instances de visite, recommandations
   medias/      Fichiers joints (images, documents, vidéos), tags, quota, stockage
   theme/       Configuration Tailwind et tokens de thème

@@ -37,20 +37,27 @@
       <div>
         <dt class="text-xs text-text-faded">Structure & Secteur</dt>
         <dd class="text-text-body">
-          {{ company.legal_structure|default:"" }}
+          {{ company.legal_structure_display|default:"" }}
           {% if company.business_line %}— {{ company.business_line }}{% endif %}
           {% if not company.legal_structure and not company.business_line %}Non spécifié{% endif %}
         </dd>
       </div>
 
+      {% if company.activity_naf25 %}
+      <div>
+        <dt class="text-xs text-text-faded">Activité principale (NAF 2025)</dt>
+        <dd class="text-text-body">{{ company.activity_naf25_display }}</dd>
+      </div>
+      {% endif %}
+
       <div class="grid grid-cols-2 gap-2">
         <div>
-          <dt class="text-xs text-text-faded">Taille de société</dt>
+          <dt class="text-xs text-text-faded">Taille du client</dt>
           <dd class="text-text-body text-xs">{{ company.company_size_category|default:"—" }}</dd>
         </div>
         <div>
           <dt class="text-xs text-text-faded">Effectifs</dt>
-          <dd class="text-text-body text-xs">{{ company.nb_employees|default:"—" }} salariés</dd>
+          <dd class="text-text-body text-xs">{% if company.nb_employees is not None %}{{ company.nb_employees }} salariés{% else %}—{% endif %}</dd>
         </div>
       </div>
 
@@ -67,6 +74,28 @@
       <div>
         <dt class="text-xs text-text-faded">Adresse</dt>
         <dd class="text-text-subtle text-xs leading-relaxed whitespace-pre-line">{{ company.address }}</dd>
+      </div>
+      {% endif %}
+
+      {% if company.headquarters_siret %}
+      <div>
+        <dt class="text-xs text-text-faded">Siège social</dt>
+        <dd class="text-text-subtle text-xs leading-relaxed">
+          {% if company.is_headquarters %}
+          Cet établissement est le siège social.
+          {% else %}
+          {% if company.headquarters_address %}<span class="whitespace-pre-line">{{ company.headquarters_address }}</span><br>{% endif %}
+          <span class="font-mono">SIRET {{ company.headquarters_siret }}</span>
+          {% with hq=company.headquarters_company %}
+          {% if hq %}· <a href="{% url 'crm:company_detail' hq.pk %}" class="text-brand-light hover:underline">Voir la fiche</a>{% endif %}
+          {% endwith %}
+          {% endif %}
+          {% if company.headquarters_state == "F" %}
+          <br><span class="font-semibold text-status-danger">Siège fermé</span>
+          {% elif company.headquarters_state == "A" %}
+          <br><span class="font-semibold text-status-success">Siège en activité</span>
+          {% endif %}
+        </dd>
       </div>
       {% endif %}
     </dl>

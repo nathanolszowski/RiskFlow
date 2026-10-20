@@ -4,6 +4,7 @@ from typing import Any, Optional, cast
 
 from core.services import delete_archived_instance
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -15,16 +16,22 @@ from django.views.decorators.http import (
 )
 
 from crm.services.company import (
-    INSEEApiClient,
+    apply_sirene_changes,
+    get_cessation_alert,
     get_company_archive_impact,
     get_company_by_id,
     get_filtered_companies,
+    get_sirene_changes,
+    get_sirene_data,
+    get_sirene_data_cached,
+    sync_sirene_status,
 )
 from crm.services.contact import (
     get_contact_archive_impact,
     get_contact_by_id,
     get_filtered_contacts,
 )
+from crm.services.legal_forms import legal_form_label
 
 from .forms import CompanyForm, ContactForm
 from .models import Company, Contact
@@ -130,6 +137,8 @@ def create_company(request: HttpRequest) -> HttpResponse:
             company = form.save(commit=False)
             company.created_by = request.user
             company.save()
+            # Store the Sirene state (closed?) and the head office of the client, shown on its page
+            sync_sirene_status(company, cast("Any", request.user))
 
             companies = get_filtered_companies(request)
             paginator = Paginator(companies, 15)
@@ -343,14 +352,79 @@ def search_siret_api(request: HttpRequest) -> HttpResponse:
     if not siret_query or len(siret_query) != 14 or not siret_query.isdigit():
         return HttpResponse("")
 
-    company_data = INSEEApiClient.fetch_by_siret(siret_query)
+    company_data = get_sirene_data_cached(siret_query)
 
     if company_data:
-        context = {"found": True, **company_data}
+        context = {
+            "found": True,
+            "alert": get_cessation_alert(company_data),
+            "legal_structure_label": legal_form_label(
+                company_data.get("legal_structure", "")
+            ),
+            **company_data,
+        }
     else:
         context = {"found": False, "query": siret_query}
 
     return render(request, "crm/partials/company/siret_search_result.html", context)
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def company_sirene_refresh(request: HttpRequest, pk: int) -> HttpResponse:
+    """Offer to update a company with the current Sirene data, field by field (HTMX).
+
+    Only the fields coming from the API can change, and only the ones the user
+    ticks. The data is fetched again on POST: the values never come from the form.
+    If Sirene reports the company as closed or ceased, the modal shows an alert
+    (informative: nothing is modified because of it).
+
+    Args:
+        request: Current request. On POST, ``fields`` lists the accepted fields.
+        pk: Primary key of the company.
+
+    Returns:
+        On GET, the modal with the differences (or a message when there is nothing
+        to show). On POST, ``HX-Refresh``, a 409 if the company is archived, or the
+        modal again with a message (422) if the API gave nothing or a value is invalid.
+
+    Raises:
+        Http404: If the company does not exist.
+    """
+    company = get_company_by_id(pk)
+    template = "crm/partials/company/company_sirene_modal.html"
+    context: dict[str, Any] = {"company": company}
+
+    if not company.is_active:
+        return HttpResponse("Ce client est archivé.", status=409)
+
+    data = get_sirene_data(company)
+    if data is None:
+        context["error"] = (
+            "Aucune donnée récupérée : SIRET introuvable ou service Sirene indisponible."
+        )
+        return render(
+            request, template, context, status=422 if request.method == "POST" else 200
+        )
+
+    if request.method == "POST":
+        try:
+            apply_sirene_changes(
+                company,
+                cast("Any", request.user),
+                data,
+                request.POST.getlist("fields"),
+            )
+        except ValidationError as e:
+            context["error"] = " ".join(e.messages)
+            context["changes"] = get_sirene_changes(company, data)
+            context["alert"] = get_cessation_alert(data)
+            return render(request, template, context, status=422)
+        return _refresh_response()
+
+    context["changes"] = get_sirene_changes(company, data)
+    context["alert"] = get_cessation_alert(data)
+    return render(request, template, context)
 
 
 # ==========================================

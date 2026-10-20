@@ -58,6 +58,17 @@
         </button>
       {% endif %}
 
+      {% if company.is_active %}
+      <button type="button" hx-get="{% url 'crm:company_sirene_refresh' company.pk %}" hx-target="#modal-container" hx-swap="innerHTML"
+        class="inline-flex items-center gap-1.5 rounded-lg bg-surface-tertiary hover:bg-surface-secondary border border-border-default px-3.5 py-2 text-xs font-semibold text-text-body transition-colors cursor-pointer whitespace-nowrap"
+        title="Comparer la fiche avec l'API Sirene">
+        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        Actualiser (Sirene)
+      </button>
+      {% endif %}
+
       <button type="button" hx-get="{% url 'crm:company_inline_update' company.pk %}" hx-target="#company-left-column"
         hx-swap="outerHTML"
         class="inline-flex items-center gap-1.5 rounded-lg bg-brand-primary hover:bg-brand-hover px-3.5 py-2 text-xs font-semibold text-brand-on shadow-xs transition-colors cursor-pointer whitespace-nowrap">
@@ -74,6 +85,10 @@
   <div class="space-y-6">
 
     {% include "core/partials/tracking/tracking_info.html" with object=company %}
+
+    {% if company.cessation_alert %}
+    {% include "crm/partials/company/company_cessation_alert.html" with alert=company.cessation_alert company_name=company.name siret=company.siret note="Constaté lors du dernier import ou de la dernière actualisation Sirene : utilisez « Actualiser (Sirene) » pour revérifier." %}
+    {% endif %}
 
     <!-- BLOCK 1: Company Information (through HTMX) -->
     <div id="company-left-column">
@@ -171,7 +186,7 @@
         <div
           class="col-span-full py-8 text-center bg-surface-secondary/30 rounded-xl border border-dashed border-border-default space-y-1">
           <p class="text-sm font-medium text-text-subtle">Aucun contact lié</p>
-          <p class="text-xs text-text-faded">Aucun interlocuteur n'a encore été associé à cette entreprise.</p>
+          <p class="text-xs text-text-faded">Aucun interlocuteur n'a encore été associé à ce client.</p>
         </div>
         {% endfor %}
       </div>

@@ -26,6 +26,7 @@
                             <p class="text-xs text-text-faded font-mono mt-0.5 truncate" title="{{ company.reference }}">
                                 Ref: {{ company.reference }}</p>
                             {% endif %}
+                            {% include "crm/partials/company/company_state_badge.html" with state=company.administrative_state %}
                         </div>
                     </div>
 
@@ -44,7 +45,7 @@
                     <div class="min-w-0">
                         <span class="text-text-faded block">Secteur / Forme</span>
                         <span class="text-text-body truncate block"
-                            title="{{ company.legal_structure|default:company.business_line|default:'—' }}">{{ company.legal_structure|default:company.business_line|default:"—" }}</span>
+                            title="{{ company.legal_structure_display|default:company.business_line|default:'—' }}">{{ company.legal_structure_display|default:company.business_line|default:"—" }}</span>
                     </div>
                 </div>
             </div>
@@ -76,9 +77,9 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                     d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0h5m0 0v-5a2 2 0 012-2h2a2 2 0 012 2v5" />
             </svg>
-            <h3 class="text-base font-semibold text-text-body">Aucune société trouvée</h3>
-            <p class="text-sm text-text-faded mt-1">Essayez de modifier vos critères de recherche ou d'ajouter une nouvelle
-                entreprise.</p>
+            <h3 class="text-base font-semibold text-text-body">Aucun client trouvé</h3>
+            <p class="text-sm text-text-faded mt-1">Essayez de modifier vos critères de recherche ou d'ajouter un nouveau
+                client.</p>
         </div>
         {% endfor %}
     </div>
@@ -89,7 +90,7 @@
         class="mt-6 flex items-center justify-between rounded-xl border border-border-default bg-surface-primary px-6 py-3 text-xs text-text-subtle">
         <div>
             Affichage de {{ page_obj.start_index }} à {{ page_obj.end_index }} sur {{ page_obj.paginator.count }}
-            sociétés
+            clients
         </div>
         <div class="flex items-center space-x-1">
             {% if page_obj.has_previous %}
