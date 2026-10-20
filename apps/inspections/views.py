@@ -5,6 +5,7 @@ from typing import Any
 from core.modals import delete_confirm_modal
 from core.services import delete_archived_instance
 from crm.models import Company, Contact
+from crm.services.company import get_company_by_id
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
@@ -75,6 +76,35 @@ def folder_list(request: HttpRequest) -> HttpResponse:
             "page_obj": page_obj,
             "companies": companies,
             "phase_choices": InspectionFolder.Phase.choices,
+        },
+    )
+
+
+@login_required
+@require_GET
+def company_folders_panel(request: HttpRequest, company_id: int) -> HttpResponse:
+    """Render the panel of the folders of a company, loaded by its detail page (HTMX).
+
+    The crm app only holds a container pointing here: everything about folders
+    (list, archived state, "new folder" button) stays in this app.
+
+    Args:
+        request: Current request.
+        company_id: Primary key of the company.
+
+    Returns:
+        The panel, listing the folders of the company created by the user.
+
+    Raises:
+        Http404: If the company does not exist.
+    """
+    company = get_company_by_id(company_id)
+    return render(
+        request,
+        "inspections/partials/folder/company_folders_panel.html",
+        {
+            "company": company,
+            "folders": get_company_folders(company, request.user),
         },
     )
 

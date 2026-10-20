@@ -14,6 +14,11 @@ urlpatterns = [
         name="folder_list_paginated",
     ),
     path("dossiers/edition/", views.create_folder, name="create_folder"),
+    path(
+        "dossiers/societe/<int:company_id>/",
+        views.company_folders_panel,
+        name="company_folders_panel",
+    ),
     path("dossier/<int:pk>/", views.folder_detail, name="folder_detail"),
     path(
         "dossier/<int:pk>/edition/",

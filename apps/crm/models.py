@@ -9,7 +9,6 @@ from django.utils import timezone
 if TYPE_CHECKING:
     from accounts.models import CustomUser
     from django.db.models.fields.related_descriptors import RelatedManager
-    from inspections.models import InspectionFolder
 
 
 class Company(TrackingModel):
@@ -65,7 +64,8 @@ class Company(TrackingModel):
     if TYPE_CHECKING:
         # Reverse relation (related_name), declared for Pylance only
         contacts: "RelatedManager[Contact]"
-        inspection_folders: "RelatedManager[InspectionFolder]"
+        # Untyped on purpose: crm must not import inspections (inspections depends on crm, never the reverse)
+        inspection_folders: "RelatedManager[Any]"
 
     class Meta(TrackingModel.Meta):
         verbose_name = "Société"
@@ -168,7 +168,8 @@ class Contact(TrackingModel):
 
     if TYPE_CHECKING:
         # Reverse relation (related_name), declared for Pylance only
-        inspection_folders: "RelatedManager[InspectionFolder]"
+        # Untyped on purpose: crm must not import inspections (inspections depends on crm, never the reverse)
+        inspection_folders: "RelatedManager[Any]"
 
     class Meta(TrackingModel.Meta):
         verbose_name = "Contact"
