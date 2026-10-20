@@ -52,6 +52,13 @@
 
   --color-on-primary: #06231B;
 
+  /* Folder cards */
+  --bg-card: #1A3027;
+  --border-card: #3F6B58;
+  --bg-card-inset: #122219;
+  --card-segment: #2F5645;
+  --card-shadow-value: 0 10px 28px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.35);
+
   /* Chart series (dashboard donut) */
   --chart-1: #FFCF56;
   --chart-2: #3AB795;
@@ -122,6 +129,13 @@
 
   --color-on-primary: #0B2E25;
 
+  /* Folder cards */
+  --bg-card: #FBF9EC;
+  --border-card: #BFC59E;
+  --bg-card-inset: #F1EED6;
+  --card-segment: #D6D9B8;
+  --card-shadow-value: 0 8px 22px rgba(18, 51, 43, 0.14), 0 1px 3px rgba(18, 51, 43, 0.12);
+
   /* Chart series (dashboard donut) */
   --chart-1: #EDB400;
   --chart-2: #3AB795;
@@ -183,6 +197,12 @@
   --color-brand-hover: var(--color-primary-hover);
   --color-brand-light: var(--color-primary-light);
   --color-brand-on: var(--color-on-primary);
+
+  --color-card: var(--bg-card);
+  --color-card-border: var(--border-card);
+  --color-card-inset: var(--bg-card-inset);
+  --color-card-segment: var(--card-segment);
+  --shadow-card: var(--card-shadow-value);
   --color-brand-bg: var(--color-primary-bg);
   --color-brand-border: var(--color-primary-border);
 

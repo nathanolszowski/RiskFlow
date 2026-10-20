@@ -9,6 +9,7 @@ from core.models import TrackingModel
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
+from django.utils.functional import cached_property
 
 from .validators import (
     AnswersValidationError,
@@ -248,7 +249,7 @@ class InspectionFolder(TrackingModel):
         """Return the most recently created visit of the folder, or None if it has none."""
         return self.visits.order_by("-created_at").first()
 
-    @property
+    @cached_property
     def next_visit_date(self) -> Optional[date]:
         """Return the date of the next scheduled visit of the folder.
 
@@ -265,6 +266,12 @@ class InspectionFolder(TrackingModel):
         )
 
         return next_visit.due_date if next_visit else None
+
+    @property
+    def days_until_next_visit(self) -> Optional[int]:
+        """Return the number of days before the next scheduled visit, or None if there is none."""
+        next_date = self.next_visit_date
+        return (next_date - timezone.localdate()).days if next_date else None
 
     @property
     def phase_progress(self) -> Optional[dict[str, Any]]:
