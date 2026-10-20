@@ -38,3 +38,5 @@ LOGGING = {
     "handlers": {"null": {"class": "logging.NullHandler"}},
     "root": {"handlers": ["null"], "level": "CRITICAL"},
 }
+
+TEST_RUNNER = "config.test_runner.AppsDiscoverRunner"
