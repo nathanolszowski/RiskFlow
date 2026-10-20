@@ -4,12 +4,14 @@ from typing import Any
 
 from core.modals import delete_confirm_modal
 from core.services import delete_archived_instance
-from crm.models import Company, Contact
-from crm.services.company import get_company_by_id
+from core.services.directory import (
+    get_companies_with_folders,
+    get_company_by_id,
+    get_company_or_none,
+)
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
-from django.forms import ModelChoiceField
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -58,11 +60,7 @@ def folder_list(request: HttpRequest) -> HttpResponse:
     Returns:
         The full page, first page of the filtered list.
     """
-    companies = (
-        Company.objects.filter(inspection_folders__isnull=False)
-        .distinct()
-        .order_by("name")
-    )
+    companies = get_companies_with_folders()
     folders = get_filtered_folders(request)
 
     paginator = Paginator(folders, 15)
@@ -181,19 +179,10 @@ def create_folder(request: HttpRequest) -> HttpResponse:
         errors (422).
     """
     company_id = request.GET.get("company") or request.POST.get("company")
-    selected_company = (
-        Company.objects.filter(pk=company_id).first() if company_id else None
-    )
+    selected_company = get_company_or_none(company_id)
 
     if request.method == "POST":
-        form = InspectionFolderForm(request.POST)
-
-        if selected_company:
-            contact_field = form.fields["contact"]
-            if isinstance(contact_field, ModelChoiceField):
-                contact_field.queryset = Contact.objects.filter(
-                    company=selected_company
-                )
+        form = InspectionFolderForm(request.POST, company=selected_company)
 
         if form.is_valid():
             create_tracked_instance(form, request.user)
@@ -229,12 +218,7 @@ def create_folder(request: HttpRequest) -> HttpResponse:
     if selected_company:
         initial_data["company"] = selected_company
 
-    form = InspectionFolderForm(initial=initial_data)
-
-    if selected_company:
-        contact_field = form.fields["contact"]
-        if isinstance(contact_field, ModelChoiceField):
-            contact_field.queryset = Contact.objects.filter(company=selected_company)
+    form = InspectionFolderForm(initial=initial_data, company=selected_company)
 
     return render(
         request,

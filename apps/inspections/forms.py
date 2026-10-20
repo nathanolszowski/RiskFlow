@@ -9,6 +9,7 @@ from .services.template import get_usable_templates
 
 if TYPE_CHECKING:
     from accounts.models import CustomUser
+    from django.db.models import Model
 
 
 class InspectionFolderForm(forms.ModelForm):
@@ -26,14 +27,22 @@ class InspectionFolderForm(forms.ModelForm):
             "notes",
         ]
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
+    def __init__(
+        self, *args: Any, company: "Model | None" = None, **kwargs: Any
+    ) -> None:
         """Set the initial phase of a new folder and style the widgets.
 
         Args:
             *args: Positional arguments passed to ``ModelForm``.
+            company: Company the folder is created for, if already known: the
+                contacts are then limited to its own.
             **kwargs: Keyword arguments passed to ``ModelForm``.
         """
         super().__init__(*args, **kwargs)
+
+        contact_field = self.fields.get("contact")
+        if company and isinstance(contact_field, forms.ModelChoiceField):
+            contact_field.queryset = contact_field.queryset.filter(company=company)
 
         # A new folder skips the CREATION phase and starts directly at PREPARATION
         if not self.instance.pk:

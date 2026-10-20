@@ -11,7 +11,7 @@ from inspections.models import InspectionFolder
 
 if TYPE_CHECKING:
     from accounts.models import CustomUser
-    from crm.models import Company
+    from django.db.models import Model
 
 
 def get_inspection_folders_by_user(user: "CustomUser") -> QuerySet:
@@ -28,7 +28,7 @@ def get_inspection_folders_by_user(user: "CustomUser") -> QuerySet:
     ).select_related("company")
 
 
-def get_company_folders(company: "Company", user: "CustomUser") -> QuerySet:
+def get_company_folders(company: "Model", user: "CustomUser") -> QuerySet:
     """Return every folder (active or archived) of a company created by the user.
 
     Args:
@@ -129,7 +129,8 @@ def create_tracked_instance(form: ModelForm, user: "CustomUser") -> InspectionFo
         The saved instance.
     """
     instance = form.save(commit=False)
-    if hasattr(instance, "created_by") and not instance.created_by_id:
+    # Test the id: reading an unset ``created_by`` raises instead of returning None
+    if not instance.created_by_id:
         instance.created_by = user
     instance.save()
     form.save_m2m()
