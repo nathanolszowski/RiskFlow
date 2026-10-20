@@ -19,7 +19,9 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "coverage>=7.16.2",
     "django-stubs>=6.1.2",
+    "factory-boy>=3.3.3",
     "ruff>=0.17.1",
 ]
 
@@ -34,3 +36,15 @@ ignore = ["E501"]                      # longueur de ligne : gérée par le form
 
 [tool.ruff.lint.per-file-ignores]
 "config/settings/*.py" = ["F403", "F405"]  # `from .base import *` voulu
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"  # style des docstrings ; le contrôle D1 est lancé à part sur les tests
+
+[tool.coverage.run]
+source = ["apps"]
+omit = ["*/migrations/*", "*/tests/*"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
