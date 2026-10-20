@@ -3,7 +3,7 @@
 import os
 import uuid
 from datetime import datetime
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from core.models import TrackingModel
 from django.core.exceptions import ValidationError
@@ -147,6 +147,18 @@ class Media(TrackingModel):
     )
     notes = models.TextField(blank=True, verbose_name="Notes")
 
+    # Fields that make up the target of a media, checked by clean()
+    TARGET_FIELDS = frozenset(
+        {
+            "folder",
+            "folder_id",
+            "visit",
+            "visit_id",
+            "recommandation",
+            "recommandation_id",
+        }
+    )
+
     if TYPE_CHECKING:
         # FK id attributes, declared for Pylance only
         folder_id: int
@@ -217,3 +229,23 @@ class Media(TrackingModel):
             raise ValidationError("Cette visite n'appartient pas au dossier.")
         if self.recommandation_id and self.recommandation.folder_id != self.folder_id:
             raise ValidationError("Cette recommandation n'appartient pas au dossier.")
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """Save the media, checking its target first with ``clean()``.
+
+        ``clean()`` is not called by Django on ``save()``. It is run whenever the
+        target (folder, visit, recommendation) can change, so that a media can never
+        be saved attached to another folder, whoever the caller is. It is skipped
+        when only other fields are written (``update_fields``, e.g. archive metadata).
+
+        Args:
+            *args: Positional arguments passed to ``Model.save()``.
+            **kwargs: Keyword arguments passed to ``Model.save()``.
+
+        Raises:
+            ValidationError: If the target is invalid.
+        """
+        update_fields = kwargs.get("update_fields")
+        if update_fields is None or self.TARGET_FIELDS & set(update_fields):
+            self.clean()
+        super().save(*args, **kwargs)

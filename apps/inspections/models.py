@@ -191,13 +191,44 @@ class InspectionFolder(TrackingModel):
             if not InspectionFolder.objects.filter(reference=ref).exists():
                 return ref
 
+    def clean(self) -> None:
+        """Check that the referent contact belongs to the company of the folder.
+
+        Raises:
+            ValidationError: If the contact belongs to another company.
+        """
+        super().clean()
+        if (
+            self.contact_id
+            and self.company_id
+            and self.contact.company_id != self.company_id
+        ):
+            raise ValidationError(
+                {"contact": "Ce contact n'appartient pas à la société du dossier."}
+            )
+
     def save(self, *args: Any, **kwargs: Any) -> None:
         """Save the folder, generating its reference when empty.
+
+        ``clean()`` is not called by Django on ``save()``: it is run here whenever the
+        company or the contact can change (not for ``update_fields`` writes such as
+        archiving).
 
         Args:
             *args: Positional arguments passed to ``Model.save()``.
             **kwargs: Keyword arguments passed to ``Model.save()``.
+
+        Raises:
+            ValidationError: If the contact does not belong to the company.
         """
+        update_fields = kwargs.get("update_fields")
+        if update_fields is None or {
+            "company",
+            "company_id",
+            "contact",
+            "contact_id",
+        } & set(update_fields):
+            self.clean()
         if not self.reference:
             self.reference = self.generate_unique_reference()
         super().save(*args, **kwargs)
