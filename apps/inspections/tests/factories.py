@@ -80,13 +80,14 @@ class InspectionFolderFactory(TrackedFactory):
     """Build a valid ``InspectionFolder`` for a client and one of its contacts.
 
     The contact always belongs to the folder's company, so ``InspectionFolder.clean()``
-    passes. The whole tree has a single owner, the creator of the company.
+    passes. The whole tree has a single owner: ``created_by``, who also creates the
+    company and the contact.
 
     Attributes:
-        company: A new company by default.
-        contact: A new contact of that company.
-        created_by: The creator of the company. Passing only ``created_by`` leaves
-            the company to another user: pass ``company`` too to control the owner.
+        created_by: Owner of the folder, a new user by default. Pass it to build the
+            whole tree for a given user.
+        company: A new company created by ``created_by``.
+        contact: A new contact of that company, created by ``created_by``.
 
     Traits:
         archived: Archived folder (see ``TrackedFactory``).
@@ -97,11 +98,15 @@ class InspectionFolderFactory(TrackedFactory):
 
         model = InspectionFolder
 
-    company = factory.SubFactory(CompanyFactory)
-    contact = factory.SubFactory(
-        ContactFactory, company=factory.SelfAttribute("..company")
+    created_by = factory.SubFactory("accounts.tests.factories.UserFactory")
+    company = factory.SubFactory(
+        CompanyFactory, created_by=factory.SelfAttribute("..created_by")
     )
-    created_by = factory.SelfAttribute("company.created_by")
+    contact = factory.SubFactory(
+        ContactFactory,
+        company=factory.SelfAttribute("..company"),
+        created_by=factory.SelfAttribute("..created_by"),
+    )
     inspection_site_address = factory.Faker("address")
 
 
@@ -110,18 +115,25 @@ class VisitTemplateFactory(TrackedFactory):
 
     Attributes:
         created_by: A new user (pass one to give several templates the same owner).
-        shared: False by default. It is a model field with the name of the usual
-            trait, so it is passed directly: ``VisitTemplateFactory(shared=True)``.
+        shared: False by default (model field).
         schema: A deep copy of ``SAMPLE_SCHEMA``, safe to modify in a test.
 
     Traits:
         archived: Archived template (see ``TrackedFactory``).
+        shared_template: Template shared with every user (``shared=True``). The
+            trait cannot be called ``shared``: factory_boy refuses a trait that has
+            the name of a field.
     """
 
     class Meta:
         """Bind the factory to the template model."""
 
         model = VisitTemplate
+
+    class Params:
+        """Traits of the template factory."""
+
+        shared_template = factory.Trait(shared=True)
 
     created_by = factory.SubFactory("accounts.tests.factories.UserFactory")
     name = factory.Sequence(lambda n: f"Template {n}")

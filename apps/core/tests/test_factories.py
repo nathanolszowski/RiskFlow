@@ -55,7 +55,7 @@ class FactoriesTests(TestCase):
     def test_template_factory_and_shared_trait(self):
         """A template is valid, private by default and shared with the trait."""
         self.assertFalse(VisitTemplateFactory().shared)
-        self.assertTrue(VisitTemplateFactory(shared=True).shared)
+        self.assertTrue(VisitTemplateFactory(shared_template=True).shared)
 
     def test_templates_do_not_share_their_schema(self):
         """Editing the schema of one template never leaks to another one."""
