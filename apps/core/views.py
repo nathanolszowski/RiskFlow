@@ -77,6 +77,7 @@ def toggle_theme(request: HttpRequest) -> HttpResponse:
     return redirect(request.META.get("HTTP_REFERER", "/"))
 
 
+@login_required
 def global_search(request: HttpRequest) -> HttpResponse:
     """Search folders, companies and contacts matching the ``q`` GET parameter.
 
