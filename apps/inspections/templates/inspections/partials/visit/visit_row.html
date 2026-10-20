@@ -1,5 +1,5 @@
 {# One row of the table of the visits. Context: visit, csrf_token. #}
-<div class="grid grid-cols-1 items-center gap-x-4 gap-y-2 border-t border-border-default px-5 py-3 lg:grid-cols-[7rem_7rem_minmax(0,1.2fr)_9.5rem_minmax(0,1fr)_21rem] {% if not visit.is_active %}opacity-70{% endif %}">
+<div class="grid grid-cols-1 items-center gap-x-4 gap-y-2 border-t border-border-default px-5 py-3 lg:grid-cols-[7rem_7rem_minmax(0,1.2fr)_9.5rem_minmax(0,1fr)_23rem] {% if not visit.is_active %}opacity-70{% endif %}">
   <span class="flex flex-col text-sm font-semibold tabular-nums text-text-main">
     {% if visit.due_date %}{{ visit.due_date|date:"d/m/Y" }}{% else %}—{% endif %}
     {% if visit.due_time %}<span class="text-xs font-medium text-text-subtle">{{ visit.due_time|time:"H:i" }}</span>{% endif %}
@@ -30,6 +30,11 @@
         hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
       Effectuée
     </label>
+    <button type="button" hx-get="{% url 'inspections:visit_update' visit.pk %}" hx-target="#modal-container" hx-swap="innerHTML"
+      aria-label="Modifier la visite" title="Modifier"
+      class="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-border-default text-text-muted transition-colors hover:bg-surface-hover hover:text-text-main">
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+    </button>
     <button type="button" hx-post="{% url 'inspections:visit_archive' visit.pk %}" hx-target="#tab-content" hx-swap="innerHTML"
       hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' hx-confirm="Êtes-vous sûr de vouloir archiver cette visite ?"
       aria-label="Archiver la visite" title="Archiver"
