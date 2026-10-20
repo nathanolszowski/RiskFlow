@@ -388,10 +388,16 @@ class FolderListTests(FolderViewTestCase):
         self.assertEqual(list(response.context["folders"]), list(default))
 
     def test_allowed_sort_is_applied(self):
-        """``sort=reference`` orders by reference."""
+        """``sort=reference`` orders by reference, as the database sorts it."""
         response = self.client.get(self.list_url, {"sort": "reference"})
-        references = [f.reference for f in response.context["folders"]]
-        self.assertEqual(references, sorted(references))
+        pks = [f.pk for f in response.context["folders"]]
+        # Compare with the database order, not Python's ``sorted``: collations differ
+        expected = list(
+            InspectionFolder.objects.filter(pk__in=pks)
+            .order_by("reference")
+            .values_list("pk", flat=True)
+        )
+        self.assertEqual(pks, expected)
 
     def test_company_filter_menu_lists_clients_with_folders(self):
         """The company filter only offers clients that have a folder."""

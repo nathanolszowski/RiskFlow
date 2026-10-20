@@ -514,11 +514,18 @@ class CompanyListTests(CrmViewTestCase):
             self.assertEqual(list(response.context["companies"]), [target])
 
     def test_sort_outside_the_whitelist_is_ignored(self):
-        """An unknown sort falls back to the name order."""
+        """An unknown sort falls back to the name order, as the database sorts it."""
         response = self.client.get(self.list_url, {"sort": "created_by__password"})
         self.assertEqual(response.status_code, 200)
         names = [c.name for c in response.context["companies"]]
-        self.assertEqual(names, sorted(names))
+        # The database sorts with its own collation (accents, case): compare with its
+        # order, not with Python's ``sorted``, which depends on the machine running the tests
+        expected = list(
+            Company.objects.filter(created_by=self.owner, is_active=True)
+            .order_by("name")
+            .values_list("name", flat=True)[:15]
+        )
+        self.assertEqual(names, expected)
 
     def test_allowed_sort(self):
         """``-created_at`` puts the newest client first."""
