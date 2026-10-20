@@ -4,7 +4,7 @@ import math
 from datetime import date
 from typing import TYPE_CHECKING, Any, Optional
 
-from django.db.models import Count, Q, QuerySet
+from django.db.models import Count, F, Q, QuerySet
 from django.utils import timezone
 from inspections.models import InspectionFolder, VisitInstance
 from inspections.services.inspectionfolder import get_inspection_folders_by_user
@@ -166,7 +166,7 @@ def get_upcoming_visits(
             | Q(current_status=VisitInstance.Status.SCHEDULED, due_date__lt=today)
         )
         .select_related("folder__company")
-        .order_by("due_date", "pk")[:UPCOMING_VISITS_LIMIT]
+        .order_by("due_date", F("due_time").asc(nulls_last=True), "pk")[:UPCOMING_VISITS_LIMIT]
     )
     return [
         {

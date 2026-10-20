@@ -483,6 +483,7 @@ def visit_create(request: HttpRequest, folder_id: int) -> HttpResponse:
                     form.cleaned_data["template"],
                     form.cleaned_data["due_date"],
                     request.user,
+                    due_time=form.cleaned_data["due_time"],
                 )
             except ValidationError as e:
                 form.add_error("template", e)

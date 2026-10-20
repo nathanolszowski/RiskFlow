@@ -7,7 +7,7 @@
   </a>
   <div class="flex min-w-0 flex-1 basis-60 flex-col gap-0.5">
     <h1 class="truncate text-xl font-bold text-text-main">
-      Visite{% if visit.due_date %} du {{ visit.due_date|date:"d/m/Y" }}{% endif %} · {{ visit.folder.company.name }}
+      Visite{% if visit.due_date %} du {{ visit.due_date|date:"d/m/Y" }}{% if visit.due_time %} à {{ visit.due_time|time:"H:i" }}{% endif %}{% endif %} · {{ visit.folder.company.name }}
     </h1>
     <span class="truncate text-[13px] text-text-subtle">
       {{ visit.folder.reference }} · {{ visit.display_template_name }}{% if visit.folder.inspection_site_address %} · {{ visit.folder.inspection_site_address }}{% endif %}

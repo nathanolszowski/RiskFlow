@@ -4,7 +4,8 @@ The form, the progress and the validation only read ``VisitInstance.instance_sch
 the snapshot of the template, never the template itself.
 """
 
-from datetime import date
+import math
+from datetime import date, time
 from typing import TYPE_CHECKING, Any, Optional
 
 from django.core.exceptions import ValidationError
@@ -65,7 +66,11 @@ def get_visits_for_folder(folder: InspectionFolder, status: str = "active") -> Q
     """
     visits = folder.visits.select_related("template", "created_by", "updated_by")
     visits = visits.filter(is_active=(status != "archived"))
-    return visits.order_by(F("due_date").desc(nulls_last=True), "-created_at")
+    return visits.order_by(
+        F("due_date").desc(nulls_last=True),
+        F("due_time").desc(nulls_last=True),
+        "-created_at",
+    )
 
 
 def get_next_visit(folder: InspectionFolder) -> Optional[VisitInstance]:
@@ -80,7 +85,11 @@ def get_next_visit(folder: InspectionFolder) -> Optional[VisitInstance]:
     return (
         folder.visits.filter(is_active=True)
         .exclude(current_status=VisitInstance.Status.VALIDATED)
-        .order_by(F("due_date").asc(nulls_last=True), "created_at")
+        .order_by(
+            F("due_date").asc(nulls_last=True),
+            F("due_time").asc(nulls_last=True),
+            "created_at",
+        )
         .first()
     )
 
@@ -90,6 +99,7 @@ def create_visit(
     template: VisitTemplate,
     due_date: Optional[date],
     user: "CustomUser",
+    due_time: Optional[time] = None,
 ) -> VisitInstance:
     """Create a visit from a template.
 
@@ -101,6 +111,7 @@ def create_visit(
         template: Template to start from.
         due_date: Planned date, if any.
         user: User creating the visit.
+        due_time: Appointment time, if any.
 
     Returns:
         The saved visit.
@@ -120,6 +131,7 @@ def create_visit(
         folder=folder,
         template=template,
         due_date=due_date,
+        due_time=due_time,
         data={"answers": {}},
         created_by=user,
         updated_by=user,
@@ -300,6 +312,9 @@ def coerce_input(field: dict, raw: Optional[str]) -> Any:
         try:
             number = float(str(raw).replace(",", "."))
         except ValueError:
+            raise ValidationError("Un nombre est attendu.")
+        # float() also reads "nan" and "inf", which are not valid JSON values
+        if not math.isfinite(number):
             raise ValidationError("Un nombre est attendu.")
         return int(number) if number.is_integer() else number
     return raw

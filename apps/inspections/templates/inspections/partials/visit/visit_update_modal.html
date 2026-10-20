@@ -25,12 +25,19 @@
         <div class="rounded-lg border border-status-danger-border bg-status-danger-bg p-2.5 text-xs text-status-danger">{{ form.non_field_errors }}</div>
         {% endif %}
 
-        <div>
-          <label class="mb-1 block text-xs font-medium text-text-subtle">Date de visite</label>
-          {{ form.due_date }}
-          {% if form.due_date.errors %}<p class="mt-1 text-xs text-status-danger">{{ form.due_date.errors.0 }}</p>{% endif %}
-          {% if visit.is_late %}<p class="mt-1 text-xs text-status-danger">La date est dépassée : la visite est en retard.</p>{% endif %}
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label for="{{ form.due_date.id_for_label }}" class="mb-1 block text-xs font-medium text-text-subtle">Date de visite</label>
+            {{ form.due_date }}
+            {% if form.due_date.errors %}<p class="mt-1 text-xs text-status-danger">{{ form.due_date.errors.0 }}</p>{% endif %}
+          </div>
+          <div>
+            <label for="{{ form.due_time.id_for_label }}" class="mb-1 block text-xs font-medium text-text-subtle">Heure de rendez-vous <span class="text-[10px] font-normal text-text-faded">(optionnel)</span></label>
+            {{ form.due_time }}
+            {% if form.due_time.errors %}<p class="mt-1 text-xs text-status-danger">{{ form.due_time.errors.0 }}</p>{% endif %}
+          </div>
         </div>
+        {% if visit.is_late %}<p class="text-xs text-status-danger">La date est dépassée : la visite est en retard.</p>{% endif %}
 
         <div>
           <label class="mb-1 block text-xs font-medium text-text-subtle">Notes sur la visite</label>

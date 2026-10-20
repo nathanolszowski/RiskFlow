@@ -98,7 +98,7 @@ class InspectionFolderUpdateForm(InspectionFolderForm):
 
 
 class VisitInstanceUpdateForm(forms.ModelForm):
-    """Edit form for the planning data of a visit: date and notes.
+    """Edit form for the planning data of a visit: date, appointment time and notes.
 
     The status is not edited here: see ``set_visit_done``.
     """
@@ -107,10 +107,12 @@ class VisitInstanceUpdateForm(forms.ModelForm):
         model = VisitInstance
         fields = [
             "due_date",
+            "due_time",
             "notes",
         ]
         widgets = {
             "due_date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+            "due_time": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
             "notes": forms.Textarea(attrs={"rows": 3}),
         }
 
@@ -133,6 +135,7 @@ class VisitCreateForm(forms.Form):
     Attributes:
         template: Template to start from, among the ones the user can use.
         due_date: Planned date of the visit.
+        due_time: Appointment time, optional.
     """
 
     template = forms.ModelChoiceField(
@@ -150,6 +153,13 @@ class VisitCreateForm(forms.Form):
             attrs={"type": "date", "class": "form-input"}, format="%Y-%m-%d"
         ),
         error_messages={"required": "Indiquez la date de la visite."},
+    )
+    due_time = forms.TimeField(
+        label="Heure de rendez-vous",
+        required=False,
+        widget=forms.TimeInput(
+            attrs={"type": "time", "class": "form-input"}, format="%H:%M"
+        ),
     )
 
     def __init__(self, *args: Any, user: "CustomUser", **kwargs: Any) -> None:

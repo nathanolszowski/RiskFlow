@@ -434,6 +434,9 @@ class VisitInstance(TrackingModel):
         verbose_name="Statut de la visite",
     )
     due_date = models.DateField(null=True, blank=True, verbose_name="Date de visite")
+    due_time = models.TimeField(
+        null=True, blank=True, verbose_name="Heure de rendez-vous"
+    )
     notes = models.TextField(blank=True, verbose_name="Notes sur la visite")
 
     if TYPE_CHECKING:

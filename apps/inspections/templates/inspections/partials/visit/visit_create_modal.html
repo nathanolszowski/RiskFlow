@@ -44,9 +44,19 @@
         </div>
 
         <div>
-          <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-light">2 · Date de la visite</h4>
-          {{ form.due_date }}
-          {% if form.due_date.errors %}<p class="mt-1 text-xs text-status-danger">{{ form.due_date.errors.0 }}</p>{% endif %}
+          <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-light">2 · Date et heure de la visite</h4>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label for="{{ form.due_date.id_for_label }}" class="mb-1 block text-xs font-medium text-text-subtle">Date <span class="text-status-danger">*</span></label>
+              {{ form.due_date }}
+              {% if form.due_date.errors %}<p class="mt-1 text-xs text-status-danger">{{ form.due_date.errors.0 }}</p>{% endif %}
+            </div>
+            <div>
+              <label for="{{ form.due_time.id_for_label }}" class="mb-1 block text-xs font-medium text-text-subtle">Heure de rendez-vous <span class="text-[10px] font-normal text-text-faded">(optionnel)</span></label>
+              {{ form.due_time }}
+              {% if form.due_time.errors %}<p class="mt-1 text-xs text-status-danger">{{ form.due_time.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
         </div>
       </div>
 
