@@ -92,7 +92,7 @@ def _render_medias_tab(request: HttpRequest, folder: InspectionFolder) -> HttpRe
         The tab fragment.
     """
     return render(
-        request, "medias/partials/tab_medias.html", _tab_context(request, folder)
+        request, "medias/partials/tabs/tab_medias.html", _tab_context(request, folder)
     )
 
 
@@ -118,7 +118,7 @@ def _invalid_modal(
     """
     html = render_to_string(template, context, request)
     tab = render_to_string(
-        "medias/partials/tab_medias.html",
+        "medias/partials/tabs/tab_medias.html",
         _tab_context(request, folder, targets),
         request,
     )
@@ -195,7 +195,7 @@ def media_upload(request: HttpRequest, folder_id: int) -> HttpResponse:
             + list(form.errors.get("files", []) if form.is_bound else []),
         }
 
-    modal = "medias/partials/media_upload_modal.html"
+    modal = "medias/partials/media/media_upload_modal.html"
 
     if request.method == "POST":
         form = MediaUploadForm(request.POST, request.FILES, folder=folder)
@@ -254,7 +254,7 @@ def media_update(request: HttpRequest, pk: int) -> HttpResponse:
     """
     media = get_media_by_id(pk, request.user)
     folder = media.folder
-    modal = "medias/partials/media_update_modal.html"
+    modal = "medias/partials/media/media_update_modal.html"
 
     if request.method == "POST":
         form = MediaUpdateForm.for_media(media, request.POST)

@@ -23,7 +23,7 @@
       {% csrf_token %}
 
       <div class="space-y-5 overflow-y-auto p-6">
-        {% include "medias/partials/quota_bar.html" %}
+        {% include "medias/partials/media/quota_bar.html" %}
 
         {% if file_errors %}
         <div class="space-y-1 rounded-lg border border-status-danger-border bg-status-danger-bg p-3 text-xs text-status-danger">
@@ -51,7 +51,7 @@
           {% if form.target.errors %}<p class="mt-1 text-xs text-status-danger">{{ form.target.errors.0 }}</p>{% endif %}
         </div>
 
-        {% include "medias/partials/media_tags_field.html" %}
+        {% include "medias/partials/media/media_tags_field.html" %}
 
         <div>
           <label for="{{ form.notes.id_for_label }}" class="mb-2 block text-xs font-semibold uppercase tracking-wider text-brand-light">Notes (facultatif)</label>

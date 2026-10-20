@@ -4,7 +4,7 @@
 <div class="space-y-6">
   <!-- Quota and main action -->
   <div class="flex flex-col gap-4 rounded-2xl border border-border-default bg-surface-primary p-4 sm:flex-row sm:items-center">
-    {% include "medias/partials/quota_bar.html" %}
+    {% include "medias/partials/media/quota_bar.html" %}
     {% if folder.is_active %}
     <button type="button" {% if usage.level == 'full' %}disabled{% endif %}
       hx-get="{% url 'medias:media_upload' folder.id %}{% if target %}?target={{ target|urlencode }}{% endif %}" hx-target="#modal-container" hx-swap="innerHTML"
@@ -57,7 +57,7 @@
   {% if medias %}
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
     {% for media in medias %}
-    {% include "medias/partials/media_card.html" %}
+    {% include "medias/partials/media/media_card.html" %}
     {% endfor %}
   </div>
   {% else %}
