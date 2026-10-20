@@ -29,7 +29,7 @@ target-version = "py312"
 extend-exclude = ["**/migrations/*"]   # migrations générées par Django, à ne pas reformater
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "RUF100"]     # erreurs, pyflakes, tri des imports, noqa inutiles
+select = ["E", "F", "I", "RUF100", "TC"]  # erreurs, pyflakes, tri des imports, noqa inutiles, imports de typage sous TYPE_CHECKING
 ignore = ["E501"]                      # longueur de ligne : gérée par le formateur, il ne coupe pas les chaînes
 
 [tool.ruff.lint.per-file-ignores]

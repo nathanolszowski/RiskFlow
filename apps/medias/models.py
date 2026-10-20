@@ -11,9 +11,6 @@ from django.db import models
 from django.db.models import Q
 from django.db.models.functions import Lower
 
-if TYPE_CHECKING:
-    pass
-
 
 def media_upload_to(instance: "Media", filename: str) -> str:
     """Return the storage path of a file: a random name, never the original one.

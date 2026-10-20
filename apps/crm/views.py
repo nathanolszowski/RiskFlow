@@ -292,7 +292,7 @@ def company_archive(request: HttpRequest, pk: int) -> HttpResponse:
             },
         )
 
-    company.archive(user=cast(Any, request.user))
+    company.archive(user=cast("Any", request.user))
 
     if request.headers.get("HX-Request"):
         return _refresh_response()
@@ -316,7 +316,7 @@ def company_unarchive(request: HttpRequest, pk: int) -> HttpResponse:
         Http404: If the company does not exist.
     """
     company = get_company_by_id(pk)
-    company.unarchive(user=cast(Any, request.user))
+    company.unarchive(user=cast("Any", request.user))
 
     if request.headers.get("HX-Request"):
         return _refresh_response()
@@ -604,7 +604,7 @@ def contact_archive(request: HttpRequest, pk: int) -> HttpResponse:
             "Ce contact est référencé par un ou plusieurs dossiers actifs.", status=409
         )
 
-    contact.archive(user=cast(Any, request.user))
+    contact.archive(user=cast("Any", request.user))
 
     if request.headers.get("HX-Request"):
         return _refresh_response()
@@ -628,7 +628,7 @@ def contact_unarchive(request: HttpRequest, pk: int) -> HttpResponse:
         Http404: If the contact does not exist.
     """
     contact = get_contact_by_id(pk)
-    contact.unarchive(user=cast(Any, request.user))
+    contact.unarchive(user=cast("Any", request.user))
 
     if request.headers.get("HX-Request"):
         return _refresh_response()
