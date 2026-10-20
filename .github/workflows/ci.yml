@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: riskflow
+          POSTGRES_PASSWORD: riskflow
+          POSTGRES_DB: riskflow
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U riskflow"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DB_NAME: riskflow
+      DB_USER: riskflow
+      DB_PASSWORD: riskflow
+      DB_HOST: localhost
+      DB_PORT: "5432"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Lint
+        run: uv run ruff check apps config
+
+      - name: Format
+        run: uv run ruff format --check apps config
+
+      - name: Docstrings of the tests
+        run: uv run ruff check --select D1 apps/*/tests
+
+      - name: Migrations are up to date
+        run: uv run python manage.py makemigrations --check --dry-run --settings=config.settings.test
+
+      - name: Tests
+        run: uv run coverage run manage.py test --settings=config.settings.test
+
+      - name: Coverage
+        run: uv run coverage report --fail-under=70
