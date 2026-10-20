@@ -33,13 +33,14 @@ RiskFlow vise à rassembler ce flux de travail, aujourd'hui éclaté entre table
 - **Médias** : photos, PDF, Excel, Word, PowerPoint et vidéos rattachés à un dossier, une visite ou une recommandation, à toutes les étapes de la mission. Images compressées avec Pillow (miniature, EXIF conservé : date, GPS, appareil), tags libres par utilisateur, limites de taille par type, quota approximatif par dossier avec barre de remplissage, fichiers privés servis uniquement à leur propriétaire. Voir [Gestion des médias](#gestion-des-médias-développement-et-production).
 - **Archivage (soft delete) et suppression définitive** de tous les objets métier, avec cascades (dossier → visites, recommandations et médias, client → contacts), popups de confirmation et règles de protection (on n'efface qu'un objet préalablement archivé).
 - **Traçabilité** : date et auteur de la création, de la dernière modification et de l'archivage.
+- **Tests automatisés et CI** : suite de tests Django (factory_boy, API Sirene simulée) et workflow GitHub Actions. Voir [Tests](#tests).
 - **Tableau de bord**, **recherche globale** et **thème clair / sombre**.
 
 ### Prévues
 
 - Rapport de visite : interface en écran partagé, export PDF.
 - Cloisonnement complet des données par inspecteur.
-- Tests automatisés, CI GitHub Actions et déploiement.
+- Déploiement.
 - À plus long terme : notifications, tableau de bord analytique, portail client, base de connaissances avec recherche sémantique (RAG avec `pgvector`), dont une interrogation des documents d'un dossier (Gemini, Celery + Redis).
 
 ## Stack technique
@@ -166,8 +167,31 @@ Un fichier refusé (format, taille, quota) ouvre un pop-up explicatif ; les imag
 ```bash
 uv run python manage.py runserver        # serveur seul
 uv run python manage.py tailwind build   # compiler le CSS
-uv run python manage.py test             # lancer les tests
+uv run python manage.py test --settings=config.settings.test   # lancer les tests
 ```
+
+### Tests
+
+Les tests utilisent PostgreSQL (verrous `select_for_update`, contraintes `CHECK`) : le rôle de la base doit pouvoir créer une base de test.
+
+```bash
+sudo -u postgres psql -c "ALTER ROLE <utilisateur> CREATEDB;"   # une seule fois
+uv run python manage.py test --settings=config.settings.test    # toute la suite
+uv run python manage.py test inspections --settings=config.settings.test -v 2   # une app, avec la description de chaque test
+uv run coverage run manage.py test --settings=config.settings.test && uv run coverage report
+```
+
+- Un paquet `tests/` par app, avec ses fabriques (`factories.py`) ; aucun appel réseau (API Sirene et service NAF simulés avec les fichiers de `apps/crm/tests/fixtures/`) ; fichiers écrits dans un dossier temporaire.
+- Chaque module, classe et méthode de test a une docstring en anglais ; `uv run ruff check --select D1 apps/*/tests` le vérifie.
+- La CI (`.github/workflows/ci.yml`) lance, sur chaque push et pull request vers `develop` et `main` : lint, format, docstrings des tests, contrôle des migrations, tests et couverture (seuil de 70 %).
+- Les écarts connus sont consignés par des tests `@expectedFailure` (`test_sprint5_*` : cloisonnement par utilisateur de la recherche globale et du CRM prévu au sprint 5).
+- Ce que les tests ne couvrent pas (navigateur, réseau, tablette) se vérifie avec la [recette manuelle](#recette-manuelle).
+
+### Contrôle des réglages de production
+
+`DJANGO_SETTINGS_MODULE=config.settings.prod uv run python manage.py check --deploy` (avec `SECRET_KEY`, `ALLOWED_HOSTS`, `DB_*` et `AWS_*` renseignés) ne laisse que deux avertissements, volontaires :
+
+- `security.W005` (`SECURE_HSTS_INCLUDE_SUBDOMAINS`) et `security.W021` (`SECURE_HSTS_PRELOAD`) : ces réglages engagent tous les sous-domaines (et, pour le preload, la liste des navigateurs, difficile à annuler). Ils ne sont à activer qu'une fois le nom de domaine définitif connu et entièrement servi en HTTPS.
 
 
 ## Recette manuelle
