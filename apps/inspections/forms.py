@@ -3,6 +3,7 @@
 from typing import TYPE_CHECKING, Any
 
 from django import forms
+from django.urls import reverse
 
 from .models import InspectionFolder, Recommandation, VisitInstance, VisitTemplate
 from .services.template import get_usable_templates
@@ -34,15 +35,21 @@ class InspectionFolderForm(forms.ModelForm):
 
         Args:
             *args: Positional arguments passed to ``ModelForm``.
-            company: Company the folder is created for, if already known: the
-                contacts are then limited to its own.
+            company: Company the folder is created for, if known: the contacts are then
+                limited to its own. Without it, a new folder offers no contact until a
+                company is chosen (the company field reloads the contact field).
             **kwargs: Keyword arguments passed to ``ModelForm``.
         """
         super().__init__(*args, **kwargs)
 
         contact_field = self.fields.get("contact")
-        if company and isinstance(contact_field, forms.ModelChoiceField):
-            contact_field.queryset = contact_field.queryset.filter(company=company)
+        if isinstance(contact_field, forms.ModelChoiceField):
+            if company:
+                contact_field.queryset = contact_field.queryset.filter(company=company)
+                contact_field.empty_label = "Aucun contact référent"
+            elif not self.instance.pk:
+                contact_field.queryset = contact_field.queryset.none()
+                contact_field.empty_label = "Sélectionnez d'abord un client"
 
         # A new folder skips the CREATION phase and starts directly at PREPARATION
         if not self.instance.pk:
@@ -54,6 +61,15 @@ class InspectionFolderForm(forms.ModelForm):
         company_field = self.fields.get("company")
         if isinstance(company_field, forms.ModelChoiceField):
             company_field.empty_label = "Sélectionnez un client"
+            # Choosing a company reloads the contact field with the contacts of that company
+            company_field.widget.attrs.update(
+                {
+                    "hx-get": reverse("inspections:folder_contact_field"),
+                    "hx-trigger": "change",
+                    "hx-target": "#contact-field",
+                    "hx-swap": "innerHTML",
+                }
+            )
 
 
 class InspectionFolderUpdateForm(InspectionFolderForm):

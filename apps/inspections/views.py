@@ -80,6 +80,28 @@ def folder_list(request: HttpRequest) -> HttpResponse:
 
 @login_required
 @require_GET
+def folder_contact_field(request: HttpRequest) -> HttpResponse:
+    """Render the contact field of the folder creation form for a company (HTMX).
+
+    Called when the company is chosen in the form: only the contacts of that company
+    are offered. Without a valid company, the field has no choice.
+
+    Args:
+        request: Current request. ``company`` holds the company id.
+
+    Returns:
+        The ``contact`` select (``folder_contact_field.html``).
+    """
+    form = InspectionFolderForm(company=get_company_or_none(request.GET.get("company")))
+    return render(
+        request,
+        "inspections/partials/folder/folder_contact_field.html",
+        {"form": form},
+    )
+
+
+@login_required
+@require_GET
 def company_folders_panel(request: HttpRequest, company_id: int) -> HttpResponse:
     """Render the panel of the folders of a company, loaded by its detail page (HTMX).
 

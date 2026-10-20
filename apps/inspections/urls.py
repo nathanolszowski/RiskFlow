@@ -15,6 +15,11 @@ urlpatterns = [
     ),
     path("dossiers/edition/", views.create_folder, name="create_folder"),
     path(
+        "dossiers/contacts/",
+        views.folder_contact_field,
+        name="folder_contact_field",
+    ),
+    path(
         "dossiers/client/<int:company_id>/",
         views.company_folders_panel,
         name="company_folders_panel",
