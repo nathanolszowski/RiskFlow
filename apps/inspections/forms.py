@@ -29,7 +29,11 @@ class InspectionFolderForm(forms.ModelForm):
         ]
 
     def __init__(
-        self, *args: Any, company: "Model | None" = None, **kwargs: Any
+        self,
+        *args: Any,
+        company: "Model | None" = None,
+        user: "CustomUser | None" = None,
+        **kwargs: Any,
     ) -> None:
         """Set the initial phase of a new folder and style the widgets.
 
@@ -38,6 +42,7 @@ class InspectionFolderForm(forms.ModelForm):
             company: Company the folder is created for, if known: the contacts are then
                 limited to its own. Without it, a new folder offers no contact until a
                 company is chosen (the company field reloads the contact field).
+            user: User creating the folder: only their own companies are offered.
             **kwargs: Keyword arguments passed to ``ModelForm``.
         """
         super().__init__(*args, **kwargs)
@@ -60,6 +65,8 @@ class InspectionFolderForm(forms.ModelForm):
 
         company_field = self.fields.get("company")
         if isinstance(company_field, forms.ModelChoiceField):
+            if user is not None:
+                company_field.queryset = company_field.queryset.filter(created_by=user)
             company_field.empty_label = "Sélectionnez un client"
             # Choosing a company reloads the contact field with the contacts of that company
             company_field.widget.attrs.update(

@@ -1,7 +1,6 @@
 """Core views: dashboard, session heartbeat, theme toggle and global search."""
 
 from crm.models import Company, Contact
-from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
@@ -13,7 +12,7 @@ from core.decorators import htmx_login_required
 from core.services.dashboard import get_dashboard_context, parse_period
 
 
-@login_required
+@htmx_login_required
 @require_GET
 def dashboard(request: HttpRequest) -> HttpResponse:
     """Render the dashboard of the logged-in user.
@@ -77,12 +76,12 @@ def toggle_theme(request: HttpRequest) -> HttpResponse:
     return redirect(request.META.get("HTTP_REFERER", "/"))
 
 
-@login_required
+@htmx_login_required
 def global_search(request: HttpRequest) -> HttpResponse:
     """Search folders, companies and contacts matching the ``q`` GET parameter.
 
     The search starts at two characters and returns at most five results per
-    category. It is not yet filtered by user.
+    category. Only the objects created by the user are searched.
 
     Args:
         request: Current request.
@@ -97,17 +96,20 @@ def global_search(request: HttpRequest) -> HttpResponse:
 
     if query and len(query) >= 2:
         folders = InspectionFolder.objects.filter(
-            Q(reference__icontains=query) | Q(company__name__icontains=query)
+            Q(reference__icontains=query) | Q(company__name__icontains=query),
+            created_by=request.user,
         )[:5]
 
         companies = Company.objects.filter(
-            Q(name__icontains=query) | Q(address__icontains=query)
+            Q(name__icontains=query) | Q(address__icontains=query),
+            created_by=request.user,
         )[:5]
 
         contacts = Contact.objects.filter(
             Q(first_name__icontains=query)
             | Q(last_name__icontains=query)
-            | Q(email__icontains=query)
+            | Q(email__icontains=query),
+            created_by=request.user,
         )[:5]
 
     return render(

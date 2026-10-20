@@ -567,6 +567,6 @@ class ContactListTests(CrmViewTestCase):
 
     def test_company_filter(self):
         """The client filter keeps the contacts of that client only."""
-        other = ContactFactory()
+        other = ContactFactory(company=CompanyFactory(created_by=self.owner))
         response = self.client.get(self.list_url, {"company": other.company_id})
         self.assertEqual(list(response.context["contacts"]), [other])

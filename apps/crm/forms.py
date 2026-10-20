@@ -1,10 +1,13 @@
 """Forms of the crm app: company and contact."""
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from django import forms
 
 from .models import Company, Contact
+
+if TYPE_CHECKING:
+    from accounts.models import CustomUser
 
 
 class CompanyForm(forms.ModelForm):
@@ -113,11 +116,14 @@ class ContactForm(forms.ModelForm):
             "position",
         ]
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
+    def __init__(
+        self, *args: Any, user: "CustomUser | None" = None, **kwargs: Any
+    ) -> None:
         """Style the widgets, set the company empty label and the placeholders.
 
         Args:
             *args: Positional arguments passed to ``ModelForm``.
+            user: Logged-in user: only their own companies can be chosen.
             **kwargs: Keyword arguments passed to ``ModelForm``.
         """
         super().__init__(*args, **kwargs)
@@ -128,6 +134,8 @@ class ContactForm(forms.ModelForm):
         company_field = self.fields.get("company")
         if isinstance(company_field, forms.ModelChoiceField):
             company_field.empty_label = "Sélectionnez un client"
+            if user is not None:
+                company_field.queryset = company_field.queryset.filter(created_by=user)
         # Placeholders
         placeholders = {
             "first_name": "ex: Jean",

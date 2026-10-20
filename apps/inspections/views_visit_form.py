@@ -3,7 +3,6 @@
 from typing import Any, Optional
 
 from core.decorators import htmx_login_required
-from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import render
@@ -29,7 +28,7 @@ from inspections.validators import AnswersValidationError
 # ==========================================
 
 
-@login_required
+@htmx_login_required
 @require_GET
 def visit_form(request: HttpRequest, pk: int) -> HttpResponse:
     """Render the full page of the visit form.
@@ -149,7 +148,7 @@ def visit_save_answers(request: HttpRequest, pk: int) -> HttpResponse:
     )
 
 
-@login_required
+@htmx_login_required
 @require_POST
 def visit_complete(request: HttpRequest, pk: int) -> HttpResponse:
     """End the filling of a visit.
@@ -193,7 +192,7 @@ def visit_complete(request: HttpRequest, pk: int) -> HttpResponse:
     return response
 
 
-@login_required
+@htmx_login_required
 @require_POST
 def visit_reopen(request: HttpRequest, pk: int) -> HttpResponse:
     """Make a done visit editable again and open its form.

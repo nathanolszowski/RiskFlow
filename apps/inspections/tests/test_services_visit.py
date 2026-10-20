@@ -84,7 +84,7 @@ class CreateVisitTests(TestCase):
 
     def test_shared_template_of_another_user_is_accepted(self):
         """A template shared by someone else can be used."""
-        shared = VisitTemplateFactory(shared=True)
+        shared = VisitTemplateFactory(shared_template=True)
         visit = create_visit(self.folder, shared, None, self.user)
         self.assertEqual(visit.template, shared)
 

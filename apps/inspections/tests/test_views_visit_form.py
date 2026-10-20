@@ -330,7 +330,7 @@ class VisitCreateTests(VisitFormTestCase):
     def setUp(self):
         """Create the templates around the visit: shared, private of others, archived."""
         super().setUp()
-        self.shared = VisitTemplateFactory(shared=True)
+        self.shared = VisitTemplateFactory(shared_template=True)
         self.foreign_private = VisitTemplateFactory()
         self.archived = VisitTemplateFactory(created_by=self.owner, archived=True)
         self.url_create = self.url("visit_create", self.folder.pk)

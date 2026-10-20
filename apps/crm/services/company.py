@@ -277,22 +277,25 @@ class INSEEApiClient:
         }
 
 
-def get_company_by_id(pk: int) -> Company:
+def get_company_by_id(pk: int, user: "CustomUser") -> Company:
     """Return a company with its tracking users.
 
-    Not yet filtered by user.
+    Restricted to the companies created by the user.
 
     Args:
         pk: Primary key of the company.
+        user: Logged-in user, who must have created the company.
 
     Returns:
         The company.
 
     Raises:
-        Http404: If the company does not exist.
+        Http404: If the company does not exist or belongs to another user.
     """
     return get_object_or_404(
-        Company.objects.select_related("created_by", "updated_by", "archived_by"), pk=pk
+        Company.objects.select_related("created_by", "updated_by", "archived_by"),
+        pk=pk,
+        created_by=user,
     )
 
 
@@ -322,7 +325,7 @@ def get_company_archive_impact(company: Company) -> dict[str, QuerySet]:
 
 
 def get_filtered_companies(request: HttpRequest) -> QuerySet:
-    """Return the companies filtered and sorted by the GET parameters.
+    """Return the companies of the logged-in user, filtered and sorted by the GET parameters.
 
     Args:
         request: Current request. Reads ``q`` (search on name, SIREN, SIRET and
@@ -333,7 +336,7 @@ def get_filtered_companies(request: HttpRequest) -> QuerySet:
     Returns:
         The companies, annotated with ``inspection_folders_count``.
     """
-    companies = Company.objects.annotate(
+    companies = Company.objects.filter(created_by=request.user).annotate(
         inspection_folders_count=Count("inspection_folders")
     )
 

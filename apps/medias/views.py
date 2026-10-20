@@ -3,9 +3,9 @@
 import re
 from typing import BinaryIO, Optional
 
+from core.decorators import htmx_login_required
 from core.modals import delete_confirm_modal
 from django.conf import settings
-from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.files.storage import FileSystemStorage
 from django.db.models.fields.files import FieldFile
@@ -131,7 +131,7 @@ def _invalid_modal(
     return response
 
 
-@login_required
+@htmx_login_required
 @require_GET
 def folder_tab_medias(request: HttpRequest, pk: int) -> HttpResponse:
     """Render only the content of the medias tab.
@@ -150,7 +150,7 @@ def folder_tab_medias(request: HttpRequest, pk: int) -> HttpResponse:
     return _render_medias_tab(request, folder)
 
 
-@login_required
+@htmx_login_required
 @require_http_methods(["GET", "POST"])
 def media_upload(request: HttpRequest, folder_id: int) -> HttpResponse:
     """Upload one or several files in a modal (HTMX, multipart).
@@ -236,7 +236,7 @@ def media_upload(request: HttpRequest, folder_id: int) -> HttpResponse:
     return render(request, modal, context(form))
 
 
-@login_required
+@htmx_login_required
 @require_http_methods(["GET", "POST"])
 def media_update(request: HttpRequest, pk: int) -> HttpResponse:
     """Edit the caption, the notes and the target of a media in a modal (HTMX).
@@ -406,7 +406,7 @@ def _serve(
     return redirect(url)
 
 
-@login_required
+@htmx_login_required
 @require_GET
 def media_file(request: HttpRequest, pk: int) -> HttpResponse:
     """Serve the file of a media to its owner.
@@ -429,7 +429,7 @@ def media_file(request: HttpRequest, pk: int) -> HttpResponse:
     return _serve(request, media, media.file, inline=inline)
 
 
-@login_required
+@htmx_login_required
 @require_GET
 def media_thumbnail(request: HttpRequest, pk: int) -> HttpResponse:
     """Serve the thumbnail of an image to its owner.
@@ -448,7 +448,7 @@ def media_thumbnail(request: HttpRequest, pk: int) -> HttpResponse:
     return _serve(request, media, media.thumbnail, inline=True)
 
 
-@login_required
+@htmx_login_required
 @require_POST
 def media_archive(request: HttpRequest, pk: int) -> HttpResponse:
     """Archive a media.
@@ -470,7 +470,7 @@ def media_archive(request: HttpRequest, pk: int) -> HttpResponse:
     return redirect("inspections:folder_detail", pk=media.folder_id)
 
 
-@login_required
+@htmx_login_required
 @require_POST
 def media_unarchive(request: HttpRequest, pk: int) -> HttpResponse:
     """Unarchive a media.
@@ -492,7 +492,7 @@ def media_unarchive(request: HttpRequest, pk: int) -> HttpResponse:
     return redirect("inspections:folder_detail", pk=media.folder_id)
 
 
-@login_required
+@htmx_login_required
 @require_http_methods(["GET", "POST"])
 def media_delete(request: HttpRequest, pk: int) -> HttpResponse:
     """Permanently delete an archived media (confirmation modal on GET).

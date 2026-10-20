@@ -2,6 +2,7 @@
 
 from typing import Any
 
+from core.decorators import htmx_login_required
 from core.modals import delete_confirm_modal
 from core.services import delete_archived_instance
 from core.services.directory import (
@@ -9,7 +10,6 @@ from core.services.directory import (
     get_company_by_id,
     get_company_or_none,
 )
-from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse
@@ -48,7 +48,7 @@ from .models import InspectionFolder
 # ==========================================
 
 
-@login_required
+@htmx_login_required
 @require_GET
 def folder_list(request: HttpRequest) -> HttpResponse:
     """Render the folders list page (initial page load).
@@ -60,7 +60,7 @@ def folder_list(request: HttpRequest) -> HttpResponse:
     Returns:
         The full page, first page of the filtered list.
     """
-    companies = get_companies_with_folders()
+    companies = get_companies_with_folders(request.user)
     folders = get_filtered_folders(request)
 
     paginator = Paginator(folders, 15)
@@ -78,7 +78,7 @@ def folder_list(request: HttpRequest) -> HttpResponse:
     )
 
 
-@login_required
+@htmx_login_required
 @require_GET
 def folder_contact_field(request: HttpRequest) -> HttpResponse:
     """Render the contact field of the folder creation form for a company (HTMX).
@@ -92,7 +92,10 @@ def folder_contact_field(request: HttpRequest) -> HttpResponse:
     Returns:
         The ``contact`` select (``folder_contact_field.html``).
     """
-    form = InspectionFolderForm(company=get_company_or_none(request.GET.get("company")))
+    form = InspectionFolderForm(
+        company=get_company_or_none(request.GET.get("company"), request.user),
+        user=request.user,
+    )
     return render(
         request,
         "inspections/partials/folder/folder_contact_field.html",
@@ -100,7 +103,7 @@ def folder_contact_field(request: HttpRequest) -> HttpResponse:
     )
 
 
-@login_required
+@htmx_login_required
 @require_GET
 def company_folders_panel(request: HttpRequest, company_id: int) -> HttpResponse:
     """Render the panel of the folders of a company, loaded by its detail page (HTMX).
@@ -118,7 +121,7 @@ def company_folders_panel(request: HttpRequest, company_id: int) -> HttpResponse
     Raises:
         Http404: If the company does not exist.
     """
-    company = get_company_by_id(company_id)
+    company = get_company_by_id(company_id, request.user)
     return render(
         request,
         "inspections/partials/folder/company_folders_panel.html",
@@ -129,7 +132,7 @@ def company_folders_panel(request: HttpRequest, company_id: int) -> HttpResponse
     )
 
 
-@login_required
+@htmx_login_required
 @require_GET
 def folder_list_paginated(request: HttpRequest, page: int = 1) -> HttpResponse:
     """Render only the folders grid of the given page and filters (HTMX).
@@ -156,7 +159,7 @@ def folder_list_paginated(request: HttpRequest, page: int = 1) -> HttpResponse:
     )
 
 
-@login_required
+@htmx_login_required
 @require_GET
 def folder_detail(request: HttpRequest, pk: int) -> HttpResponse:
     """Render the detail page of a folder.
@@ -183,7 +186,7 @@ def folder_detail(request: HttpRequest, pk: int) -> HttpResponse:
     return render(request, "inspections/folder_detail.html", context)
 
 
-@login_required
+@htmx_login_required
 @require_http_methods(["GET", "POST"])
 def create_folder(request: HttpRequest) -> HttpResponse:
     """Render and process the folder creation modal (HTMX).
@@ -201,10 +204,12 @@ def create_folder(request: HttpRequest) -> HttpResponse:
         errors (422).
     """
     company_id = request.GET.get("company") or request.POST.get("company")
-    selected_company = get_company_or_none(company_id)
+    selected_company = get_company_or_none(company_id, request.user)
 
     if request.method == "POST":
-        form = InspectionFolderForm(request.POST, company=selected_company)
+        form = InspectionFolderForm(
+            request.POST, company=selected_company, user=request.user
+        )
 
         if form.is_valid():
             create_tracked_instance(form, request.user)
@@ -240,7 +245,9 @@ def create_folder(request: HttpRequest) -> HttpResponse:
     if selected_company:
         initial_data["company"] = selected_company
 
-    form = InspectionFolderForm(initial=initial_data, company=selected_company)
+    form = InspectionFolderForm(
+        initial=initial_data, company=selected_company, user=request.user
+    )
 
     return render(
         request,
@@ -249,7 +256,7 @@ def create_folder(request: HttpRequest) -> HttpResponse:
     )
 
 
-@login_required
+@htmx_login_required
 @require_http_methods(["GET", "POST"])
 def folder_inline_update(request: HttpRequest, pk: int) -> HttpResponse:
     """Edit the data of a folder from the overview tab (HTMX).
@@ -289,7 +296,7 @@ def folder_inline_update(request: HttpRequest, pk: int) -> HttpResponse:
     )
 
 
-@login_required
+@htmx_login_required
 @require_GET
 def folder_inline_read(request: HttpRequest, pk: int) -> HttpResponse:
     """Render the read-only fragment of a folder in the overview tab (HTMX).
@@ -312,7 +319,7 @@ def folder_inline_read(request: HttpRequest, pk: int) -> HttpResponse:
     )
 
 
-@login_required
+@htmx_login_required
 @require_http_methods(["GET", "POST"])
 def folder_archive(request: HttpRequest, folder_id: int) -> HttpResponse:
     """Archive a folder together with its visits and recommendations.
@@ -369,7 +376,7 @@ def folder_archive(request: HttpRequest, folder_id: int) -> HttpResponse:
     return redirect("inspections:folder_detail", pk=folder.pk)
 
 
-@login_required
+@htmx_login_required
 @require_POST
 def folder_unarchive(request: HttpRequest, folder_id: int) -> HttpResponse:
     """Unarchive a folder, with the visits and recommendations archived together with it.
@@ -413,7 +420,7 @@ def _kept_medias_entries(obj: Any) -> list[str]:
     ]
 
 
-@login_required
+@htmx_login_required
 @require_http_methods(["GET", "POST"])
 def folder_delete(request: HttpRequest, folder_id: int) -> HttpResponse:
     """Permanently delete an archived folder with its visits and recommendations.
@@ -474,7 +481,7 @@ def folder_delete(request: HttpRequest, folder_id: int) -> HttpResponse:
 # ==========================================
 
 
-@login_required
+@htmx_login_required
 @require_http_methods(["GET", "POST"])
 def visit_create(request: HttpRequest, folder_id: int) -> HttpResponse:
     """Prepare a new visit from a template (own or shared) and a date (HTMX).
@@ -538,7 +545,7 @@ def visit_create(request: HttpRequest, folder_id: int) -> HttpResponse:
     )
 
 
-@login_required
+@htmx_login_required
 @require_http_methods(["GET", "POST"])
 def visit_update(request: HttpRequest, pk: int) -> HttpResponse:
     """Edit the planning data of a visit (date and notes) in a modal (HTMX).
@@ -583,7 +590,7 @@ def visit_update(request: HttpRequest, pk: int) -> HttpResponse:
     )
 
 
-@login_required
+@htmx_login_required
 @require_POST
 def visit_toggle_done(request: HttpRequest, pk: int) -> HttpResponse:
     """Tick or untick a visit as done from the visits tab.
@@ -606,7 +613,7 @@ def visit_toggle_done(request: HttpRequest, pk: int) -> HttpResponse:
     return _render_visit_tab(request, visit.folder)
 
 
-@login_required
+@htmx_login_required
 @require_POST
 def visit_archive(request: HttpRequest, pk: int) -> HttpResponse:
     """Archive a visit.
@@ -631,7 +638,7 @@ def visit_archive(request: HttpRequest, pk: int) -> HttpResponse:
     return redirect("inspections:folder_detail", pk=visit.folder_id)
 
 
-@login_required
+@htmx_login_required
 @require_POST
 def visit_unarchive(request: HttpRequest, pk: int) -> HttpResponse:
     """Unarchive a visit.
@@ -656,7 +663,7 @@ def visit_unarchive(request: HttpRequest, pk: int) -> HttpResponse:
     return redirect("inspections:folder_detail", pk=visit.folder_id)
 
 
-@login_required
+@htmx_login_required
 @require_http_methods(["GET", "POST"])
 def visit_delete(request: HttpRequest, pk: int) -> HttpResponse:
     """Permanently delete an archived visit.
@@ -709,7 +716,7 @@ def visit_delete(request: HttpRequest, pk: int) -> HttpResponse:
 # ==========================================
 
 
-@login_required
+@htmx_login_required
 @require_http_methods(["GET", "POST"])
 def recommandation_inline_update(request: HttpRequest, pk: int) -> HttpResponse:
     """Edit a recommendation from the recommendations tab (HTMX).
@@ -750,7 +757,7 @@ def recommandation_inline_update(request: HttpRequest, pk: int) -> HttpResponse:
     )
 
 
-@login_required
+@htmx_login_required
 @require_GET
 def recommandation_inline_read(request: HttpRequest, pk: int) -> HttpResponse:
     """Render the read-only fragment of a recommendation (HTMX).
@@ -774,7 +781,7 @@ def recommandation_inline_read(request: HttpRequest, pk: int) -> HttpResponse:
     )
 
 
-@login_required
+@htmx_login_required
 @require_POST
 def recommandation_archive(request: HttpRequest, pk: int) -> HttpResponse:
     """Archive a recommendation.
@@ -800,7 +807,7 @@ def recommandation_archive(request: HttpRequest, pk: int) -> HttpResponse:
     return redirect("inspections:folder_detail", pk=rec.folder_id)
 
 
-@login_required
+@htmx_login_required
 @require_POST
 def recommandation_unarchive(request: HttpRequest, pk: int) -> HttpResponse:
     """Unarchive a recommendation.
@@ -826,7 +833,7 @@ def recommandation_unarchive(request: HttpRequest, pk: int) -> HttpResponse:
     return redirect("inspections:folder_detail", pk=rec.folder_id)
 
 
-@login_required
+@htmx_login_required
 @require_http_methods(["GET", "POST"])
 def recommandation_delete(request: HttpRequest, pk: int) -> HttpResponse:
     """Permanently delete an archived recommendation.
@@ -881,7 +888,7 @@ def recommandation_delete(request: HttpRequest, pk: int) -> HttpResponse:
 # ==========================================
 
 
-@login_required
+@htmx_login_required
 @require_GET
 def folder_tab_overview(request: HttpRequest, pk: int) -> HttpResponse:
     """Render only the content of the overview tab.
@@ -933,7 +940,7 @@ def _render_visit_tab(request: HttpRequest, folder: InspectionFolder) -> HttpRes
     )
 
 
-@login_required
+@htmx_login_required
 @require_GET
 def folder_tab_visit(request: HttpRequest, pk: int) -> HttpResponse:
     """Render only the content of the visit tab.
@@ -976,7 +983,7 @@ def _render_recommandations_tab(
     )
 
 
-@login_required
+@htmx_login_required
 @require_GET
 def folder_tab_recommandations(request: HttpRequest, pk: int) -> HttpResponse:
     """Render only the content of the recommendations tab.

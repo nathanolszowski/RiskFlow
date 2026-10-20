@@ -5,8 +5,6 @@ later without protection is caught here. The public routes are listed explicitly
 ``PUBLIC_ROUTES``.
 """
 
-import unittest
-
 from accounts.tests.factories import UserFactory
 from django.conf import settings
 from django.test import TestCase
@@ -98,13 +96,10 @@ class AnonymousAccessTests(TestCase):
                 self.assertEqual(response.status_code, 401)
                 self.assertNotIn("HX-Redirect", response)
 
-    @unittest.expectedFailure
-    def test_known_gap_anonymous_htmx_gets_401_with_redirect_everywhere(self):
-        """Known gap: only three views use ``htmx_login_required``; the others answer 302.
+    def test_anonymous_htmx_gets_401_with_redirect_everywhere(self):
+        """Any other protected route answers an anonymous HTMX request with 401 and ``HX-Redirect``.
 
-        An expired session on any HTMX request should get a 401 with ``HX-Redirect``
-        (otherwise HTMX swaps the login page into the current page). Remove the
-        ``expectedFailure`` mark once the decorator is applied to all HTMX views.
+        Otherwise HTMX would follow a 302 and swap the login page into the current page.
         """
         for name, url in self.protected_routes():
             if name in HTMX_401_ROUTES:

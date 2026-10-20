@@ -2,12 +2,12 @@
 
 from typing import Any, Optional, cast
 
+from core.decorators import htmx_login_required
 from core.services import delete_archived_instance
-from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import (
     require_GET,
@@ -34,14 +34,14 @@ from crm.services.contact import (
 from crm.services.legal_forms import legal_form_label
 
 from .forms import CompanyForm, ContactForm
-from .models import Company, Contact
+from .models import Company
 
 # ==========================================
 # ==== COMPANY SECTION =====================
 # ==========================================
 
 
-@login_required
+@htmx_login_required
 @require_GET
 def company_list(request: HttpRequest) -> HttpResponse:
     """Render the companies list page, first page of the filtered list.
@@ -67,7 +67,7 @@ def company_list(request: HttpRequest) -> HttpResponse:
     )
 
 
-@login_required
+@htmx_login_required
 @require_GET
 def company_list_paginated(request: HttpRequest, page: int = 1) -> HttpResponse:
     """Render only the companies grid of the given page (HTMX).
@@ -94,7 +94,7 @@ def company_list_paginated(request: HttpRequest, page: int = 1) -> HttpResponse:
     )
 
 
-@login_required
+@htmx_login_required
 @require_GET
 def company_detail(request: HttpRequest, pk: int) -> HttpResponse:
     """Render the detail page of a company.
@@ -109,9 +109,7 @@ def company_detail(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the company does not exist.
     """
-    company = get_object_or_404(
-        Company.objects.select_related("created_by", "updated_by"), pk=pk
-    )
+    company = get_company_by_id(pk, request.user)
 
     context = {
         "company": company,
@@ -119,7 +117,7 @@ def company_detail(request: HttpRequest, pk: int) -> HttpResponse:
     return render(request, "crm/company_detail.html", context)
 
 
-@login_required
+@htmx_login_required
 @require_http_methods(["GET", "POST"])
 def create_company(request: HttpRequest) -> HttpResponse:
     """Render and process the company creation modal (HTMX).
@@ -168,7 +166,7 @@ def create_company(request: HttpRequest) -> HttpResponse:
     )
 
 
-@login_required
+@htmx_login_required
 @require_http_methods(["GET", "POST"])
 def company_inline_update(request: HttpRequest, pk: int) -> HttpResponse:
     """Edit the data of a company from its detail page (HTMX).
@@ -185,7 +183,7 @@ def company_inline_update(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the company does not exist.
     """
-    company = get_object_or_404(Company, pk=pk)
+    company = get_company_by_id(pk, request.user)
 
     if request.method == "POST":
         form = CompanyForm(request.POST, instance=company)
@@ -208,7 +206,7 @@ def company_inline_update(request: HttpRequest, pk: int) -> HttpResponse:
     )
 
 
-@login_required
+@htmx_login_required
 @require_GET
 def company_inline_read(request: HttpRequest, pk: int) -> HttpResponse:
     """Render the read-only fragment of a company (HTMX).
@@ -223,7 +221,7 @@ def company_inline_read(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the company does not exist.
     """
-    company = get_object_or_404(Company, pk=pk)
+    company = get_company_by_id(pk, request.user)
     return render(
         request,
         "crm/partials/company/company_read.html",
@@ -238,7 +236,7 @@ def _refresh_response() -> HttpResponse:
     return response
 
 
-@login_required
+@htmx_login_required
 @require_http_methods(["GET", "POST"])
 def company_archive(request: HttpRequest, pk: int) -> HttpResponse:
     """Archive a company and its active contacts.
@@ -255,7 +253,7 @@ def company_archive(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the company does not exist.
     """
-    company = get_company_by_id(pk)
+    company = get_company_by_id(pk, request.user)
 
     if request.method == "GET":
         impact = get_company_archive_impact(company)
@@ -312,7 +310,7 @@ def company_archive(request: HttpRequest, pk: int) -> HttpResponse:
     return redirect("crm:company_detail", pk=company.pk)
 
 
-@login_required
+@htmx_login_required
 @require_POST
 def company_unarchive(request: HttpRequest, pk: int) -> HttpResponse:
     """Unarchive a company. Its contacts stay archived.
@@ -327,7 +325,7 @@ def company_unarchive(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the company does not exist.
     """
-    company = get_company_by_id(pk)
+    company = get_company_by_id(pk, request.user)
     company.unarchive(user=cast("Any", request.user))
 
     if request.headers.get("HX-Request"):
@@ -336,7 +334,7 @@ def company_unarchive(request: HttpRequest, pk: int) -> HttpResponse:
     return redirect("crm:company_detail", pk=company.pk)
 
 
-@login_required
+@htmx_login_required
 @require_GET
 def search_siret_api(request: HttpRequest) -> HttpResponse:
     """Query the INSEE API to auto-complete the company creation form (HTMX).
@@ -375,7 +373,7 @@ def search_siret_api(request: HttpRequest) -> HttpResponse:
     return render(request, "crm/partials/company/siret_search_result.html", context)
 
 
-@login_required
+@htmx_login_required
 @require_http_methods(["GET", "POST"])
 def company_sirene_refresh(request: HttpRequest, pk: int) -> HttpResponse:
     """Offer to update a company with the current Sirene data, field by field (HTMX).
@@ -397,7 +395,7 @@ def company_sirene_refresh(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the company does not exist.
     """
-    company = get_company_by_id(pk)
+    company = get_company_by_id(pk, request.user)
     template = "crm/partials/company/company_sirene_modal.html"
     context: dict[str, Any] = {"company": company}
 
@@ -438,7 +436,7 @@ def company_sirene_refresh(request: HttpRequest, pk: int) -> HttpResponse:
 # ==========================================
 
 
-@login_required
+@htmx_login_required
 @require_GET
 def contact_list(request: HttpRequest) -> HttpResponse:
     """Render the contacts list page, first page of the filtered list.
@@ -449,7 +447,7 @@ def contact_list(request: HttpRequest) -> HttpResponse:
     Returns:
         The full page.
     """
-    companies = Company.objects.all().order_by("name")
+    companies = Company.objects.filter(created_by=request.user).order_by("name")
     contacts = get_filtered_contacts(request)
 
     paginator = Paginator(contacts, 15)
@@ -466,7 +464,7 @@ def contact_list(request: HttpRequest) -> HttpResponse:
     )
 
 
-@login_required
+@htmx_login_required
 @require_GET
 def contact_list_paginated(request: HttpRequest, page: int = 1) -> HttpResponse:
     """Render only the contacts grid of the given page (HTMX).
@@ -493,7 +491,7 @@ def contact_list_paginated(request: HttpRequest, page: int = 1) -> HttpResponse:
     )
 
 
-@login_required
+@htmx_login_required
 @require_GET
 def contact_detail(request: HttpRequest, pk: int) -> HttpResponse:
     """Render the detail page of a contact.
@@ -508,13 +506,11 @@ def contact_detail(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the contact does not exist.
     """
-    contact = get_object_or_404(
-        Contact.objects.select_related("company", "created_by", "updated_by"), pk=pk
-    )
+    contact = get_contact_by_id(pk, request.user)
     return render(request, "crm/contact_detail.html", {"contact": contact})
 
 
-@login_required
+@htmx_login_required
 @require_http_methods(["GET", "POST"])
 def create_contact(request: HttpRequest) -> HttpResponse:
     """Render and process the contact creation modal (HTMX).
@@ -534,7 +530,7 @@ def create_contact(request: HttpRequest) -> HttpResponse:
     company_id = request.GET.get("company") or request.POST.get("company")
 
     if request.method == "POST":
-        form = ContactForm(request.POST)
+        form = ContactForm(request.POST, user=request.user)
         if form.is_valid():
             contact = form.save(commit=False)
             contact.created_by = request.user
@@ -569,13 +565,13 @@ def create_contact(request: HttpRequest) -> HttpResponse:
     if company_id:
         initial_data["company"] = company_id
 
-    form = ContactForm(initial=initial_data)
+    form = ContactForm(initial=initial_data, user=request.user)
     return render(
         request, "crm/partials/contact/contact_form_modal.html", {"form": form}
     )
 
 
-@login_required
+@htmx_login_required
 @require_http_methods(["GET", "POST"])
 def contact_inline_update(request: HttpRequest, pk: int) -> HttpResponse:
     """Edit the data of a contact from its detail page (HTMX).
@@ -592,12 +588,10 @@ def contact_inline_update(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the contact does not exist.
     """
-    contact = get_object_or_404(
-        Contact.objects.select_related("company", "created_by", "updated_by"), pk=pk
-    )
+    contact = get_contact_by_id(pk, request.user)
 
     if request.method == "POST":
-        form = ContactForm(request.POST, instance=contact)
+        form = ContactForm(request.POST, instance=contact, user=request.user)
         if form.is_valid():
             contact = form.save(commit=False)
             contact.updated_by = request.user
@@ -608,7 +602,7 @@ def contact_inline_update(request: HttpRequest, pk: int) -> HttpResponse:
                 {"contact": contact, "refresh_tracking": True},
             )
     else:
-        form = ContactForm(instance=contact)
+        form = ContactForm(instance=contact, user=request.user)
 
     return render(
         request,
@@ -617,7 +611,7 @@ def contact_inline_update(request: HttpRequest, pk: int) -> HttpResponse:
     )
 
 
-@login_required
+@htmx_login_required
 @require_GET
 def contact_inline_read(request: HttpRequest, pk: int) -> HttpResponse:
     """Render the read-only fragment of a contact (HTMX).
@@ -632,9 +626,7 @@ def contact_inline_read(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the contact does not exist.
     """
-    contact = get_object_or_404(
-        Contact.objects.select_related("company", "created_by", "updated_by"), pk=pk
-    )
+    contact = get_contact_by_id(pk, request.user)
     return render(
         request,
         "crm/partials/contact/contact_read.html",
@@ -642,7 +634,7 @@ def contact_inline_read(request: HttpRequest, pk: int) -> HttpResponse:
     )
 
 
-@login_required
+@htmx_login_required
 @require_http_methods(["GET", "POST"])
 def contact_archive(request: HttpRequest, pk: int) -> HttpResponse:
     """Archive a contact, unless an active folder still references it as referent.
@@ -659,7 +651,7 @@ def contact_archive(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the contact does not exist.
     """
-    contact = get_contact_by_id(pk)
+    contact = get_contact_by_id(pk, request.user)
     folders = get_contact_archive_impact(contact)
 
     if request.method == "GET":
@@ -692,7 +684,7 @@ def contact_archive(request: HttpRequest, pk: int) -> HttpResponse:
     return redirect("crm:contact_detail", pk=contact.pk)
 
 
-@login_required
+@htmx_login_required
 @require_POST
 def contact_unarchive(request: HttpRequest, pk: int) -> HttpResponse:
     """Unarchive a contact.
@@ -707,7 +699,7 @@ def contact_unarchive(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the contact does not exist.
     """
-    contact = get_contact_by_id(pk)
+    contact = get_contact_by_id(pk, request.user)
     contact.unarchive(user=cast("Any", request.user))
 
     if request.headers.get("HX-Request"):
@@ -741,7 +733,7 @@ def _redirect_response(url: str) -> HttpResponse:
     return response
 
 
-@login_required
+@htmx_login_required
 @require_http_methods(["GET", "POST"])
 def company_delete(request: HttpRequest, pk: int) -> HttpResponse:
     """Permanently delete an archived company and its contacts.
@@ -760,7 +752,7 @@ def company_delete(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the company does not exist.
     """
-    company = get_company_by_id(pk)
+    company = get_company_by_id(pk, request.user)
     folders = company.inspection_folders.all()
     contacts = company.contacts.all()
 
@@ -815,7 +807,7 @@ def company_delete(request: HttpRequest, pk: int) -> HttpResponse:
     return redirect("crm:company_list")
 
 
-@login_required
+@htmx_login_required
 @require_http_methods(["GET", "POST"])
 def contact_delete(request: HttpRequest, pk: int) -> HttpResponse:
     """Permanently delete an archived contact.
@@ -834,7 +826,7 @@ def contact_delete(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the contact does not exist.
     """
-    contact = get_contact_by_id(pk)
+    contact = get_contact_by_id(pk, request.user)
     folders = contact.inspection_folders.all()
 
     blocking = None

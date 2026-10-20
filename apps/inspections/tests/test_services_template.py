@@ -44,17 +44,20 @@ class TemplateQueriesTests(TestCase):
         cls.other = UserFactory()
         cls.mine = VisitTemplateFactory(created_by=cls.me, name="Mon template")
         cls.mine_shared = VisitTemplateFactory(
-            created_by=cls.me, shared=True, name="Mon partagé"
+            created_by=cls.me, shared_template=True, name="Mon partagé"
         )
         cls.mine_archived = VisitTemplateFactory(
             created_by=cls.me, archived=True, name="Mon archivé"
         )
         cls.theirs = VisitTemplateFactory(created_by=cls.other, name="Privé autre")
         cls.theirs_shared = VisitTemplateFactory(
-            created_by=cls.other, shared=True, name="Partagé autre"
+            created_by=cls.other, shared_template=True, name="Partagé autre"
         )
         cls.theirs_shared_archived = VisitTemplateFactory(
-            created_by=cls.other, shared=True, archived=True, name="Partagé archivé"
+            created_by=cls.other,
+            shared_template=True,
+            archived=True,
+            name="Partagé archivé",
         )
 
     def test_usable_templates_are_active_and_mine_or_shared(self):
@@ -162,7 +165,7 @@ class TemplateWritesTests(TestCase):
 
     def test_duplicate_template(self):
         """A copy belongs to the user, is private and is a deep copy."""
-        shared = VisitTemplateFactory(shared=True, description="d")
+        shared = VisitTemplateFactory(shared_template=True, description="d")
         copy_ = duplicate_template(shared, self.user)
         self.assertNotEqual(copy_.pk, shared.pk)
         self.assertEqual(copy_.created_by, self.user)

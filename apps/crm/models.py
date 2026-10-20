@@ -170,10 +170,12 @@ class Company(TrackingModel):
 
     @property
     def headquarters_company(self) -> Optional["Company"]:
-        """Return the client whose SIRET is the head office, if it exists and is another one."""
+        """Return the client of the same user whose SIRET is the head office, if it is another one."""
         if not self.headquarters_siret or self.is_headquarters:
             return None
-        return Company.objects.filter(siret=self.headquarters_siret).first()
+        return Company.objects.filter(
+            siret=self.headquarters_siret, created_by_id=self.created_by_id
+        ).first()
 
     @property
     def cessation_alert(self) -> Optional[dict[str, Any]]:

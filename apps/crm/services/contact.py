@@ -1,31 +1,38 @@
 """Contact services: getters and filtered list."""
 
+from typing import TYPE_CHECKING
+
 from django.db.models import Q, QuerySet
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 
 from crm.models import Contact
 
+if TYPE_CHECKING:
+    from accounts.models import CustomUser
 
-def get_contact_by_id(pk: int) -> Contact:
+
+def get_contact_by_id(pk: int, user: "CustomUser") -> Contact:
     """Return a contact with its company and tracking users.
 
-    Not yet filtered by user.
+    Restricted to the contacts created by the user.
 
     Args:
         pk: Primary key of the contact.
+        user: Logged-in user, who must have created the contact.
 
     Returns:
         The contact.
 
     Raises:
-        Http404: If the contact does not exist.
+        Http404: If the contact does not exist or belongs to another user.
     """
     return get_object_or_404(
         Contact.objects.select_related(
             "company", "created_by", "updated_by", "archived_by"
         ),
         pk=pk,
+        created_by=user,
     )
 
 
@@ -56,7 +63,7 @@ def get_filtered_contacts(request: HttpRequest) -> QuerySet:
     company_id = request.GET.get("company", "").strip()
     status = request.GET.get("status", "active").strip()
 
-    contacts = Contact.objects.select_related("company").all()
+    contacts = Contact.objects.select_related("company").filter(created_by=request.user)
 
     if query:
         contacts = contacts.filter(

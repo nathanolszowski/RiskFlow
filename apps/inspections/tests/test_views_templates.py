@@ -51,7 +51,7 @@ class TemplateViewTestCase(HtmxClientMixin, TestCase):
         super().setUp()
         self.mine = VisitTemplateFactory(created_by=self.owner, name="Mon template")
         self.shared = VisitTemplateFactory(
-            created_by=self.other, shared=True, name="Partagé par l'autre"
+            created_by=self.other, shared_template=True, name="Partagé par l'autre"
         )
 
     def url(self, name, *args):

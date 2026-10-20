@@ -2,7 +2,7 @@
 
 from typing import Any, Optional
 
-from django.contrib.auth.decorators import login_required
+from core.decorators import htmx_login_required
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
@@ -114,7 +114,7 @@ def _render_panel(
     return render(request, "inspections/partials/template/template_panel.html", context)
 
 
-@login_required
+@htmx_login_required
 @require_GET
 def template_panel(request: HttpRequest) -> HttpResponse:
     """Render the side panel: opening it loads the full drawer, then tabs and search reload the list only.
@@ -268,7 +268,7 @@ def _save_editor(
     return template, None
 
 
-@login_required
+@htmx_login_required
 @require_http_methods(["GET", "POST"])
 def template_create(request: HttpRequest) -> HttpResponse:
     """Create a template.
@@ -295,7 +295,7 @@ def template_create(request: HttpRequest) -> HttpResponse:
     )
 
 
-@login_required
+@htmx_login_required
 @require_http_methods(["GET", "POST"])
 def template_edit(request: HttpRequest, pk: int) -> HttpResponse:
     """Edit one of the templates of the user.
@@ -332,7 +332,7 @@ def template_edit(request: HttpRequest, pk: int) -> HttpResponse:
     return _render_editor(request, context)
 
 
-@login_required
+@htmx_login_required
 @require_GET
 def template_read(request: HttpRequest, pk: int) -> HttpResponse:
     """Render a template in read-only mode (the ones shared by the other users).
@@ -360,7 +360,7 @@ def template_read(request: HttpRequest, pk: int) -> HttpResponse:
     return _render_editor(request, context)
 
 
-@login_required
+@htmx_login_required
 @require_POST
 def template_editor_operation(request: HttpRequest) -> HttpResponse:
     """Apply one editor action on the posted form, then render the structure again.
@@ -409,7 +409,7 @@ def template_editor_operation(request: HttpRequest) -> HttpResponse:
 # ==========================================
 
 
-@login_required
+@htmx_login_required
 @require_POST
 def template_duplicate(request: HttpRequest, pk: int) -> HttpResponse:
     """Copy a template (own or shared) into the templates of the user.
@@ -428,7 +428,7 @@ def template_duplicate(request: HttpRequest, pk: int) -> HttpResponse:
     return _render_panel(request, "mine")
 
 
-@login_required
+@htmx_login_required
 @require_POST
 def template_toggle_share(request: HttpRequest, pk: int) -> HttpResponse:
     """Share or unshare one of the templates of the user.
@@ -469,7 +469,7 @@ def _template_modal(
     )
 
 
-@login_required
+@htmx_login_required
 @require_http_methods(["GET", "POST"])
 def template_archive(request: HttpRequest, pk: int) -> HttpResponse:
     """Archive a template: it is not offered for new visits any more.
@@ -508,7 +508,7 @@ def template_archive(request: HttpRequest, pk: int) -> HttpResponse:
     return _render_panel(request, "mine")
 
 
-@login_required
+@htmx_login_required
 @require_POST
 def template_unarchive(request: HttpRequest, pk: int) -> HttpResponse:
     """Unarchive one of the templates of the user.
@@ -528,7 +528,7 @@ def template_unarchive(request: HttpRequest, pk: int) -> HttpResponse:
     return _render_panel(request, "mine")
 
 
-@login_required
+@htmx_login_required
 @require_http_methods(["GET", "POST"])
 def template_delete(request: HttpRequest, pk: int) -> HttpResponse:
     """Permanently delete an archived template.

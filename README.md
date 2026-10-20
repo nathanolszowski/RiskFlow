@@ -39,7 +39,6 @@ RiskFlow vise à rassembler ce flux de travail, aujourd'hui éclaté entre table
 ### Prévues
 
 - Rapport de visite : interface en écran partagé, export PDF.
-- Cloisonnement complet des données par inspecteur.
 - Déploiement.
 - À plus long terme : notifications, tableau de bord analytique, portail client, base de connaissances avec recherche sémantique (RAG avec `pgvector`), dont une interrogation des documents d'un dossier (Gemini, Celery + Redis).
 
@@ -184,7 +183,7 @@ uv run coverage run manage.py test --settings=config.settings.test && uv run cov
 - Un paquet `tests/` par app, avec ses fabriques (`factories.py`) ; aucun appel réseau (API Sirene et service NAF simulés avec les fichiers de `apps/crm/tests/fixtures/`) ; fichiers écrits dans un dossier temporaire.
 - Chaque module, classe et méthode de test a une docstring en anglais ; `uv run ruff check --select D1 apps/*/tests` le vérifie.
 - La CI (`.github/workflows/ci.yml`) lance, sur chaque push et pull request vers `develop` et `main` : lint, format, docstrings des tests, contrôle des migrations, tests et couverture (seuil de 70 %).
-- Les écarts connus sont consignés par des tests `@expectedFailure` (`test_sprint5_*` : cloisonnement par utilisateur de la recherche globale et du CRM prévu au sprint 5).
+- Le cloisonnement par utilisateur (dossiers, visites, médias, clients, contacts, recherche globale) est verrouillé par les tests d'isolation (`test_isolation.py`).
 - Ce que les tests ne couvrent pas (navigateur, réseau, tablette) se vérifie avec la [recette manuelle](#recette-manuelle).
 
 ### Contrôle des réglages de production
