@@ -47,7 +47,8 @@ class MultipleFileField(forms.FileField):
         """
         clean_one = super().clean
         if isinstance(data, (list, tuple)):
-            return [clean_one(d, initial) for d in data]
+            # An empty list (no file chosen) must raise the "required" error like None does
+            return [clean_one(d, initial) for d in data] or [clean_one(None, initial)]
         return [clean_one(data, initial)]
 
 
