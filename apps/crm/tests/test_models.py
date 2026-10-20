@@ -240,7 +240,7 @@ class CompanyServicesTests(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        """Create an active company with two folders, a quiet one and an archived one."""
+        """Create a busy company (2 own folders, 1 of another user), a quiet and an archived one."""
         cls.user = UserFactory()
         cls.busy = CompanyFactory(
             created_by=cls.user,
@@ -248,7 +248,8 @@ class CompanyServicesTests(TestCase):
             siret="11111111111111",
             siren="111111111",
         )
-        InspectionFolderFactory.create_batch(2, company=cls.busy)
+        InspectionFolderFactory.create_batch(2, company=cls.busy, created_by=cls.user)
+        InspectionFolderFactory(company=cls.busy)  # a folder of another user
         cls.quiet = CompanyFactory(
             created_by=cls.user,
             name="Alpha Quiet",
@@ -262,32 +263,26 @@ class CompanyServicesTests(TestCase):
 
     def test_get_company_by_id(self):
         """An existing company is returned, a missing one gives a 404."""
-        self.assertEqual(get_company_by_id(self.busy.pk, self.user), self.busy)
+        self.assertEqual(get_company_by_id(self.busy.pk), self.busy)
         with self.assertRaises(Http404):
-            get_company_by_id(0, self.user)
+            get_company_by_id(0)
 
-    def test_get_company_by_id_of_another_user_is_404(self):
-        """A client of someone else is not found."""
-        with self.assertRaises(Http404):
-            get_company_by_id(self.foreign.pk, self.user)
+    def test_get_company_by_id_of_another_user_is_shared(self):
+        """A client created by someone else is found: clients are shared."""
+        self.assertEqual(get_company_by_id(self.foreign.pk), self.foreign)
 
-    def test_list_hides_the_clients_of_other_users(self):
-        """The list only contains the clients created by the user, whatever the filters."""
-        for params in (
-            {},
-            {"status": "archived"},
-            {"q": "Foreign"},
-            {"sort": "-created_at"},
-        ):
+    def test_list_shows_the_clients_of_other_users(self):
+        """The clients of other users are listed and searchable."""
+        for params in ({}, {"q": "Foreign"}, {"sort": "-created_at"}):
             with self.subTest(params=params):
                 found = get_filtered_companies(get_request(self.user, **params))
-                self.assertNotIn(self.foreign, found)
+                self.assertIn(self.foreign, found)
 
     def test_default_list_is_active_companies_by_name(self):
         """By default archived companies are hidden and the list is sorted by name."""
         self.assertEqual(
             list(get_filtered_companies(get_request(self.user))),
-            [self.quiet, self.busy],
+            [self.foreign, self.quiet, self.busy],
         )
 
     def test_status_filter(self):
@@ -310,9 +305,22 @@ class CompanyServicesTests(TestCase):
             get_request(self.user, sort="-inspection_folders_count")
         )
         self.assertEqual(by_count[0], self.busy)
-        self.assertEqual(by_count[0].inspection_folders_count, 2)
         fallback = get_filtered_companies(get_request(self.user, sort="siret; DROP"))
-        self.assertEqual(list(fallback), [self.quiet, self.busy])
+        self.assertEqual(list(fallback), [self.foreign, self.quiet, self.busy])
+
+    def test_folder_count_only_counts_the_folders_of_the_user(self):
+        """The count is the user's own: the folder of another user is not counted."""
+        counts = {
+            c.pk: c.inspection_folders_count
+            for c in get_filtered_companies(get_request(self.user))
+        }
+        self.assertEqual(counts[self.busy.pk], 2)
+        other_user = self.busy.inspection_folders.exclude(created_by=self.user).first()
+        counts_other = {
+            c.pk: c.inspection_folders_count
+            for c in get_filtered_companies(get_request(other_user.created_by))
+        }
+        self.assertEqual(counts_other[self.busy.pk], 1)
 
 
 class ContactServicesTests(TestCase):
@@ -340,26 +348,26 @@ class ContactServicesTests(TestCase):
 
     def test_get_contact_by_id(self):
         """An existing contact is returned, a missing one gives a 404."""
-        self.assertEqual(get_contact_by_id(self.ada.pk, self.user), self.ada)
+        self.assertEqual(get_contact_by_id(self.ada.pk), self.ada)
         with self.assertRaises(Http404):
-            get_contact_by_id(0, self.user)
+            get_contact_by_id(0)
 
-    def test_get_contact_by_id_of_another_user_is_404(self):
-        """A contact of someone else is not found."""
-        with self.assertRaises(Http404):
-            get_contact_by_id(self.foreign.pk, self.user)
+    def test_get_contact_by_id_of_another_user_is_shared(self):
+        """A contact created by someone else is found: contacts are shared."""
+        self.assertEqual(get_contact_by_id(self.foreign.pk), self.foreign)
 
-    def test_list_hides_the_contacts_of_other_users(self):
-        """Contacts of other users never appear, even when the search matches them."""
+    def test_list_shows_the_contacts_of_other_users(self):
+        """Contacts of other users appear, and the search matches them."""
         found = get_filtered_contacts(
             get_request(self.user, q="lovelace", status="all")
         )
-        self.assertEqual(list(found), [self.ada])
+        self.assertEqual(list(found), [self.foreign, self.ada])
 
     def test_default_list_is_active_newest_first(self):
         """By default only active contacts are listed, newest first."""
         self.assertEqual(
-            list(get_filtered_contacts(get_request(self.user))), [self.bob, self.ada]
+            list(get_filtered_contacts(get_request(self.user))),
+            [self.foreign, self.bob, self.ada],
         )
 
     def test_status_filter(self):
@@ -369,15 +377,20 @@ class ContactServicesTests(TestCase):
             [self.old],
         )
         self.assertEqual(
-            len(get_filtered_contacts(get_request(self.user, status="all"))), 3
+            len(get_filtered_contacts(get_request(self.user, status="all"))), 4
         )
 
     def test_search(self):
         """The search matches the names, the email and the company name."""
-        for query in ("lovelace", "ada@acme", "globex"):
+        expected = {
+            "lovelace": [self.foreign, self.ada],
+            "ada@acme": [self.ada],
+            "globex": [self.bob],
+        }
+        for query, contacts in expected.items():
             with self.subTest(query=query):
                 found = list(get_filtered_contacts(get_request(self.user, q=query)))
-                self.assertEqual(found, [self.ada if query != "globex" else self.bob])
+                self.assertEqual(found, contacts)
 
     def test_company_filter_ignores_non_numeric_ids(self):
         """The company filter applies for a numeric id and is ignored otherwise."""
@@ -386,5 +399,5 @@ class ContactServicesTests(TestCase):
             [self.bob],
         )
         self.assertEqual(
-            len(get_filtered_contacts(get_request(self.user, company="abc"))), 2
+            len(get_filtered_contacts(get_request(self.user, company="abc"))), 3
         )

@@ -22,34 +22,38 @@ __all__ = [
 
 
 def get_companies_with_folders(user: "CustomUser") -> "QuerySet[Company]":
-    """Return the companies of the user that have at least one inspection folder, by name.
+    """Return the companies that have at least one inspection folder of the user, by name.
+
+    Companies are shared between users, folders are not: only the companies of the
+    user's own folders are listed.
 
     Args:
-        user: Owner of the companies.
+        user: Owner of the folders.
 
     Returns:
         The companies, without duplicates.
     """
     return (
-        Company.objects.filter(created_by=user, inspection_folders__isnull=False)
+        Company.objects.filter(inspection_folders__created_by=user)
         .distinct()
         .order_by("name")
     )
 
 
-def get_company_or_none(pk: object, user: "CustomUser") -> Optional[Company]:
+def get_company_or_none(pk: object) -> Optional[Company]:
     """Return the company with the given primary key, or None.
+
+    Companies are shared between all users.
 
     Args:
         pk: Raw primary key, e.g. a query string value. Empty or invalid gives None.
-        user: Owner of the company.
 
     Returns:
-        The company, or None if there is none or it belongs to another user.
+        The company, or None if there is none.
     """
     if not pk:
         return None
     try:
-        return Company.objects.filter(pk=pk, created_by=user).first()
+        return Company.objects.filter(pk=pk).first()
     except (TypeError, ValueError):
         return None

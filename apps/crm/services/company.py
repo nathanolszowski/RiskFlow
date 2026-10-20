@@ -277,25 +277,23 @@ class INSEEApiClient:
         }
 
 
-def get_company_by_id(pk: int, user: "CustomUser") -> Company:
+def get_company_by_id(pk: int) -> Company:
     """Return a company with its tracking users.
 
-    Restricted to the companies created by the user.
+    Companies are shared between all users (only folders, visits, recommendations,
+    medias and templates are private to their owner).
 
     Args:
         pk: Primary key of the company.
-        user: Logged-in user, who must have created the company.
 
     Returns:
         The company.
 
     Raises:
-        Http404: If the company does not exist or belongs to another user.
+        Http404: If the company does not exist.
     """
     return get_object_or_404(
-        Company.objects.select_related("created_by", "updated_by", "archived_by"),
-        pk=pk,
-        created_by=user,
+        Company.objects.select_related("created_by", "updated_by", "archived_by"), pk=pk
     )
 
 
@@ -325,7 +323,10 @@ def get_company_archive_impact(company: Company) -> dict[str, QuerySet]:
 
 
 def get_filtered_companies(request: HttpRequest) -> QuerySet:
-    """Return the companies of the logged-in user, filtered and sorted by the GET parameters.
+    """Return the companies, filtered and sorted by the GET parameters.
+
+    Companies are shared between all users. The folder count is the one of the
+    logged-in user (the folders of the others are not theirs to see).
 
     Args:
         request: Current request. Reads ``q`` (search on name, SIREN, SIRET and
@@ -334,10 +335,13 @@ def get_filtered_companies(request: HttpRequest) -> QuerySet:
             anything else falls back to ``name``).
 
     Returns:
-        The companies, annotated with ``inspection_folders_count``.
+        The companies, annotated with ``inspection_folders_count`` (own folders).
     """
-    companies = Company.objects.filter(created_by=request.user).annotate(
-        inspection_folders_count=Count("inspection_folders")
+    companies = Company.objects.annotate(
+        inspection_folders_count=Count(
+            "inspection_folders",
+            filter=Q(inspection_folders__created_by=request.user),
+        )
     )
 
     # Recherche textuelle

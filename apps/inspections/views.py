@@ -92,10 +92,7 @@ def folder_contact_field(request: HttpRequest) -> HttpResponse:
     Returns:
         The ``contact`` select (``folder_contact_field.html``).
     """
-    form = InspectionFolderForm(
-        company=get_company_or_none(request.GET.get("company"), request.user),
-        user=request.user,
-    )
+    form = InspectionFolderForm(company=get_company_or_none(request.GET.get("company")))
     return render(
         request,
         "inspections/partials/folder/folder_contact_field.html",
@@ -121,7 +118,7 @@ def company_folders_panel(request: HttpRequest, company_id: int) -> HttpResponse
     Raises:
         Http404: If the company does not exist.
     """
-    company = get_company_by_id(company_id, request.user)
+    company = get_company_by_id(company_id)
     return render(
         request,
         "inspections/partials/folder/company_folders_panel.html",
@@ -204,12 +201,10 @@ def create_folder(request: HttpRequest) -> HttpResponse:
         errors (422).
     """
     company_id = request.GET.get("company") or request.POST.get("company")
-    selected_company = get_company_or_none(company_id, request.user)
+    selected_company = get_company_or_none(company_id)
 
     if request.method == "POST":
-        form = InspectionFolderForm(
-            request.POST, company=selected_company, user=request.user
-        )
+        form = InspectionFolderForm(request.POST, company=selected_company)
 
         if form.is_valid():
             create_tracked_instance(form, request.user)
@@ -245,9 +240,7 @@ def create_folder(request: HttpRequest) -> HttpResponse:
     if selected_company:
         initial_data["company"] = selected_company
 
-    form = InspectionFolderForm(
-        initial=initial_data, company=selected_company, user=request.user
-    )
+    form = InspectionFolderForm(initial=initial_data, company=selected_company)
 
     return render(
         request,

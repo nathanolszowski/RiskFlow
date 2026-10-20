@@ -109,7 +109,7 @@ def company_detail(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the company does not exist.
     """
-    company = get_company_by_id(pk, request.user)
+    company = get_company_by_id(pk)
 
     context = {
         "company": company,
@@ -183,7 +183,7 @@ def company_inline_update(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the company does not exist.
     """
-    company = get_company_by_id(pk, request.user)
+    company = get_company_by_id(pk)
 
     if request.method == "POST":
         form = CompanyForm(request.POST, instance=company)
@@ -221,7 +221,7 @@ def company_inline_read(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the company does not exist.
     """
-    company = get_company_by_id(pk, request.user)
+    company = get_company_by_id(pk)
     return render(
         request,
         "crm/partials/company/company_read.html",
@@ -253,7 +253,7 @@ def company_archive(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the company does not exist.
     """
-    company = get_company_by_id(pk, request.user)
+    company = get_company_by_id(pk)
 
     if request.method == "GET":
         impact = get_company_archive_impact(company)
@@ -325,7 +325,7 @@ def company_unarchive(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the company does not exist.
     """
-    company = get_company_by_id(pk, request.user)
+    company = get_company_by_id(pk)
     company.unarchive(user=cast("Any", request.user))
 
     if request.headers.get("HX-Request"):
@@ -395,7 +395,7 @@ def company_sirene_refresh(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the company does not exist.
     """
-    company = get_company_by_id(pk, request.user)
+    company = get_company_by_id(pk)
     template = "crm/partials/company/company_sirene_modal.html"
     context: dict[str, Any] = {"company": company}
 
@@ -506,7 +506,7 @@ def contact_detail(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the contact does not exist.
     """
-    contact = get_contact_by_id(pk, request.user)
+    contact = get_contact_by_id(pk)
     return render(request, "crm/contact_detail.html", {"contact": contact})
 
 
@@ -530,7 +530,7 @@ def create_contact(request: HttpRequest) -> HttpResponse:
     company_id = request.GET.get("company") or request.POST.get("company")
 
     if request.method == "POST":
-        form = ContactForm(request.POST, user=request.user)
+        form = ContactForm(request.POST)
         if form.is_valid():
             contact = form.save(commit=False)
             contact.created_by = request.user
@@ -565,7 +565,7 @@ def create_contact(request: HttpRequest) -> HttpResponse:
     if company_id:
         initial_data["company"] = company_id
 
-    form = ContactForm(initial=initial_data, user=request.user)
+    form = ContactForm(initial=initial_data)
     return render(
         request, "crm/partials/contact/contact_form_modal.html", {"form": form}
     )
@@ -588,10 +588,10 @@ def contact_inline_update(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the contact does not exist.
     """
-    contact = get_contact_by_id(pk, request.user)
+    contact = get_contact_by_id(pk)
 
     if request.method == "POST":
-        form = ContactForm(request.POST, instance=contact, user=request.user)
+        form = ContactForm(request.POST, instance=contact)
         if form.is_valid():
             contact = form.save(commit=False)
             contact.updated_by = request.user
@@ -602,7 +602,7 @@ def contact_inline_update(request: HttpRequest, pk: int) -> HttpResponse:
                 {"contact": contact, "refresh_tracking": True},
             )
     else:
-        form = ContactForm(instance=contact, user=request.user)
+        form = ContactForm(instance=contact)
 
     return render(
         request,
@@ -626,7 +626,7 @@ def contact_inline_read(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the contact does not exist.
     """
-    contact = get_contact_by_id(pk, request.user)
+    contact = get_contact_by_id(pk)
     return render(
         request,
         "crm/partials/contact/contact_read.html",
@@ -651,7 +651,7 @@ def contact_archive(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the contact does not exist.
     """
-    contact = get_contact_by_id(pk, request.user)
+    contact = get_contact_by_id(pk)
     folders = get_contact_archive_impact(contact)
 
     if request.method == "GET":
@@ -699,7 +699,7 @@ def contact_unarchive(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the contact does not exist.
     """
-    contact = get_contact_by_id(pk, request.user)
+    contact = get_contact_by_id(pk)
     contact.unarchive(user=cast("Any", request.user))
 
     if request.headers.get("HX-Request"):
@@ -752,7 +752,7 @@ def company_delete(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the company does not exist.
     """
-    company = get_company_by_id(pk, request.user)
+    company = get_company_by_id(pk)
     folders = company.inspection_folders.all()
     contacts = company.contacts.all()
 
@@ -826,7 +826,7 @@ def contact_delete(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the contact does not exist.
     """
-    contact = get_contact_by_id(pk, request.user)
+    contact = get_contact_by_id(pk)
     folders = contact.inspection_folders.all()
 
     blocking = None

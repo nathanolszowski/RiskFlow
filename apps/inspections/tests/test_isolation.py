@@ -5,13 +5,12 @@ template answers 404 to a logged-in user who does not own the object, in GET and
 POST, and a POST changes nothing in the database. The medias URLs are covered by
 ``medias/tests/test_isolation.py``.
 
-The ``test_*`` tests describe the isolation planned for sprint 5 (global
-search and CRM views are not filtered by user yet): they are marked
-``expectedFailure`` and must lose that mark when the isolation is implemented.
+Clients and contacts are the exception: they are shared between all users (see
+``CrmSharingTests``). Their folders stay private.
 """
 
 from core.tests.helpers import BOTH, GET, POST, HtmxClientMixin, IsolationMixin, Route
-from crm.models import Company, Contact
+from crm.models import Contact
 from crm.tests.factories import CompanyFactory, ContactFactory
 from django.test import TestCase
 from django.urls import reverse
@@ -166,13 +165,6 @@ class IsolationTests(IsolationMixin, HtmxClientMixin, TestCase):
         self.assertEqual(response.context["last_folder"], mine)
         self.assertNotContains(response, self.folder.reference)
 
-    def test_company_folders_panel_of_another_user_is_404(self):
-        """The panel of someone else's client answers 404."""
-        response = self.client.get(
-            reverse("inspections:company_folders_panel", args=[self.company.pk])
-        )
-        self.assertEqual(response.status_code, 404)
-
     def test_company_folders_panel_lists_only_the_user_folders(self):
         """The panel of my own client only lists the folders I created."""
         mine = InspectionFolderFactory(created_by=self.other)
@@ -216,104 +208,91 @@ class IsolationTests(IsolationMixin, HtmxClientMixin, TestCase):
         self.assertEqual(response.status_code, 404)
 
 
-class CrmIsolationTests(HtmxClientMixin, TestCase):
-    """Clients, contacts and global search only show the objects of the logged-in user."""
+class CrmSharingTests(HtmxClientMixin, TestCase):
+    """Clients and contacts are shared between users; folders stay private."""
 
     def setUp(self):
         """Create a client, a contact and a folder for ``owner``; log ``other`` in."""
         super().setUp()
-        self.company = CompanyFactory(created_by=self.owner, name="Entreprise Secrète")
-        self.contact = ContactFactory(company=self.company, last_name="Confidentiel")
+        self.company = CompanyFactory(created_by=self.owner, name="Entreprise Partagée")
+        self.contact = ContactFactory(company=self.company, last_name="Interlocuteur")
         self.folder = InspectionFolderFactory(
             company=self.company, contact=self.contact, created_by=self.owner
         )
         self.client.force_login(self.other)
 
-    def test_company_detail_is_404_for_another_user(self):
-        """The detail page of someone else's client answers 404."""
+    def test_company_detail_is_visible_to_another_user(self):
+        """The detail page of a client created by someone else is shown."""
         response = self.client.get(
             reverse("crm:company_detail", args=[self.company.pk])
         )
-        self.assertEqual(response.status_code, 404)
+        self.assertContains(response, "Entreprise Partagée")
 
-    def test_contact_detail_is_404_for_another_user(self):
-        """The detail page of someone else's contact answers 404."""
+    def test_contact_detail_is_visible_to_another_user(self):
+        """The detail page of a contact created by someone else is shown."""
         response = self.client.get(
             reverse("crm:contact_detail", args=[self.contact.pk])
         )
-        self.assertEqual(response.status_code, 404)
+        self.assertContains(response, "Interlocuteur")
 
-    def test_company_list_hides_clients_of_others(self):
-        """The client list only shows the clients of the logged-in user."""
-        response = self.client.get(reverse("crm:company_list"))
-        self.assertNotContains(response, "Entreprise Secrète")
-
-    def test_contact_list_hides_contacts_of_others(self):
-        """The contact list only shows the contacts of the logged-in user."""
-        response = self.client.get(reverse("crm:contact_list"))
-        self.assertNotContains(response, "Confidentiel")
-
-    def test_company_archive_is_404_for_another_user(self):
-        """Someone else's client cannot be archived."""
-        response = self.client.post(
-            reverse("crm:company_archive", args=[self.company.pk])
+    def test_company_and_contact_lists_show_the_ones_of_others(self):
+        """The client and contact lists show what other users created."""
+        self.assertContains(
+            self.client.get(reverse("crm:company_list")), "Entreprise Partagée"
         )
-        self.assertEqual(response.status_code, 404)
-
-    def test_global_search_hides_folders_of_others(self):
-        """The global search does not return the folders of other users."""
-        response = self.client.get(
-            reverse("core:global_search"), {"q": self.folder.reference}
+        self.assertContains(
+            self.client.get(reverse("crm:contact_list")), "Interlocuteur"
         )
+
+    def test_global_search_finds_shared_clients_and_contacts_but_not_folders(self):
+        """The global search returns clients and contacts of others, never their folders."""
+        url = reverse("core:global_search")
+        response = self.client.get(url, {"q": "Partagée"})
+        self.assertEqual(list(response.context["companies"]), [self.company])
+        response = self.client.get(url, {"q": "Interlocuteur"})
+        self.assertEqual(list(response.context["contacts"]), [self.contact])
+        response = self.client.get(url, {"q": self.folder.reference})
         self.assertEqual(list(response.context["folders"]), [])
 
-    def test_global_search_hides_companies_of_others(self):
-        """The global search does not return the clients of other users."""
-        response = self.client.get(reverse("core:global_search"), {"q": "Secrète"})
-        self.assertEqual(list(response.context["companies"]), [])
+    def test_shared_company_page_does_not_reveal_the_folders_of_others(self):
+        """The folders panel of a shared client is empty for a user without folder on it."""
+        response = self.client.get(
+            reverse("inspections:company_folders_panel", args=[self.company.pk])
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(list(response.context["folders"]), [])
+        self.assertNotContains(response, self.folder.reference)
 
-    def test_global_search_hides_contacts_of_others(self):
-        """The global search does not return the contacts of other users."""
-        response = self.client.get(reverse("core:global_search"), {"q": "Confidentiel"})
-        self.assertEqual(list(response.context["contacts"]), [])
+    def test_folder_count_of_the_client_list_is_the_one_of_the_user(self):
+        """The folder count of a shared client counts only the user's own folders."""
+        response = self.client.get(reverse("crm:company_list"))
+        company = next(c for c in response.context["companies"] if c == self.company)
+        self.assertEqual(company.inspection_folders_count, 0)
 
-    def test_companies_and_contacts_of_the_owner_are_unchanged_by_reads(self):
-        """Control: the reads above do not alter the CRM data."""
-        self.client.get(reverse("crm:company_detail", args=[self.company.pk]))
-        self.assertTrue(Company.objects.get(pk=self.company.pk).is_active)
-        self.assertTrue(Contact.objects.get(pk=self.contact.pk).is_active)
-
-    def test_every_crm_url_of_a_foreign_object_is_404(self):
-        """Detail, edit, archive, delete and refresh URLs of a foreign client or contact give 404."""
+    def test_crm_pages_of_a_shared_object_answer_for_another_user(self):
+        """Read pages and confirmation modals of a shared client or contact are reachable."""
         for name, obj in (
             ("company_detail", self.company),
-            ("company_inline_update", self.company),
             ("company_inline_read", self.company),
             ("company_archive", self.company),
-            ("company_unarchive", self.company),
-            ("company_delete", self.company),
-            ("company_sirene_refresh", self.company),
             ("contact_detail", self.contact),
-            ("contact_inline_update", self.contact),
             ("contact_inline_read", self.contact),
             ("contact_archive", self.contact),
-            ("contact_unarchive", self.contact),
-            ("contact_delete", self.contact),
         ):
-            url = reverse(f"crm:{name}", args=[obj.pk])
-            for method in ("GET", "POST"):
-                with self.subTest(url=name, method=method):
-                    response = self.client.generic(method, url)
-                    self.assertIn(response.status_code, (404, 405))
-        self.assertTrue(Company.objects.get(pk=self.company.pk).is_active)
-        self.assertTrue(Contact.objects.get(pk=self.contact.pk).is_active)
+            with self.subTest(url=name):
+                response = self.client.get(reverse(f"crm:{name}", args=[obj.pk]))
+                self.assertEqual(response.status_code, 200)
 
-    def test_creation_forms_refuse_a_foreign_client(self):
-        """A folder or a contact cannot be created on someone else's client."""
+    def test_a_folder_and_a_contact_can_be_created_on_a_shared_client(self):
+        """Another user can open a folder, or add a contact, on a shared client."""
         response = self.htmx_post(
             reverse("inspections:create_folder"), {"company": self.company.pk}
         )
-        self.assertEqual(response.status_code, 422)
+        self.assertEqual(response.status_code, 204)
+        folder = InspectionFolder.objects.get(
+            company=self.company, created_by=self.other
+        )
+        self.assertNotEqual(folder.pk, self.folder.pk)
         response = self.htmx_post(
             reverse("crm:create_contact"),
             {
@@ -323,16 +302,19 @@ class CrmIsolationTests(HtmxClientMixin, TestCase):
                 "position": "C",
             },
         )
-        self.assertEqual(response.status_code, 422)
-        self.assertEqual(Contact.objects.filter(first_name="A").count(), 0)
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(Contact.objects.filter(first_name="A").count(), 1)
 
-    def test_foreign_clients_are_not_offered_in_forms_or_filters(self):
-        """The folder filter and the contact form only offer my own clients."""
+    def test_folder_filter_only_offers_clients_of_the_users_folders(self):
+        """The folder list filter offers the clients of my folders, not every client."""
         mine = CompanyFactory(created_by=self.other)
         InspectionFolderFactory(company=mine, created_by=self.other)
         response = self.client.get(reverse("inspections:folder_list"))
         self.assertEqual(list(response.context["companies"]), [mine])
+
+    def test_contact_form_offers_every_client(self):
+        """The contact form offers all the clients, as they are shared."""
+        mine = CompanyFactory(created_by=self.other)
         response = self.htmx_get(reverse("crm:create_contact"))
-        self.assertEqual(
-            list(response.context["form"].fields["company"].queryset), [mine]
-        )
+        offered = set(response.context["form"].fields["company"].queryset)
+        self.assertEqual(offered, {mine, self.company})

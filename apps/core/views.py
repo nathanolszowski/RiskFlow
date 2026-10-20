@@ -81,7 +81,8 @@ def global_search(request: HttpRequest) -> HttpResponse:
     """Search folders, companies and contacts matching the ``q`` GET parameter.
 
     The search starts at two characters and returns at most five results per
-    category. Only the objects created by the user are searched.
+    category. Folders are searched among the ones of the user; clients and contacts
+    are shared between users, so all of them are searched.
 
     Args:
         request: Current request.
@@ -101,15 +102,13 @@ def global_search(request: HttpRequest) -> HttpResponse:
         )[:5]
 
         companies = Company.objects.filter(
-            Q(name__icontains=query) | Q(address__icontains=query),
-            created_by=request.user,
+            Q(name__icontains=query) | Q(address__icontains=query)
         )[:5]
 
         contacts = Contact.objects.filter(
             Q(first_name__icontains=query)
             | Q(last_name__icontains=query)
-            | Q(email__icontains=query),
-            created_by=request.user,
+            | Q(email__icontains=query)
         )[:5]
 
     return render(
