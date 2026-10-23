@@ -1,0 +1,9 @@
+<div class="flex items-center gap-3.5">
+  <span class="inline-flex size-10 items-center justify-center rounded-[10px] border border-brand-border bg-brand-bg">
+    <svg class="size-5 text-brand-light" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true">{{ icon }}</svg>
+  </span>
+  <div class="flex flex-col gap-0.5">
+    <h2 class="text-lg font-semibold text-text-main">{{ title }}</h2>
+    <span class="text-[13px] text-text-subtle">{{ subtitle }}{% if subtitle_date %} {{ subtitle_date|date:"d/m/Y" }}.{% endif %}</span>
+  </div>
+</div>

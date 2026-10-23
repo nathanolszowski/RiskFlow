@@ -72,7 +72,12 @@
               </svg>
               {% endif %}
             </button>
-            <span class="text-sm font-medium text-text-muted whitespace-nowrap">Connecté : <strong class="text-text-main">{{ user.username }}</strong></span>
+            <a href="{% url 'accounts:profile' %}" aria-label="Mon profil, connecté en tant que {{ user.username }}"
+              {% if request.resolver_match.url_name == 'profile' %}aria-current="page"{% endif %}
+              class="inline-flex h-11 items-center gap-2.5 rounded-full border border-brand-border bg-brand-bg pl-1.5 pr-3.5 text-text-main transition hover:border-brand-primary">
+              <span class="inline-flex size-8 items-center justify-center rounded-full bg-brand-primary text-[13px] font-bold text-brand-on">{{ user.username|slice:":2"|upper }}</span>
+              <span class="text-sm font-semibold">{{ user.username }}</span>
+            </a>
             <form action="{% url 'accounts:logout' %}" method="POST" class="inline">
               {% csrf_token %}
               <button type="submit"
@@ -130,7 +135,7 @@
         <a href="{% url 'crm:contact_list' %}" class="block rounded-md px-3 py-2 text-base font-medium text-text-muted hover:bg-surface-hover hover:text-text-main">Contacts</a>
       </div>
       <div class="border-t border-border-default pt-4 pb-3 px-5 flex items-center justify-between">
-        <div class="text-sm font-medium text-text-subtle">{{ user.username }}</div>
+        <a href="{% url 'accounts:profile' %}" class="text-sm font-medium text-text-main hover:underline">Mon profil ({{ user.username }})</a>
         <form action="{% url 'accounts:logout' %}" method="POST">
           {% csrf_token %}
           <button type="submit" class="block rounded-md bg-status-danger-bg border border-status-danger-border px-3 py-1.5 text-sm font-medium text-status-danger">Déconnexion</button>

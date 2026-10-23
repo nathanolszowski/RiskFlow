@@ -1,7 +1,9 @@
-"""URLs of the accounts app: login and logout."""
+"""URLs of the accounts app: login, logout and profile."""
 
 from django.contrib.auth import views as auth_views
 from django.urls import path
+
+from . import views
 
 app_name = "accounts"
 
@@ -16,4 +18,8 @@ urlpatterns = [
         auth_views.LogoutView.as_view(next_page="accounts:login"),
         name="logout",
     ),
+    path("profil/", views.profile, name="profile"),
+    path("profil/email/", views.profile_email, name="profile_email"),
+    path("profil/adresse/", views.profile_address, name="profile_address"),
+    path("profil/mot-de-passe/", views.profile_password, name="profile_password"),
 ]

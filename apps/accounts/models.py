@@ -11,10 +11,24 @@ class CustomUser(AbstractUser):
 
     Attributes:
         phone_number: Optional phone number.
+        street: Number and street of the home address.
+        address_complement: Optional address complement (building, floor...).
+        postal_code: Postal code of the home address.
+        city: City of the home address.
+        password_changed_at: When the user last changed the password themselves.
     """
 
     # Add any additional fields you want for ALL USERS
     phone_number = models.CharField(max_length=15, blank=True, null=True)
+    street = models.CharField(max_length=255, blank=True, verbose_name="Numéro et rue")
+    address_complement = models.CharField(
+        max_length=255, blank=True, verbose_name="Complément d'adresse"
+    )
+    postal_code = models.CharField(
+        max_length=10, blank=True, verbose_name="Code postal"
+    )
+    city = models.CharField(max_length=100, blank=True, verbose_name="Ville")
+    password_changed_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self) -> str:
         """Return the username."""
