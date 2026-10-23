@@ -14,10 +14,10 @@
     </div>
 
     <div class="grid min-w-0 flex-1 grid-cols-1 gap-x-6 gap-y-3 text-sm text-text-body sm:grid-cols-2">
-      {% if folder.inspection_site_address %}
+      {% if folder.full_address %}
       <span class="flex min-w-0 items-center gap-2.5">
         <svg class="h-4 w-4 shrink-0 text-brand-light" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
-        <span class="truncate">{{ folder.inspection_site_address }}</span>
+        <span class="truncate">{{ folder.full_address }}</span>
       </span>
       {% endif %}
       <span class="flex items-center gap-2.5 sm:col-span-2">

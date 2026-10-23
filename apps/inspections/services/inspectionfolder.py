@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING
 
+from core.services.geo import certify_address
 from django.db.models import Q, QuerySet
 from django.forms import ModelForm
 from django.http import HttpRequest
@@ -134,4 +135,5 @@ def create_tracked_instance(form: ModelForm, user: "CustomUser") -> InspectionFo
         instance.created_by = user
     instance.save()
     form.save_m2m()
+    certify_address(instance)
     return instance

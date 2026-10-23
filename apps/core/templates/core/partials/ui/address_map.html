@@ -1,0 +1,11 @@
+{% comment %}
+  Carte d'une adresse certifiée (Leaflet + plan IGN), initialisée par core/address_map.js.
+  Contexte : obj (modèle avec AddressMixin), origin (modèle ou None, facultatif : point de départ).
+{% endcomment %}
+{% if obj.has_coordinates %}
+<div data-address-map data-lat="{{ obj.latitude|stringformat:'s' }}" data-lon="{{ obj.longitude|stringformat:'s' }}"
+     data-label="{{ obj.full_address }}"
+     {% if origin_lat and origin_lon %}data-origin-lat="{{ origin_lat|stringformat:'s' }}" data-origin-lon="{{ origin_lon|stringformat:'s' }}" data-origin-label="{{ origin_label }}"{% endif %}
+     class="h-64 w-full overflow-hidden rounded-xl border border-border-default"
+     role="img" aria-label="Carte : {{ obj.full_address }}"></div>
+{% endif %}

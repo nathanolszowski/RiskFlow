@@ -4,6 +4,7 @@ from typing import Any, Optional, cast
 
 from core.decorators import htmx_login_required
 from core.services import delete_archived_instance
+from core.services.geo import certify_address
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse
@@ -138,6 +139,7 @@ def create_company(request: HttpRequest) -> HttpResponse:
             company = form.save(commit=False)
             company.created_by = request.user
             company.save()
+            certify_address(company)
             # Store the Sirene state (closed?) and the head office of the client, shown on its page
             sync_sirene_status(company, cast("Any", request.user))
 
@@ -191,6 +193,7 @@ def company_inline_update(request: HttpRequest, pk: int) -> HttpResponse:
             company = form.save(commit=False)
             company.updated_by = request.user
             company.save()
+            certify_address(company)
             return render(
                 request,
                 "crm/partials/company/company_read.html",

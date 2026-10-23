@@ -10,6 +10,7 @@ from inspections.models import InspectionFolder
 
 from core.decorators import htmx_login_required
 from core.services.dashboard import get_dashboard_context, parse_period
+from core.services.geo import suggest
 
 
 @htmx_login_required
@@ -102,7 +103,10 @@ def global_search(request: HttpRequest) -> HttpResponse:
         )[:5]
 
         companies = Company.objects.filter(
-            Q(name__icontains=query) | Q(address__icontains=query)
+            Q(name__icontains=query)
+            | Q(address_line__icontains=query)
+            | Q(city__icontains=query)
+            | Q(postal_code__icontains=query)
         )[:5]
 
         contacts = Contact.objects.filter(
@@ -120,4 +124,26 @@ def global_search(request: HttpRequest) -> HttpResponse:
             "companies": companies,
             "contacts": contacts,
         },
+    )
+
+
+@htmx_login_required
+@require_GET
+def address_suggestions(request: HttpRequest) -> HttpResponse:
+    """Suggest addresses for the street being typed (HTMX).
+
+    Args:
+        request: Current request. ``address_line`` (or ``origin_address`` for a
+            starting point) holds the text typed so far.
+
+    Returns:
+        The suggestions partial, empty when the text is too short or the geocoding
+        service is unavailable.
+    """
+    text = request.GET.get("address_line") or request.GET.get("origin_address", "")
+    suggestions = suggest(text)
+    return render(
+        request,
+        "core/partials/ui/address_suggestions.html",
+        {"suggestions": suggestions},
     )

@@ -11,9 +11,12 @@
     {% csrf_token %}
     <div class="grid max-w-2xl grid-cols-6 gap-x-4 gap-y-3.5">
       <div class="col-span-6 flex flex-col gap-1.5">
-        <label for="{{ form.street.id_for_label }}" class="text-xs font-medium text-text-subtle">{{ form.street.label }}</label>
-        {{ form.street }}
-        {% for error in form.street.errors %}<p class="text-xs text-status-danger">{{ error }}</p>{% endfor %}
+        <label for="{{ form.address_line.id_for_label }}" class="text-xs font-medium text-text-subtle">{{ form.address_line.label }}</label>
+        <div class="relative">
+          {{ form.address_line }}
+          <div id="address-suggestions" data-address-suggestions></div>
+        </div>
+        {% for error in form.address_line.errors %}<p class="text-xs text-status-danger">{{ error }}</p>{% endfor %}
       </div>
       <div class="col-span-6 flex flex-col gap-1.5">
         <label for="{{ form.address_complement.id_for_label }}" class="text-xs font-medium text-text-subtle">{{ form.address_complement.label }} <span class="font-normal text-text-subtle">(facultatif)</span></label>
@@ -37,9 +40,9 @@
       <button type="submit" class="cursor-pointer rounded-lg bg-brand-primary px-4 py-2 text-xs font-semibold text-brand-on shadow-xs transition-colors hover:bg-brand-hover">Enregistrer</button>
     </div>
   </form>
-  {% elif user.street %}
+  {% elif user.address_line %}
   <div class="flex flex-col gap-0.5 text-[17px] text-text-main">
-    <span>{{ user.street }}</span>
+    <span>{{ user.address_line }}</span>
     {% if user.address_complement %}<span>{{ user.address_complement }}</span>{% endif %}
     <span>{{ user.postal_code }} {{ user.city }}</span>
   </div>

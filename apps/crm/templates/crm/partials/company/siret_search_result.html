@@ -44,8 +44,15 @@
 <input type="text" id="id_creation_date" name="creation_date" value="{{ creation_date }}" hx-swap-oob="true"
        class="w-full rounded-lg border border-border-default bg-surface-tertiary p-2.5 text-sm text-text-main focus:border-brand-primary focus:ring-brand-primary">
 
-<textarea id="id_address" name="address" hx-swap-oob="true"
-       class="w-full rounded-lg border border-border-default bg-surface-tertiary p-2.5 text-sm text-text-main focus:border-brand-primary focus:ring-brand-primary">{{ address }}</textarea>
+<input type="text" id="id_address_line" name="address_line" value="{{ address_line }}" hx-swap-oob="true"
+       class="form-input" autocomplete="off" hx-get="{% url 'core:address_suggestions' %}"
+       hx-trigger="input changed delay:300ms" hx-target="#address-suggestions" hx-swap="innerHTML">
+
+<input type="text" id="id_postal_code" name="postal_code" value="{{ postal_code }}" hx-swap-oob="true"
+       class="form-input">
+
+<input type="text" id="id_city" name="city" value="{{ city }}" hx-swap-oob="true"
+       class="form-input">
 
 {% elif query %}
 <div class="rounded-lg border border-amber-500/30 bg-amber-950/20 p-2.5 text-xs text-amber-400">

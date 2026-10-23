@@ -43,9 +43,8 @@
 
     <!-- Address -->
     <div>
-      <label class="block text-xs font-medium text-text-subtle mb-1">Adresse du site d'inspection</label>
-      {{ form.inspection_site_address }}
-      {% if form.inspection_site_address.errors %}<p class="text-xs text-rose-400 mt-1">{{ form.inspection_site_address.errors.0 }}</p>{% endif %}
+      <p class="block text-xs font-medium text-text-subtle mb-1">Adresse du site d'inspection</p>
+      {% include "core/partials/ui/address_fields.html" %}
     </div>
 
     <!-- Notes -->

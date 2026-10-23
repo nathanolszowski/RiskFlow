@@ -46,7 +46,9 @@ def company_post(**overrides):
         "business_line": "62.01Z",
         "company_size_category": "PME",
         "creation_date": "2010-01-01",
-        "address": "10 RUE DE LA PAIX, 75002 PARIS",
+        "address_line": "10 RUE DE LA PAIX",
+        "postal_code": "75002",
+        "city": "PARIS",
     }
     data.update(overrides)
     return data
@@ -240,7 +242,7 @@ class SireneRefreshTests(CrmViewTestCase):
             siret=SIRET_SIEGE,
             siren="123456782",
             name="Ancien nom",
-            address="Ancienne adresse",
+            address_line="Ancienne adresse",
             website="https://client.example",
         )
         self.url = reverse("crm:company_sirene_refresh", args=[self.company.pk])
@@ -276,7 +278,7 @@ class SireneRefreshTests(CrmViewTestCase):
         self.assertEqual(response["HX-Refresh"], "true")
         self.company.refresh_from_db()
         self.assertEqual(self.company.name, "ACME INDUSTRIES")
-        self.assertEqual(self.company.address, "Ancienne adresse")
+        self.assertEqual(self.company.address_line, "Ancienne adresse")
         self.assertEqual(self.company.updated_by, self.owner)
 
     def test_post_ignores_values_and_fields_sent_by_the_form(self):

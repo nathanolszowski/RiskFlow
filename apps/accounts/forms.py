@@ -1,5 +1,6 @@
 """Forms of the profile page."""
 
+from core.forms import enable_address_autocomplete
 from django import forms
 from django.contrib.auth.forms import PasswordChangeForm
 
@@ -41,9 +42,9 @@ class AddressForm(StyledFormMixin, forms.ModelForm):
         """Bind the form to the address fields."""
 
         model = CustomUser
-        fields = ["street", "address_complement", "postal_code", "city"]
+        fields = ["address_line", "address_complement", "postal_code", "city"]
         widgets = {
-            "street": forms.TextInput(attrs={"autocomplete": "address-line1"}),
+            "address_line": forms.TextInput(attrs={"autocomplete": "address-line1"}),
             "address_complement": forms.TextInput(
                 attrs={
                     "autocomplete": "address-line2",
@@ -59,8 +60,9 @@ class AddressForm(StyledFormMixin, forms.ModelForm):
     def __init__(self, *args, **kwargs):
         """Make the street, postal code and city mandatory once the form is used."""
         super().__init__(*args, **kwargs)
-        for name in ("street", "postal_code", "city"):
+        for name in ("address_line", "postal_code", "city"):
             self.fields[name].required = True
+        enable_address_autocomplete(self)
 
 
 class ProfilePasswordForm(StyledFormMixin, PasswordChangeForm):

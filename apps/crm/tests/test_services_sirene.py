@@ -267,7 +267,9 @@ class SireneChangesTests(SireneTestCase):
             siret=SIRET_SIEGE,
             siren=self.data["siren"],
             name=self.data["name"],
-            address=self.data["address"],
+            address_line=self.data["address_line"],
+            postal_code=self.data["postal_code"],
+            city=self.data["city"],
             legal_structure=self.data["legal_structure"],
             company_size_category=self.data["company_size_category"],
             business_line=self.data["business_line"],
@@ -372,7 +374,9 @@ class ApplySireneChangesTests(SireneTestCase):
             siret=SIRET_SIEGE,
             siren="123456782",
             name="Ancien nom",
-            address="Ancienne adresse",
+            address_line="Ancienne adresse",
+            postal_code="69001",
+            city="LYON",
             creation_date=date(2000, 1, 1),
             website="https://client.example",
             labels="ISO 9001",
@@ -408,7 +412,7 @@ class ApplySireneChangesTests(SireneTestCase):
         self.assertEqual(updated, ["name"])
         company = self.reload()
         self.assertEqual(company.name, "ACME INDUSTRIES")
-        self.assertEqual(company.address, "Ancienne adresse")
+        self.assertEqual(company.address_line, "Ancienne adresse")
         self.assertEqual(company.updated_by, self.user)
 
     def test_fields_outside_the_whitelist_are_ignored(self):
@@ -449,7 +453,7 @@ class ApplySireneChangesTests(SireneTestCase):
             ),
             (SIRET_SIEGE, "https://client.example", "ISO 9001", "Conseil", 42),
         )
-        self.assertEqual(company.address, "10 RUE DE LA PAIX, 75002 PARIS")
+        self.assertEqual(company.full_address, "10 RUE DE LA PAIX, 75002 PARIS")
         self.assertEqual(company.creation_date, date(2010, 1, 1))
 
     def test_empty_api_value_does_not_erase(self):
@@ -466,7 +470,7 @@ class ApplySireneChangesTests(SireneTestCase):
     def test_values_come_from_the_api_data(self):
         """The written value is the one of the data, not something posted."""
         self.apply(["address"])
-        self.assertEqual(self.reload().address, self.data["address"])
+        self.assertEqual(self.reload().full_address, self.data["address"])
 
     def test_state_writes_the_closure_date_too(self):
         """Accepting the state writes ``administrative_state`` and ``closure_date``."""

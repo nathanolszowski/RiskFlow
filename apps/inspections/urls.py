@@ -25,6 +25,7 @@ urlpatterns = [
         name="company_folders_panel",
     ),
     path("dossier/<int:pk>/", views.folder_detail, name="folder_detail"),
+    path("dossier/<int:pk>/trajet/", views.folder_travel, name="folder_travel"),
     path(
         "dossier/<int:pk>/edition/",
         views.folder_inline_update,

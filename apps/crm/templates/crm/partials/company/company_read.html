@@ -70,10 +70,16 @@
       </div>
       {% endif %}
 
-      {% if company.address %}
+      {% if company.full_address %}
       <div>
         <dt class="text-xs text-text-faded">Adresse</dt>
-        <dd class="text-text-subtle text-xs leading-relaxed whitespace-pre-line">{{ company.address }}</dd>
+        <dd class="text-text-subtle text-xs leading-relaxed">
+          {{ company.full_address }}
+          <div class="mt-1">{% include "core/partials/ui/address_badge.html" with obj=company %}</div>
+        </dd>
+        {% if company.has_coordinates %}
+        <div class="mt-3">{% include "core/partials/ui/address_map.html" with obj=company %}</div>
+        {% endif %}
       </div>
       {% endif %}
 

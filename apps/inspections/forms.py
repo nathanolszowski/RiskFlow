@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING, Any
 
+from core.forms import enable_address_autocomplete
 from django import forms
 from django.urls import reverse
 
@@ -24,7 +25,9 @@ class InspectionFolderForm(forms.ModelForm):
         fields = [
             "company",
             "contact",
-            "inspection_site_address",
+            "address_line",
+            "postal_code",
+            "city",
             "notes",
         ]
 
@@ -60,6 +63,7 @@ class InspectionFolderForm(forms.ModelForm):
 
         for name, field in self.fields.items():
             field.widget.attrs.update({"class": "form-input"})
+        enable_address_autocomplete(self)
 
         company_field = self.fields.get("company")
         if isinstance(company_field, forms.ModelChoiceField):
@@ -86,7 +90,9 @@ class InspectionFolderUpdateForm(InspectionFolderForm):
         fields = [
             "contact",
             "current_phase",
-            "inspection_site_address",
+            "address_line",
+            "postal_code",
+            "city",
             "notes",
         ]
 

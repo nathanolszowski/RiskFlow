@@ -78,13 +78,10 @@
                     </h4>
                     <div class="space-y-4">
                         <div>
-                            <label class="mb-1 block text-xs font-medium text-text-subtle">
-                                {{ form.inspection_site_address.label }} <span class="text-[10px] text-text-faded font-normal">(optionnel)</span>
-                            </label>
-                            {{ form.inspection_site_address }}
-                            {% if form.inspection_site_address.errors %}
-                                <p class="mt-1 text-xs text-status-danger">{{ form.inspection_site_address.errors.0 }}</p>
-                            {% endif %}
+                            <p class="mb-1 block text-xs font-medium text-text-subtle">
+                                Adresse du site d'inspection <span class="text-[10px] text-text-faded font-normal">(optionnel)</span>
+                            </p>
+                            {% include "core/partials/ui/address_fields.html" %}
                         </div>
 
                         <!-- Notes internes -->

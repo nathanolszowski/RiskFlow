@@ -66,7 +66,7 @@ class CreateFolderTests(FolderViewTestCase):
 
     def test_invalid_post_is_422_with_the_modal(self):
         """A missing client re-renders the modal with 422 and creates nothing."""
-        response = self.htmx_post(self.url, {"inspection_site_address": "x"})
+        response = self.htmx_post(self.url, {"address_line": "x"})
         self.assertEqual(response.status_code, 422)
         self.assertTemplateUsed(response, MODAL)
         self.assertIn("company", response.context["form"].errors)

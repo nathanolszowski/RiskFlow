@@ -22,7 +22,8 @@
       "typeVoieEtablissement": "RUE",
       "libelleVoieEtablissement": "DE LA PAIX",
       "codePostalEtablissement": "75002",
-      "libelleCommuneEtablissement": "PARIS"
+      "libelleCommuneEtablissement": "PARIS",
+      "codeCommuneEtablissement": "75102"
     },
     "periodesEtablissement": [
       {

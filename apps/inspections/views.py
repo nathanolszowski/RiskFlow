@@ -10,6 +10,7 @@ from core.services.directory import (
     get_company_by_id,
     get_company_or_none,
 )
+from core.services.geo import certify_address
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse
@@ -25,6 +26,11 @@ from inspections.services.inspectionfolder import (
     get_inspection_folder_by_id,
 )
 from inspections.services.recommandation import get_recommandation_by_id
+from inspections.services.travel import (
+    TravelError,
+    is_travel_estimate_stale,
+    refresh_travel_estimate,
+)
 from inspections.services.visit import (
     VisitLockedError,
     create_visit,
@@ -176,6 +182,7 @@ def folder_detail(request: HttpRequest, pk: int) -> HttpResponse:
 
     context = {
         "folder": folder,
+        "travel_stale": is_travel_estimate_stale(folder, request.user),
         "company_folders": get_company_folders(folder.company, request.user),
         # Lets the visit form send the inspector back to the visits tab (?tab=visit)
         "initial_tab": request.GET.get("tab"),
@@ -274,6 +281,7 @@ def folder_inline_update(request: HttpRequest, pk: int) -> HttpResponse:
             folder = form.save(commit=False)
             folder.updated_by = request.user
             folder.save()
+            certify_address(folder)
             return render(
                 request,
                 "inspections/partials/folder/folder_read.html",
@@ -902,8 +910,55 @@ def folder_tab_overview(request: HttpRequest, pk: int) -> HttpResponse:
         "inspections/partials/tabs/tab_overview.html",
         {
             "folder": folder,
+            "travel_stale": is_travel_estimate_stale(folder, request.user),
             "company_folders": get_company_folders(folder.company, request.user),
         },
+    )
+
+
+@htmx_login_required
+@require_POST
+def folder_travel(request: HttpRequest, pk: int) -> HttpResponse:
+    """Compute the travel time to the site of a folder and store it (HTMX).
+
+    The only place where the route service is called: displaying a folder never
+    recomputes the estimate.
+
+    Args:
+        request: Current request. ``origin_address`` is another starting point to
+            geocode, ``use_home`` goes back to the home of the user; without them
+            the starting point already stored (or the home) is used again.
+        pk: Primary key of the folder.
+
+    Returns:
+        The travel card. On an error (uncertified address, service down...) it shows the
+        message with a 422 status and keeps the previous estimate.
+
+    Raises:
+        Http404: If the folder does not exist or belongs to another user.
+    """
+    folder = get_inspection_folder_by_id(pk, request.user)
+    if not folder.is_active:
+        return HttpResponse(status=409)
+    error = ""
+    try:
+        refresh_travel_estimate(
+            folder,
+            request.user,
+            origin_address=request.POST.get("origin_address", ""),
+            use_home=bool(request.POST.get("use_home")),
+        )
+    except TravelError as exc:
+        error = str(exc)
+    return render(
+        request,
+        "inspections/partials/folder/folder_travel.html",
+        {
+            "folder": folder,
+            "travel_stale": is_travel_estimate_stale(folder, request.user),
+            "travel_error": error,
+        },
+        status=422 if error else 200,
     )
 
 

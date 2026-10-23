@@ -35,8 +35,8 @@
       </div>
       <div class="space-y-1.5">
         <div class="text-3xl font-bold tracking-tight text-text-main">{{ last_folder.company.name }}</div>
-        {% if last_folder.inspection_site_address %}
-        <div class="text-base text-text-muted">{{ last_folder.inspection_site_address|truncatechars:80 }}</div>
+        {% if last_folder.full_address %}
+        <div class="text-base text-text-muted">{{ last_folder.full_address|truncatechars:80 }}</div>
         {% endif %}
         <div class="text-sm text-text-subtle">{{ last_folder.reference }}</div>
       </div>
@@ -126,7 +126,7 @@
             </div>
             <div class="min-w-0 flex-1">
               <div class="truncate text-base font-semibold text-text-main">{{ item.visit.folder.company.name }}</div>
-              <div class="truncate text-sm text-text-subtle">{% if item.visit.due_time %}{{ item.visit.due_time|time:"H:i" }} · {% endif %}{{ item.visit.folder.inspection_site_address|default:item.visit.folder.reference }}</div>
+              <div class="truncate text-sm text-text-subtle">{% if item.visit.due_time %}{{ item.visit.due_time|time:"H:i" }} · {% endif %}{{ item.visit.folder.full_address|default:item.visit.folder.reference }}</div>
             </div>
             {% if item.visit.current_status == 'DELAY' %}
             <span class="shrink-0 rounded-full bg-status-danger-bg px-2.5 py-1 text-xs font-semibold text-status-danger">{{ item.visit.get_current_status_display }}</span>

@@ -38,8 +38,8 @@
         </div>
         <div>
             <dt class="text-xs text-text-faded">Adresse du site d'inspection</dt>
-            <dd class="text-text-body whitespace-pre-line">
-                {% if folder.inspection_site_address %}{{ folder.inspection_site_address }}{% else %}<span class="text-text-faded italic">Non renseignée</span>{% endif %}
+            <dd class="text-text-body">
+                {% if folder.full_address %}{{ folder.full_address }} {% include "core/partials/ui/address_badge.html" with obj=folder %}{% else %}<span class="text-text-faded italic">Non renseignée</span>{% endif %}
             </dd>
         </div>
         <div class="sm:col-span-2">

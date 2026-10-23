@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any
 
 import requests
 from core.services import update_tracked_instance
+from core.services.geo import certify_address
 from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
@@ -26,11 +27,16 @@ from crm.services.naf import fetch_naf25_label
 if TYPE_CHECKING:
     from accounts.models import CustomUser
 
+# Pseudo-field of the Sirene update: the postal address (writes ``address_line``,
+# ``postal_code``, ``city`` and ``citycode`` together, then geocodes it again)
+SIRENE_ADDRESS_FIELD = "address"
+SIRENE_ADDRESS_PARTS = ("address_line", "postal_code", "city")
+
 # Fields of a company that come from the Sirene API (see ``INSEEApiClient._format_etablissement_data``).
 # ``siret`` is left out: it is the key of the lookup and is unique, so it is never rewritten.
 SIRENE_FIELDS = (
     "name",
-    "address",
+    SIRENE_ADDRESS_FIELD,
     "legal_structure",
     "company_size_category",
     "business_line",
@@ -212,7 +218,8 @@ class INSEEApiClient:
         Returns:
             A dict with ``name``, ``siren``, ``siret``, ``vat_number``,
             ``legal_structure``, ``company_size_category``, ``business_line``,
-            ``address``, ``creation_date``, and the administrative state
+            ``address`` (one line) and its parts ``address_line``, ``postal_code``,
+            ``city`` and ``citycode``, ``creation_date``, and the administrative state
             (``establishment_state``, ``unit_state``, ``closure_date``). The
             head office is added by ``fetch_by_siret``.
         """
@@ -243,9 +250,8 @@ class INSEEApiClient:
         cp = address.get("codePostalEtablissement") or ""
         ville = address.get("libelleCommuneEtablissement") or ""
 
-        address_parts = [
-            p for p in [f"{num} {type_v} {lib_v}".strip(), f"{cp} {ville}".strip()] if p
-        ]
+        street = f"{num} {type_v} {lib_v}".strip()
+        address_parts = [p for p in [street, f"{cp} {ville}".strip()] if p]
         full_address = ", ".join(address_parts)
         # SIREN & VAT number calculation
         siren = etab.get("siren") or (
@@ -266,6 +272,10 @@ class INSEEApiClient:
             "business_line": actual_period.get("activitePrincipaleEtablissement")
             or unit.get("activitePrincipaleUniteLegale", ""),
             "address": full_address,
+            "address_line": street,
+            "postal_code": cp,
+            "city": ville,
+            "citycode": address.get("codeCommuneEtablissement") or "",
             "creation_date": etab.get("dateCreationEtablissement")
             or unit.get("dateCreationUniteLegale", ""),
             # Administrative state, only used for the cessation alert (never copied into the company):
@@ -423,6 +433,11 @@ def get_sirene_changes(company: Company, data: dict) -> list[dict[str, str]]:
     """
     changes = []
     for field in SIRENE_FIELDS:
+        if field == SIRENE_ADDRESS_FIELD:
+            address_change = _address_change(company, data)
+            if address_change:
+                changes.append(address_change)
+            continue
         new = _sirene_value(field, data.get(field))
         current = _sirene_value(field, getattr(company, field))
         if field == "activity_naf25":
@@ -454,6 +469,31 @@ def get_sirene_changes(company: Company, data: dict) -> list[dict[str, str]]:
     if state_change:
         changes.append(state_change)
     return changes
+
+
+def _address_parts(source: Any) -> dict[str, str]:
+    """Return the comparable address parts of a company or of Sirene data."""
+    getter = source.get if isinstance(source, dict) else lambda p: getattr(source, p)
+    return {p: _sirene_value(p, getter(p)) for p in SIRENE_ADDRESS_PARTS}
+
+
+def _address_change(company: Company, data: dict) -> dict[str, str] | None:
+    """Return the proposed change of postal address, or None if there is none.
+
+    The address is compared part by part (street, postal code, city). Sirene giving
+    no street or no city never blanks the address of the client.
+    """
+    new_parts = _address_parts(data)
+    if not new_parts["address_line"] or not new_parts["city"]:
+        return None
+    if new_parts == _address_parts(company):
+        return None
+    return {
+        "field": SIRENE_ADDRESS_FIELD,
+        "label": "Adresse",
+        "current": company.full_address,
+        "new": _sirene_value("address", data.get("address")),
+    }
 
 
 def _describe_state(state: str, since: date | None) -> str:
@@ -527,6 +567,15 @@ def apply_sirene_changes(
             setattr(company, "administrative_state", state)
             setattr(company, "closure_date", since)
             continue
+        if field == SIRENE_ADDRESS_FIELD:
+            values.update(
+                {p: _sirene_value(p, data.get(p)) for p in SIRENE_ADDRESS_PARTS}
+            )
+            values["citycode"] = _sirene_value("citycode", data.get("citycode"))
+            values["address_source"] = Company.AddressSource.SIRENE
+            for name in (*SIRENE_ADDRESS_PARTS, "citycode", "address_source"):
+                setattr(company, name, values[name])
+            continue
         if field == "activity_naf25":
             values["activity_naf25_label"] = _sirene_value(
                 field, data.get("activity_naf25_label")
@@ -548,6 +597,8 @@ def apply_sirene_changes(
         exclude=[f.name for f in Company._meta.fields if f.name not in values]
     )
     update_tracked_instance(company, user, **values)
+    if SIRENE_ADDRESS_FIELD in fields:
+        certify_address(company)
     return fields
 
 
@@ -650,4 +701,10 @@ def sync_sirene_status(company: Company, user: "CustomUser") -> None:
     }
     if state:
         values.update(administrative_state=state, closure_date=since)
+    if _address_parts(company) == _address_parts(data):
+        # The address was not edited after the SIRET search: it is the Sirene one
+        values.update(
+            address_source=Company.AddressSource.SIRENE,
+            citycode=_sirene_value("citycode", data.get("citycode")),
+        )
     update_tracked_instance(company, user, **values)

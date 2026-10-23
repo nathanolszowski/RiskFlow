@@ -44,7 +44,9 @@ class CompanyFactory(TrackedFactory):
     created_by = factory.SubFactory(UserFactory)
     updated_by = factory.SelfAttribute("created_by")
     name = factory.Faker("company")
-    address = factory.Faker("address")
+    address_line = factory.Faker("street_address")
+    postal_code = factory.Faker("postcode")
+    city = factory.Faker("city")
     siret = factory.Sequence(lambda n: f"{10_000_000_000_000 + n}")
     siren = factory.LazyAttribute(lambda o: o.siret[:9])
     business_line = "Industrie"

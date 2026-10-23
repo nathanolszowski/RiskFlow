@@ -94,9 +94,8 @@
     </div>
 
     <!-- Address -->
-    <div>
-      <label class="block text-xs font-medium text-text-subtle mb-1">Adresse complète</label>
-      {{ form.address }}
+    <div id="company-address">
+      {% include "core/partials/ui/address_fields.html" with required=True %}
     </div>
 
     <!-- Labels & Board -->

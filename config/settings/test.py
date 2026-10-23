@@ -25,6 +25,13 @@ CACHES = {
 # Never read from the environment: the INSEE API is always mocked in tests
 INSEE_API_KEY = "test"
 
+# Geocoding and routing are always mocked in tests (the Géoplateforme is never called):
+# tests of the geo services turn the geocoding on with ``override_settings``
+GEOCODING_ENABLED = False
+GEOCODING_MIN_SCORE = 0.5
+GEOPF_GEOCODING_URL = "https://geocodage.test"
+GEOPF_ROUTING_URL = "https://itineraire.test"
+
 # Uploaded files never reach the real media/ folder
 MEDIA_ROOT = Path(tempfile.mkdtemp(prefix="riskflow-test-media-"))
 STORAGES = {

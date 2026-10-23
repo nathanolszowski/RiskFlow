@@ -27,6 +27,7 @@ RiskFlow vise à rassembler ce flux de travail, aujourd'hui éclaté entre table
 
 - **Authentification** : utilisateur personnalisé et profil inspecteur, sessions expirant après 60 minutes d'inactivité.
 - **CRM** : clients et contacts, avec pré-remplissage d'un client à partir de son SIRET via l'**API Sirene de l'INSEE** (forme juridique, activité NAF 2025, siège social). Une alerte signale un établissement fermé ou une entreprise cessée, et un bouton « Actualiser (Sirene) » compare la fiche aux données de l'API et applique, champ par champ, ce que l'utilisateur accepte.
+- **Adresses certifiées** : autocomplétion et géocodage par la **Géoplateforme IGN** (sans clé), position sur une carte, et temps de trajet en voiture depuis le domicile de l'inspecteur (ou un autre point de départ) jusqu'au site, mémorisé et recalculé seulement à la demande.
 - **Dossiers d'inspection** : création, suivi de l'avancement par phase, référence générée automatiquement (`DOS-<année>-<hex>`), filtres, tri et pagination.
 - **Visites dynamiques** : les modèles de visite sont décrits en JSON (sections et champs `boolean`, `text`, `select`, `number`), leur structure est validée avec **Pydantic**, et chaque visite d'un dossier travaille sur sa propre copie du modèle. Les réponses sont validées et enregistrées à la volée, champ par champ, y compris après une coupure réseau.
 - **Recommandations de prévention** rattachées à un dossier.
@@ -51,7 +52,7 @@ RiskFlow vise à rassembler ce flux de travail, aujourd'hui éclaté entre table
 | Front-end | Templates Django, HTMX (`django-htmx`), Tailwind CSS v4 (`django-tailwind`, binaire standalone, sans npm) |
 | Validation | Pydantic 2 |
 | Fichiers | Système de fichiers en dev, stockage S3 (Cloudflare R2) via `django-storages` en prod, Pillow pour les images |
-| Intégrations | API Sirene (INSEE), référentiel de nomenclatures `id.insee.fr` (libellés NAF 2025) |
+| Intégrations | API Sirene (INSEE), référentiel de nomenclatures `id.insee.fr` (libellés NAF 2025), Géoplateforme IGN (géocodage, itinéraires, fond de carte), sans clé |
 | Outillage | `uv` |
 
 Le choix d'HTMX permet de limiter le JavaScript au strict minimum : les listes, formulaires en modale, onglets et confirmations sont des fragments HTML renvoyés par le serveur.

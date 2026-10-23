@@ -2,7 +2,7 @@
 
 from typing import TYPE_CHECKING, Any, Optional
 
-from core.models import TrackingModel
+from core.models import AddressMixin, TrackingModel
 from django.db import models
 from django.utils import timezone
 
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from django.db.models.fields.related_descriptors import RelatedManager
 
 
-class Company(TrackingModel):
+class Company(TrackingModel, AddressMixin):
     """Client company inspected by the user.
 
     Archiving a company archives its active contacts (see ``cascade_archive``).
@@ -22,7 +22,7 @@ class Company(TrackingModel):
     Attributes:
         reference: Unique reference, generated as ``SOC-<year>-<number>`` when empty.
         name: Company name.
-        address: Postal address.
+        address_line, postal_code, city: Postal address (see ``AddressMixin``).
         siret: Unique SIRET number (14 digits).
         siren: SIREN number (9 digits).
         vat_number: Optional VAT number.
@@ -58,7 +58,6 @@ class Company(TrackingModel):
         max_length=50, unique=True, verbose_name="Référence client"
     )
     name = models.CharField(max_length=255, verbose_name="Nom du client")
-    address = models.TextField(verbose_name="Adresse")
     siret = models.CharField(max_length=14, unique=True, verbose_name="Numéro SIRET")
     business_line = models.CharField(max_length=100, verbose_name="Secteur d'activité")
     siren = models.CharField(max_length=9, verbose_name="Numéro SIREN")

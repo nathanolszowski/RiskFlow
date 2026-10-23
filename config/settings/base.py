@@ -82,6 +82,18 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 INSEE_API_KEY = os.getenv("INSEE_API_KEY")
 
+# Géoplateforme (IGN): geocoding and routing, public services without API key
+GEOPF_GEOCODING_URL = os.getenv(
+    "GEOPF_GEOCODING_URL", "https://data.geopf.fr/geocodage"
+)
+GEOPF_ROUTING_URL = os.getenv(
+    "GEOPF_ROUTING_URL", "https://data.geopf.fr/navigation/itineraire"
+)
+# Set GEOCODING_ENABLED=0 to work offline: addresses are then saved without coordinates
+GEOCODING_ENABLED = os.getenv("GEOCODING_ENABLED", "1") == "1"
+# Minimum score (0 to 1) for an address to be certified
+GEOCODING_MIN_SCORE = float(os.getenv("GEOCODING_MIN_SCORE", "0.5"))
+
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators

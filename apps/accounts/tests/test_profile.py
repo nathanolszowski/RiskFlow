@@ -73,7 +73,7 @@ class ProfileAddressTests(HtmxClientMixin, TestCase):
         response = self.htmx_post(
             reverse("accounts:profile_address"),
             {
-                "street": "12 rue des Lilas",
+                "address_line": "12 rue des Lilas",
                 "postal_code": "69003",
                 "city": "Lyon",
             },
@@ -87,7 +87,7 @@ class ProfileAddressTests(HtmxClientMixin, TestCase):
         """A missing mandatory field returns 422."""
         response = self.htmx_post(
             reverse("accounts:profile_address"),
-            {"street": "12 rue des Lilas", "postal_code": "69003"},
+            {"address_line": "12 rue des Lilas", "postal_code": "69003"},
         )
         self.assertEqual(response.status_code, 422)
 

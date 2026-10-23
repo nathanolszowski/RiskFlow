@@ -5,7 +5,7 @@ import uuid
 from datetime import date, datetime
 from typing import TYPE_CHECKING, Any, Optional
 
-from core.models import TrackingModel
+from core.models import AddressMixin, TrackingModel
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 """
 
 
-class InspectionFolder(TrackingModel):
+class InspectionFolder(TrackingModel, AddressMixin):
     """Inspection folder: the mission of an inspector for a company.
 
     A folder goes through the phases of ``Phase`` (creation, preparation, visit,
@@ -41,13 +41,24 @@ class InspectionFolder(TrackingModel):
         reference: Unique reference, generated as ``DOS-<year>-<6 hex>`` when empty.
         current_phase: Current phase of the mission.
         notes: Internal notes.
-        inspection_site_address: Address of the inspected site.
+        address_line, postal_code, city: Address of the inspected site (see
+            ``AddressMixin``).
+        travel_*: Stored travel estimate from a starting point to the site: the
+            origin (``home`` or ``custom``, its label and coordinates), the site
+            address it was computed for, the time in minutes, the distance in km
+            and the date. It is only computed when the user asks for it.
         company: Inspected company (cannot be deleted while it has folders).
         contact: Optional referent contact.
         visits: Reverse relation to the visits of the folder.
         recommandations: Reverse relation to the recommendations of the folder.
         PROGRESS_PHASES: Ordered phases shown in the progress bar.
     """
+
+    class TravelOrigin(models.TextChoices):
+        """Starting point of the stored travel estimate."""
+
+        HOME = "home", "Domicile"
+        CUSTOM = "custom", "Autre point de départ"
 
     class Phase(models.TextChoices):
         CREATION = "CREATION", "Création"
@@ -78,8 +89,46 @@ class InspectionFolder(TrackingModel):
         verbose_name="Phase actuelle",
     )
     notes = models.TextField(blank=True, verbose_name="Notes internes")
-    inspection_site_address = models.TextField(
-        blank=True, verbose_name="Adresse du site d'inspection"
+
+    # --- TRAVEL ESTIMATE (stored, computed only on request) ---
+    travel_origin_kind = models.CharField(
+        max_length=10,
+        choices=TravelOrigin.choices,
+        blank=True,
+        editable=False,
+        verbose_name="Type de point de départ",
+    )
+    travel_origin_label = models.CharField(
+        max_length=400,
+        blank=True,
+        editable=False,
+        verbose_name="Point de départ du trajet",
+    )
+    travel_origin_latitude = models.DecimalField(
+        max_digits=9, decimal_places=6, null=True, blank=True, editable=False
+    )
+    travel_origin_longitude = models.DecimalField(
+        max_digits=9, decimal_places=6, null=True, blank=True, editable=False
+    )
+    travel_destination_label = models.CharField(
+        max_length=400,
+        blank=True,
+        editable=False,
+        verbose_name="Adresse du site au moment du calcul",
+    )
+    travel_minutes = models.PositiveIntegerField(
+        null=True, blank=True, editable=False, verbose_name="Temps de trajet (min)"
+    )
+    travel_km = models.DecimalField(
+        max_digits=7,
+        decimal_places=1,
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name="Distance (km)",
+    )
+    travel_computed_at = models.DateTimeField(
+        null=True, blank=True, editable=False, verbose_name="Trajet calculé le"
     )
 
     # --- COMPANY RELATIONSHIP ---

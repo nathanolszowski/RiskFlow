@@ -1,0 +1,6 @@
+{% comment %}Badge de certification d'une adresse. Contexte : obj (modèle avec AddressMixin).{% endcomment %}
+{% if obj.address_certified %}
+<span class="inline-flex items-center gap-1 rounded-full bg-status-success-bg px-2 py-0.5 text-[11px] font-medium text-status-success" title="Adresse localisée par le service de géocodage">Adresse certifiée</span>
+{% elif obj.full_address %}
+<span class="inline-flex items-center gap-1 rounded-full bg-status-warning-bg px-2 py-0.5 text-[11px] font-medium text-status-warning" title="Adresse non localisée : à vérifier">Adresse à vérifier</span>
+{% endif %}

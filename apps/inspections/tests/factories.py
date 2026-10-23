@@ -107,7 +107,9 @@ class InspectionFolderFactory(TrackedFactory):
         company=factory.SelfAttribute("..company"),
         created_by=factory.SelfAttribute("..created_by"),
     )
-    inspection_site_address = factory.Faker("address")
+    address_line = factory.Faker("street_address")
+    postal_code = factory.Faker("postcode")
+    city = factory.Faker("city")
 
 
 class VisitTemplateFactory(TrackedFactory):

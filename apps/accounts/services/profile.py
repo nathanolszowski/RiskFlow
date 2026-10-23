@@ -1,12 +1,13 @@
 """Profile of the logged-in user: e-mail, home address and password."""
 
+from core.services.geo import certify_address
 from django.contrib.auth import update_session_auth_hash
 from django.http import HttpRequest
 from django.utils import timezone
 
 from accounts.models import CustomUser
 
-ADDRESS_FIELDS = ("street", "address_complement", "postal_code", "city")
+ADDRESS_FIELDS = ("address_line", "address_complement", "postal_code", "city")
 
 
 def get_inspector_profile(user: CustomUser):
@@ -26,6 +27,7 @@ def update_address(user: CustomUser, data: dict) -> CustomUser:
     for field in ADDRESS_FIELDS:
         setattr(user, field, data.get(field, ""))
     user.save(update_fields=list(ADDRESS_FIELDS))
+    certify_address(user)
     return user
 
 

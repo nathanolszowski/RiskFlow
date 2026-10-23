@@ -1,7 +1,7 @@
 """Abstract base model shared by the business models of the project."""
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from django.conf import settings
 from django.db import models
@@ -9,6 +9,131 @@ from django.utils import timezone
 
 if TYPE_CHECKING:
     from accounts.models import CustomUser
+
+
+class AddressMixin(models.Model):
+    """Abstract postal address that can be certified by the geocoding service.
+
+    ``address_line``, ``postal_code`` and ``city`` are typed by the user. The other
+    fields are never editable in forms: they are set by
+    ``core.services.geo.certify_address`` from the geocoder answer, so coordinates
+    cannot come from a posted form.
+
+    Attributes:
+        address_line: Number and street.
+        postal_code: Postal code.
+        city: City.
+        citycode: INSEE code of the municipality, given by the geocoder or Sirene.
+        latitude: Latitude of the geocoded address (WGS84).
+        longitude: Longitude of the geocoded address (WGS84).
+        address_certified: True when the geocoder found the address with enough confidence.
+        address_source: Where the current address comes from.
+        geocoded_at: Date of the last geocoding attempt, empty if never tried.
+        geocoded_address: Address text the coordinates were computed for. When it
+            differs from ``full_address`` the coordinates are stale: ``save()``
+            clears them and ``certify_address`` computes them again.
+    """
+
+    ADDRESS_PARTS = ("address_line", "postal_code", "city")
+    GEOCODING_FIELDS = (
+        "latitude",
+        "longitude",
+        "address_certified",
+        "geocoded_at",
+        "geocoded_address",
+        "citycode",
+    )
+
+    class AddressSource(models.TextChoices):
+        """Origin of the address."""
+
+        MANUAL = "manual", "Saisie"
+        SIRENE = "sirene", "Sirene"
+
+    address_line = models.CharField(
+        max_length=255, blank=True, verbose_name="Numéro et rue"
+    )
+    postal_code = models.CharField(
+        max_length=10, blank=True, verbose_name="Code postal"
+    )
+    city = models.CharField(max_length=100, blank=True, verbose_name="Ville")
+    citycode = models.CharField(
+        max_length=5, blank=True, editable=False, verbose_name="Code commune (INSEE)"
+    )
+    latitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name="Latitude",
+    )
+    longitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name="Longitude",
+    )
+    address_certified = models.BooleanField(
+        default=False, editable=False, verbose_name="Adresse certifiée"
+    )
+    address_source = models.CharField(
+        max_length=10,
+        choices=AddressSource.choices,
+        default=AddressSource.MANUAL,
+        editable=False,
+        verbose_name="Origine de l'adresse",
+    )
+    geocoded_at = models.DateTimeField(
+        null=True, blank=True, editable=False, verbose_name="Date du géocodage"
+    )
+    geocoded_address = models.CharField(
+        max_length=400, blank=True, editable=False, verbose_name="Adresse géocodée"
+    )
+
+    class Meta:
+        abstract = True
+
+    @property
+    def full_address(self) -> str:
+        """Return the address on one line (``12 rue X, 75001 Paris``), empty if unset."""
+        locality = f"{self.postal_code} {self.city}".strip()
+        return ", ".join(part for part in (self.address_line, locality) if part)
+
+    @property
+    def has_coordinates(self) -> bool:
+        """Return whether the address has been geocoded."""
+        return self.latitude is not None and self.longitude is not None
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """Save, dropping the coordinates when the address changed since the geocoding.
+
+        No network call here: ``core.services.geo.certify_address`` computes the new
+        coordinates. A partial save (``update_fields``) is extended with the cleared
+        fields only when it writes the address.
+
+        Args:
+            *args: Positional arguments passed to ``Model.save()``.
+            **kwargs: Keyword arguments passed to ``Model.save()``.
+        """
+        update_fields = kwargs.get("update_fields")
+        writes_address = update_fields is None or bool(
+            set(self.ADDRESS_PARTS) & set(update_fields)
+        )
+        if writes_address and self.full_address != self.geocoded_address:
+            self.latitude = None
+            self.longitude = None
+            self.address_certified = False
+            if update_fields is not None:
+                kwargs["update_fields"] = [
+                    *update_fields,
+                    "latitude",
+                    "longitude",
+                    "address_certified",
+                ]
+        super().save(*args, **kwargs)
 
 
 class TrackingModel(models.Model):

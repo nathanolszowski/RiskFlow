@@ -1,0 +1,14 @@
+{% comment %}Suggestions d'adresse (autocomplétion). Contexte : suggestions (liste de GeocodeResult).{% endcomment %}
+{% if suggestions %}
+<ul class="absolute left-0 right-0 z-20 mt-1 max-h-64 overflow-auto rounded-lg border border-border-default bg-surface-secondary shadow-lg" role="listbox">
+  {% for s in suggestions %}
+  <li role="option">
+    <button type="button" data-address-suggestion
+            data-address-line="{{ s.address_line }}" data-postal-code="{{ s.postal_code }}" data-city="{{ s.city }}"
+            class="block w-full px-3 py-3 text-left text-sm text-text-main hover:bg-surface-tertiary">
+      {{ s.address_line }} <span class="text-text-subtle">· {{ s.postal_code }} {{ s.city }}</span>
+    </button>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
