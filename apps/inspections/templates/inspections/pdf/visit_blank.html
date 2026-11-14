@@ -1,0 +1,63 @@
+{# Blank questionnaire printed for the field. Standalone page (rendered by WeasyPrint). #}
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Visite {{ visit.folder.reference }}</title>
+<style>
+  @page {
+    size: A4;
+    margin: 18mm 15mm 20mm;
+    @bottom-left { content: "Exporté le {{ exported_at|date:'d/m/Y H:i' }}"; font-size: 8pt; color: #555; }
+    @bottom-right { content: "Page " counter(page) " / " counter(pages); font-size: 8pt; color: #555; }
+  }
+  body { font-family: "DejaVu Sans", sans-serif; font-size: 10pt; color: #000; }
+  h1 { font-size: 15pt; margin: 0 0 4mm; }
+  table.meta { width: 100%; border-collapse: collapse; margin-bottom: 6mm; }
+  table.meta td { border: 0.3mm solid #888; padding: 1.5mm 2mm; font-size: 9pt; vertical-align: top; }
+  table.meta td.k { width: 28%; background: #eee; font-weight: bold; }
+  h2 { font-size: 12pt; margin: 6mm 0 3mm; padding-bottom: 1mm; border-bottom: 0.5mm solid #000; break-after: avoid; }
+  .field { break-inside: avoid; margin-bottom: 4mm; }
+  .label { font-weight: bold; }
+  .req { color: #000; }
+  .hint { font-size: 8pt; color: #555; }
+  .box { display: inline-block; width: 3.5mm; height: 3.5mm; border: 0.3mm solid #000; margin: 0 1.5mm 0 4mm; vertical-align: -0.5mm; }
+  .box:first-child { margin-left: 0; }
+  .options { margin-top: 1.5mm; }
+  .opt { display: block; margin: 1mm 0; }
+  .opt .box { margin-left: 0; }
+  .line { border-bottom: 0.3mm solid #666; height: 7mm; }
+  .numline { display: inline-block; width: 40mm; border-bottom: 0.3mm solid #666; height: 5mm; vertical-align: bottom; }
+  .notes { break-inside: avoid; margin-top: 3mm; }
+  .notes .line { height: 8mm; }
+</style>
+</head>
+<body>
+  <h1>Questionnaire de visite</h1>
+  <table class="meta">
+    <tr><td class="k">Dossier</td><td>{{ visit.folder.reference }}</td><td class="k">Template</td><td>{{ visit.display_template_name }}</td></tr>
+    <tr><td class="k">Client</td><td>{{ visit.folder.company.name }}</td><td class="k">Date prévue</td><td>{% if visit.due_date %}{{ visit.due_date|date:"d/m/Y" }}{% if visit.due_time %} à {{ visit.due_time|time:"H:i" }}{% endif %}{% else %}—{% endif %}</td></tr>
+    <tr><td class="k">Site</td><td>{{ visit.folder.full_address|default:"—" }}</td><td class="k">Inspecteur</td><td>{{ inspector.name }}{% if inspector.registration_number %} ({{ inspector.registration_number }}){% endif %}</td></tr>
+  </table>
+
+  {% for section in sections %}
+  <h2>{{ forloop.counter }}. {{ section.title }}</h2>
+  {% for field in section.fields %}
+  <div class="field">
+    <div class="label">{{ field.label }}{% if field.required %} <span class="req">*</span>{% endif %}</div>
+    {% if field.type == "boolean" %}
+      <div class="options"><span class="box"></span>Oui <span class="box"></span>Non</div>
+    {% elif field.type == "select" %}
+      <div class="options">{% for option in field.options %}<span class="opt"><span class="box"></span>{{ option }}</span>{% endfor %}</div>
+    {% elif field.type == "number" %}
+      <div class="options"><span class="numline"></span>{% if field.unit %} {{ field.unit }}{% endif %}
+        {% if field.min is not None or field.max is not None %}<span class="hint"> ({% if field.min is not None %}min {{ field.min }}{% endif %}{% if field.min is not None and field.max is not None %}, {% endif %}{% if field.max is not None %}max {{ field.max }}{% endif %})</span>{% endif %}</div>
+    {% else %}
+      <div class="line"></div><div class="line"></div><div class="line"></div>
+    {% endif %}
+  </div>
+  {% endfor %}
+  <div class="notes"><div class="hint">Notes</div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+  {% endfor %}
+</body>
+</html>

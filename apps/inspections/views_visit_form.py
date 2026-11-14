@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
 from inspections.models import VisitInstance
@@ -21,6 +22,7 @@ from inspections.services.visit import (
     reopen_visit,
     save_answers,
 )
+from inspections.services.visit_pdf import render_blank_questionnaire_pdf
 from inspections.validators import AnswersValidationError
 
 # ==========================================
@@ -214,4 +216,29 @@ def visit_reopen(request: HttpRequest, pk: int) -> HttpResponse:
         raise Http404
     response = HttpResponse(status=204)
     response["HX-Redirect"] = reverse("inspections:visit_form", args=[visit.pk])
+    return response
+
+
+@htmx_login_required
+@require_GET
+def visit_export_pdf(request: HttpRequest, pk: int) -> HttpResponse:
+    """Download the blank questionnaire of a visit as a PDF, to print.
+
+    Args:
+        request: Current request.
+        pk: Primary key of the visit.
+
+    Returns:
+        The PDF as an attachment.
+
+    Raises:
+        Http404: If the visit does not exist or belongs to another user.
+    """
+    visit = get_visit_by_id(pk, request.user)
+    pdf = render_blank_questionnaire_pdf(visit)
+    stamp = timezone.localdate().strftime("%Y%m%d")
+    response = HttpResponse(pdf, content_type="application/pdf")
+    response["Content-Disposition"] = (
+        f'attachment; filename="visite-{visit.folder.reference}-{stamp}.pdf"'
+    )
     return response

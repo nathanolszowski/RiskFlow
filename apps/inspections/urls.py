@@ -69,6 +69,11 @@ urlpatterns = [
         name="visit_save_answers",
     ),
     path(
+        "visite/<int:pk>/export-pdf/",
+        views_visit_form.visit_export_pdf,
+        name="visit_export_pdf",
+    ),
+    path(
         "visite/<int:pk>/terminer/",
         views_visit_form.visit_complete,
         name="visit_complete",

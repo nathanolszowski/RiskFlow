@@ -15,6 +15,11 @@
   </div>
   {% include "inspections/partials/visit/visit_form_progress.html" %}
   {% include "inspections/partials/visit/visit_form_status.html" %}
+  <a href="{% url 'inspections:visit_export_pdf' visit.pk %}" download
+    class="inline-flex h-12 shrink-0 items-center gap-2 rounded-lg border border-border-default bg-surface-secondary px-4 text-sm font-semibold text-text-main transition-colors hover:bg-surface-hover">
+    <svg class="h-[18px] w-[18px]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+    Exporter en PDF
+  </a>
 </header>
 
 {% if visit.current_status == 'VALIDATED' or not visit.is_active %}
