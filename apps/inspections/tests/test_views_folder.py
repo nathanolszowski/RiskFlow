@@ -4,6 +4,7 @@ from core.tests.helpers import HtmxClientMixin
 from crm.tests.factories import CompanyFactory, ContactFactory
 from django.test import TestCase
 from django.urls import reverse
+from django.utils.html import escape
 
 from inspections.models import InspectionFolder, Recommandation
 from inspections.tests.factories import InspectionFolderFactory, RecommandationFactory
@@ -312,7 +313,8 @@ class RecommandationInlineTests(FolderViewTestCase):
         response = self.htmx_get(
             reverse("inspections:recommandation_inline_read", args=[self.rec.pk])
         )
-        self.assertContains(response, self.rec.description)
+        # Faker sentences may hold an apostrophe, which the template escapes
+        self.assertContains(response, escape(self.rec.description))
 
     def test_recommendation_count_is_unchanged_by_edits(self):
         """Editing never creates a second recommendation."""

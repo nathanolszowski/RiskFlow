@@ -11,6 +11,7 @@ from core.tests.helpers import HtmxClientMixin
 from django.core.cache import cache
 from django.test import TestCase
 from django.urls import reverse
+from django.utils.html import escape
 
 from crm.models import Company, Contact
 from crm.tests.factories import CompanyFactory, ContactFactory
@@ -353,7 +354,7 @@ class CompanyInlineTests(CrmViewTestCase):
         response = self.htmx_get(
             reverse("crm:company_inline_read", args=[self.company.pk])
         )
-        self.assertContains(response, self.company.name)
+        self.assertContains(response, escape(self.company.name))
 
     def test_valid_post_updates_and_returns_the_read_fragment(self):
         """A valid POST saves the client and returns the read fragment."""
