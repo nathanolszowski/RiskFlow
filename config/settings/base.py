@@ -23,7 +23,7 @@ load_dotenv(BASE_DIR / ".env")
 # Apps live in apps/ but keep their top-level import names (core, crm, ...)
 sys.path.insert(0, str(BASE_DIR / "apps"))
 
-# SECRET_KEY, DEBUG and ALLOWED_HOSTS are defined in dev.py / prod.py
+# SECRET_KEY, DEBUG and ALLOWED_HOSTS are defined in dev.py / local.py
 
 # Application definition
 
@@ -78,7 +78,7 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 
-# Database: defined in dev.py / prod.py
+# Database: defined in dev.py / local.py
 
 INSEE_API_KEY = os.getenv("INSEE_API_KEY")
 
@@ -131,7 +131,7 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
-# Media files (uploads). Local filesystem by default, S3-compatible storage in prod.
+# Media files (uploads). On the local filesystem.
 # There is no MEDIA_URL on purpose: files are never reachable by a public URL, the
 # medias:media_file / media_thumbnail views check the owner first.
 MEDIA_ROOT = BASE_DIR / "media"
@@ -146,7 +146,7 @@ def _env_int(name, default):
     return int(os.getenv(name, default))
 
 
-# Files per request (Django has no limit on the total size: set client_max_body_size on the proxy)
+# Files per request (Django has no limit on the total size: set the limit of the web server in front, if any)
 DATA_UPLOAD_MAX_NUMBER_FILES = 20
 
 # Maximum size of a received file, in MB, per media type

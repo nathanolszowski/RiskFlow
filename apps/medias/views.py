@@ -7,7 +7,6 @@ from core.decorators import htmx_login_required
 from core.modals import delete_confirm_modal
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.files.storage import FileSystemStorage
 from django.db.models.fields.files import FieldFile
 from django.http import FileResponse, Http404, HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
@@ -341,8 +340,8 @@ def _serve(
 ) -> HttpResponse:
     """Serve a stored file; the caller has already checked the ownership.
 
-    Local storage: streamed by Django, with byte ranges. Remote storage (S3/R2):
-    redirect to a short-lived signed URL, so the bucket stays private.
+    The file is streamed by Django, with byte ranges (needed by Safari/iPadOS
+    to play a video).
 
     Args:
         request: Current request.
@@ -351,7 +350,7 @@ def _serve(
         inline: True to display the file in the browser, False to download it.
 
     Returns:
-        The file (200 or 206), a 416 for an invalid range, or a redirect to the signed URL.
+        The file (200 or 206), or a 416 for an invalid range.
 
     Raises:
         Http404: If there is no file or it is missing from the storage.
@@ -360,50 +359,41 @@ def _serve(
         raise Http404("Fichier introuvable.")
     disposition = content_disposition_header(not inline, media.original_name)
     storage = field.storage
-    if isinstance(storage, FileSystemStorage):
-        try:
-            handle = storage.open(field.name, "rb")
-        except FileNotFoundError:
-            raise Http404("Fichier introuvable.")
-        size = storage.size(field.name)
-        # Safari/iPadOS only plays a video served with byte ranges (206)
-        range_header = request.headers.get("Range")
-        if range_header:
-            byte_range = _parse_range(range_header, size)
-            if byte_range is None:
-                handle.close()
-                response = HttpResponse(status=416)
-                response["Content-Range"] = f"bytes */{size}"
-                return response
-            first, last = byte_range
-            handle.seek(first)
-            response = FileResponse(
-                _Slice(handle, last - first + 1),
-                status=206,
-                content_type=media.content_type,
-            )
-            response["Content-Range"] = f"bytes {first}-{last}/{size}"
-            response["Content-Length"] = str(last - first + 1)
-        else:
-            response = FileResponse(handle, content_type=media.content_type)
-            response["Content-Length"] = str(size)
-        response["Accept-Ranges"] = "bytes"
-        response["X-Content-Type-Options"] = "nosniff"
-        if media.media_type != Media.MediaType.PDF:
-            # Defense in depth: nothing served here may run scripts on the app origin
-            # (the browser PDF viewer does not work in a sandboxed document)
-            response["Content-Security-Policy"] = "sandbox"
-        response["Content-Disposition"] = disposition
-        response["Cache-Control"] = "private, max-age=300"
-        return response
-    url = storage.url(
-        field.name,
-        parameters={
-            "ResponseContentDisposition": disposition,
-            "ResponseContentType": media.content_type,
-        },
-    )
-    return redirect(url)
+    try:
+        handle = storage.open(field.name, "rb")
+    except FileNotFoundError:
+        raise Http404("Fichier introuvable.")
+    size = storage.size(field.name)
+    # Safari/iPadOS only plays a video served with byte ranges (206)
+    range_header = request.headers.get("Range")
+    if range_header:
+        byte_range = _parse_range(range_header, size)
+        if byte_range is None:
+            handle.close()
+            response = HttpResponse(status=416)
+            response["Content-Range"] = f"bytes */{size}"
+            return response
+        first, last = byte_range
+        handle.seek(first)
+        response = FileResponse(
+            _Slice(handle, last - first + 1),
+            status=206,
+            content_type=media.content_type,
+        )
+        response["Content-Range"] = f"bytes {first}-{last}/{size}"
+        response["Content-Length"] = str(last - first + 1)
+    else:
+        response = FileResponse(handle, content_type=media.content_type)
+        response["Content-Length"] = str(size)
+    response["Accept-Ranges"] = "bytes"
+    response["X-Content-Type-Options"] = "nosniff"
+    if media.media_type != Media.MediaType.PDF:
+        # Defense in depth: nothing served here may run scripts on the app origin
+        # (the browser PDF viewer does not work in a sandboxed document)
+        response["Content-Security-Policy"] = "sandbox"
+    response["Content-Disposition"] = disposition
+    response["Cache-Control"] = "private, max-age=300"
+    return response
 
 
 @htmx_login_required
@@ -419,7 +409,7 @@ def media_file(request: HttpRequest, pk: int) -> HttpResponse:
         pk: Primary key of the media.
 
     Returns:
-        The file, or a redirect to its signed URL.
+        The file.
 
     Raises:
         Http404: If the media does not exist or belongs to another user.
@@ -439,7 +429,7 @@ def media_thumbnail(request: HttpRequest, pk: int) -> HttpResponse:
         pk: Primary key of the media.
 
     Returns:
-        The thumbnail, or a redirect to its signed URL.
+        The thumbnail.
 
     Raises:
         Http404: If the media does not exist, has no thumbnail or belongs to another user.

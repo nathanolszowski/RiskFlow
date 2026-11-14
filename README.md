@@ -7,7 +7,7 @@ Je souhaitais réaliser une application fullstack pour mon portfolio mais je ne 
 
 ## État du projet
 
-Projet personnel en cours de développement, réalisé par sprints : fondations, cœur métier et CRM sont en place ; la gestion des médias est en place ; le rapport de visite, la sécurité et le déploiement sont les prochaines étapes. La configuration actuelle est une configuration de **développement** et n'est pas destinée à la production.
+Projet personnel en cours de développement, réalisé par sprints : fondations, cœur métier et CRM sont en place ; la gestion des médias est en place ; le rapport de visite est la prochaine étape. L'application est prévue pour un **seul utilisateur, sur un PC Windows** (Docker, voir [Déploiement local](#déploiement-local-avec-docker)) : il n'y a pas d'hébergement en ligne.
 
 ## Le métier en bref
 
@@ -40,8 +40,7 @@ RiskFlow vise à rassembler ce flux de travail, aujourd'hui éclaté entre table
 ### Prévues
 
 - Rapport de visite : interface en écran partagé, export PDF.
-- Déploiement.
-- À plus long terme : notifications, tableau de bord analytique, portail client, base de connaissances avec recherche sémantique (RAG avec `pgvector`), dont une interrogation des documents d'un dossier (Gemini, Celery + Redis).
+- À plus long terme : notifications, tableau de bord analytique, portail client, base de connaissances avec recherche sémantique (RAG avec `pgvector`), dont une interrogation des documents d'un dossier (Gemini).
 
 ## Stack technique
 
@@ -51,8 +50,9 @@ RiskFlow vise à rassembler ce flux de travail, aujourd'hui éclaté entre table
 | Base de données | PostgreSQL (via `psycopg` 3), `JSONField` pour les formulaires dynamiques |
 | Front-end | Templates Django, HTMX (`django-htmx`), Tailwind CSS v4 (`django-tailwind`, binaire standalone, sans npm) |
 | Validation | Pydantic 2 |
-| Fichiers | Système de fichiers en dev, stockage S3 (Cloudflare R2) via `django-storages` en prod, Pillow pour les images |
+| Fichiers | Système de fichiers local (`MEDIA_ROOT`), Pillow pour les images |
 | Intégrations | API Sirene (INSEE), référentiel de nomenclatures `id.insee.fr` (libellés NAF 2025), Géoplateforme IGN (géocodage, itinéraires, fond de carte), sans clé |
+| Déploiement | Docker Compose (Django + gunicorn + WhiteNoise, PostgreSQL), un seul PC, accès local uniquement |
 | Outillage | `uv` |
 
 Le choix d'HTMX permet de limiter le JavaScript au strict minimum : les listes, formulaires en modale, onglets et confirmations sont des fragments HTML renvoyés par le serveur.
@@ -113,42 +113,17 @@ uv run python manage.py tailwind dev
 
 `tailwind dev` lance à la fois le serveur Django et le watcher Tailwind. L'application est alors accessible sur <http://127.0.0.1:8000/auth/login/>. Les modèles de visite se créent depuis l'administration Django (`/admin/`).
 
-### Gestion des médias (développement et production)
+### Gestion des médias
 
-Les fichiers ne sont **jamais** servis par une URL publique : les vues `medias:media_file` et `medias:media_thumbnail` vérifient que l'utilisateur est le propriétaire du dossier avant d'envoyer le fichier.
+Les fichiers ne sont **jamais** servis par une URL publique : les vues `medias:media_file` et `medias:media_thumbnail` vérifient que l'utilisateur est le propriétaire du dossier avant d'envoyer le fichier. Django les streame lui-même, avec les requêtes `Range` (nécessaires pour lire les vidéos sur Safari).
 
-| | Développement | Production |
+| | Développement | Déploiement local (Docker) |
 | --- | --- | --- |
-| Settings | `config.settings.dev` (défaut de `manage.py`) | `DJANGO_SETTINGS_MODULE=config.settings.prod` |
-| Stockage | Dossier local `media/` à la racine (`MEDIA_ROOT`, ignoré par Git) | Bucket S3 privé, Cloudflare R2 par défaut |
-| Envoi du fichier | Streamé par Django (requêtes `Range` gérées, nécessaire pour lire les vidéos sur iPad/Safari) | Redirection vers une URL pré-signée valable 5 minutes |
-| Configuration | Aucune | Variables `AWS_*` obligatoires (voir ci-dessous) |
+| Settings | `config.settings.dev` (défaut de `manage.py`) | `config.settings.local` |
+| Stockage | Dossier `media/` à la racine (`MEDIA_ROOT`, ignoré par Git) | Volume `media` monté sur `/data/media` |
+| Configuration | Aucune | Aucune |
 
-**Développement** : rien à configurer. Les fichiers sont écrits dans `media/folders/<id du dossier>/` sous un nom aléatoire. Supprimer un média (ou son dossier) supprime aussi le fichier. Pour repartir de zéro, supprimer le dossier `media/` en même temps que la base.
-
-**Production (Cloudflare R2, via le protocole S3 standard)** :
-
-1. Dans Cloudflare, créer un bucket **privé** : ne pas activer l'accès public `r2.dev` ni de domaine personnalisé public.
-2. Créer un jeton d'API R2 limité à ce bucket, avec les droits « Object Read & Write ».
-3. Renseigner les variables d'environnement (voir `.env.example`) :
-
-   ```env
-   DJANGO_SETTINGS_MODULE=config.settings.prod
-   AWS_STORAGE_BUCKET_NAME=<bucket>
-   AWS_S3_ENDPOINT_URL=https://<account_id>.r2.cloudflarestorage.com
-   AWS_ACCESS_KEY_ID=<cle>
-   AWS_SECRET_ACCESS_KEY=<secret>
-   AWS_S3_REGION_NAME=auto
-   ```
-
-4. Appliquer les migrations (`uv run python manage.py migrate`).
-5. Sur le reverse proxy, autoriser les gros envois : `client_max_body_size 100m;` pour nginx (au moins la plus grosse limite, celle des vidéos). Django ne limite pas la taille totale d'une requête.
-
-Aucun code n'est propre à R2 : pour utiliser **AWS S3**, laisser `AWS_S3_ENDPOINT_URL` vide et renseigner la région. Pour migrer des fichiers déjà envoyés en développement vers le bucket, copier `media/` à la racine du bucket (les chemins `folders/...` sont ceux enregistrés en base), par exemple :
-
-```bash
-aws s3 sync media/ s3://<bucket>/ --endpoint-url https://<account_id>.r2.cloudflarestorage.com
-```
+Les fichiers sont écrits dans `folders/<id du dossier>/` sous un nom aléatoire. Supprimer un média (ou son dossier) supprime aussi le fichier. En développement, pour repartir de zéro, supprimer le dossier `media/` en même temps que la base.
 
 **Limites** (variables optionnelles, en Mo) :
 
@@ -187,12 +162,24 @@ uv run coverage run manage.py test --settings=config.settings.test && uv run cov
 - Le cloisonnement par utilisateur (dossiers, visites, recommandations, médias, templates privés, recherche globale des dossiers) est verrouillé par les tests d'isolation (`test_isolation.py`). Les clients et leurs contacts sont partagés entre utilisateurs, ce que vérifie `CrmSharingTests`.
 - Ce que les tests ne couvrent pas (navigateur, réseau, tablette) se vérifie avec la [recette manuelle](#recette-manuelle).
 
-### Contrôle des réglages de production
+## Déploiement local avec Docker
 
-`DJANGO_SETTINGS_MODULE=config.settings.prod uv run python manage.py check --deploy` (avec `SECRET_KEY`, `ALLOWED_HOSTS`, `DB_*` et `AWS_*` renseignés) ne laisse que deux avertissements, volontaires :
+RiskFlow tourne sur un PC (Windows avec Docker Desktop et WSL2) et n'est joignable que depuis ce PC, sur <http://localhost:8000>. Deux conteneurs : `web` (gunicorn, WhiteNoise) et `db` (PostgreSQL 16). Le port n'est publié que sur `127.0.0.1`.
 
-- `security.W005` (`SECURE_HSTS_INCLUDE_SUBDOMAINS`) et `security.W021` (`SECURE_HSTS_PRELOAD`) : ces réglages engagent tous les sous-domaines (et, pour le preload, la liste des navigateurs, difficile à annuler). Ils ne sont à activer qu'une fois le nom de domaine définitif connu et entièrement servi en HTTPS.
+1. Copier `.env.example` en `.env` et renseigner `SECRET_KEY`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` (et `INSEE_API_KEY`). `DB_HOST` est fixé par `compose.yaml`.
+2. Construire et démarrer, puis appliquer les migrations et créer le compte :
 
+```bash
+docker compose build
+docker compose up -d db
+docker compose run --rm web python manage.py migrate
+docker compose run --rm web python manage.py createsuperuser
+docker compose up -d
+```
+
+Les données vivent dans les volumes Docker `pgdata`, `media` et `logs` : un volume n'est **pas** une sauvegarde. Procédure complète (mise à jour, sauvegarde, restauration, dépannage) : `docs/riskflow-deploiement.md`, et scripts dans `scripts/`.
+
+Le contrôle des réglages se lance avec `docker compose run --rm web python manage.py check --deploy`. Les avertissements liés à HTTPS (`security.W004`, `W008`, `W012`, `W016`) sont attendus : l'application n'est servie qu'en HTTP sur `localhost`.
 
 ## Recette manuelle
 
@@ -235,7 +222,6 @@ Préparation : un compte inspecteur, un dossier avec une visite préparée à pa
 
 - [ ] Envoyer une vidéo `.mp4` et une `.mov` filmées avec l'iPad, puis les ouvrir depuis l'onglet Médias : la lecture démarre.
 - [ ] Se déplacer dans la vidéo (barre de progression) : la lecture reprend à l'endroit choisi (le serveur répond en `206 Partial Content`, onglet Réseau).
-- [ ] Même vérification avec le stockage S3/R2 en préproduction (redirection vers l'URL signée).
 
 ### Autres contrôles sur tablette
 

@@ -59,3 +59,11 @@ jobs:
 
       - name: Coverage
         run: uv run coverage report --fail-under=70
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build the image
+        run: docker build -t riskflow:ci .
