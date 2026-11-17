@@ -74,6 +74,7 @@ class GeocodeTests(GeoTestCase):
     def test_returns_the_coordinates_of_a_found_address(self):
         """A house number match gives its coordinates and its parts."""
         result = geocode(ADDRESS)
+        assert result is not None
         self.assertEqual(result.address_line, "12 Rue de la Paix")
         self.assertEqual((result.postal_code, result.city), ("75002", "Paris"))
         self.assertEqual(result.citycode, "75102")

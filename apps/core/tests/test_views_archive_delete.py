@@ -17,14 +17,14 @@ from inspections.tests.factories import (
 )
 from medias.tests.factories import MediaFactory
 
-from core.tests.helpers import HtmxClientMixin
+from core.tests.helpers import HtmxClientMixin, MixinBase
 
 MODAL = "core/partials/modal/archive_confirm_modal.html"
 VISIT_TAB = "inspections/partials/tabs/tab_visit.html"
 REC_TAB = "inspections/partials/tabs/tab_recommandations.html"
 
 
-class ModalAssertionsMixin:
+class ModalAssertionsMixin(MixinBase):
     """Assertions on the context of the confirmation modal."""
 
     def assertModal(self, response, *, blocking):

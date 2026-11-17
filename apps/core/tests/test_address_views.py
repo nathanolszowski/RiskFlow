@@ -109,6 +109,7 @@ class CertificationInFormsTests(HtmxClientMixin, TestCase):
         )
         folder = InspectionFolder.objects.get()
         self.assertTrue(folder.address_certified)
+        assert folder.latitude is not None
         self.assertAlmostEqual(float(folder.latitude), 48.869141, places=5)
 
     def test_folder_without_address_calls_nothing(self):

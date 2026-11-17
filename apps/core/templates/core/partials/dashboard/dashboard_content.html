@@ -98,7 +98,7 @@
         <ul class="flex min-w-48 flex-1 flex-col gap-3">
           {% for p in phases %}
           <li class="flex items-center gap-3 text-[15px]">
-            <span class="size-3 shrink-0 rounded-[3px]" style="background: {{ p.color }}"></span>
+            <svg class="size-3 shrink-0" viewBox="0 0 12 12" aria-hidden="true"><rect width="12" height="12" rx="3" fill="{{ p.color }}"/></svg>
             <span class="flex-1 text-text-body">{{ p.label }}</span>
             <span class="font-semibold text-text-main tabular-nums">{{ p.count }}</span>
             <span class="w-11 text-right text-text-subtle tabular-nums">{{ p.pct }} %</span>

@@ -2,6 +2,7 @@
 
 import factory
 from django.utils import timezone
+from factory.declarations import LazyFunction, SelfAttribute, Trait
 
 
 class TrackedFactory(factory.django.DjangoModelFactory):
@@ -14,7 +15,7 @@ class TrackedFactory(factory.django.DjangoModelFactory):
             ``archived_by`` set to the creator, like ``TrackingModel.archive()``.
     """
 
-    class Meta:
+    class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]
         """Mark the factory as abstract: it builds no model by itself."""
 
         abstract = True
@@ -22,8 +23,8 @@ class TrackedFactory(factory.django.DjangoModelFactory):
     class Params:
         """Traits shared by all tracked factories."""
 
-        archived = factory.Trait(
+        archived = Trait(
             is_active=False,
-            archived_at=factory.LazyFunction(timezone.now),
-            archived_by=factory.SelfAttribute("created_by"),
+            archived_at=LazyFunction(timezone.now),
+            archived_by=SelfAttribute("created_by"),
         )

@@ -2,7 +2,9 @@
 
 import json
 from collections import namedtuple
+from collections.abc import Callable
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 from unittest import mock
 
 import requests
@@ -15,8 +17,17 @@ Route = namedtuple("Route", "name key methods")
 
 GET, POST, BOTH = ("GET",), ("POST",), ("GET", "POST")
 
+if TYPE_CHECKING:
+    from django.test import TestCase
 
-class HtmxClientMixin:
+    # Type checkers see the mixins as test cases (``client``, ``assertEqual``...);
+    # at runtime they stay plain mixins to be combined with ``TestCase``.
+    MixinBase = TestCase
+else:
+    MixinBase = object
+
+
+class HtmxClientMixin(MixinBase):
     """Add two users, a logged-in client and HTMX request shortcuts to a test case.
 
     Put it before ``TestCase`` in the bases. ``setUp`` creates ``owner`` (logged in
@@ -63,12 +74,14 @@ class HtmxClientMixin:
         return self.client.post(url, data or {}, HTTP_HX_REQUEST="true", **extra)
 
 
-class IsolationMixin:
+class IsolationMixin(MixinBase):
     """Check that a user gets a 404 on every URL of an object owned by someone else.
 
     The test case must define ``database_state()`` returning a comparable snapshot of
     the tables the URLs could change.
     """
+
+    database_state: Callable[[], Any]  # type-only, defined by the test case
 
     def check_routes_404(self, routes, obj, extra_kwargs=None):
         """Request each route and expect a 404, with no change in the database.

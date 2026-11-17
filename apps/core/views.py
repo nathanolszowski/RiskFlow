@@ -1,11 +1,14 @@
 """Core views: dashboard, session heartbeat, theme toggle and global search."""
 
+from typing import Any, cast
+
 from crm.models import Company, Contact
 from django.db.models import Q
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_GET
+from django_htmx.middleware import HtmxDetails
 from inspections.models import InspectionFolder
 
 from core.decorators import htmx_login_required
@@ -13,9 +16,15 @@ from core.services.dashboard import get_dashboard_context, parse_period
 from core.services.geo import suggest
 
 
+class HtmxHttpRequest(HttpRequest):
+    """Typing helper: ``HttpRequest`` with the ``htmx`` attribute added by django-htmx."""
+
+    htmx: HtmxDetails
+
+
 @htmx_login_required
 @require_GET
-def dashboard(request: HttpRequest) -> HttpResponse:
+def dashboard(request: HtmxHttpRequest) -> HttpResponse:
     """Render the dashboard of the logged-in user.
 
     The ``month`` and ``year`` GET parameters filter the period (invalid values
@@ -29,7 +38,7 @@ def dashboard(request: HttpRequest) -> HttpResponse:
         The full page or the dashboard content partial.
     """
     month, year = parse_period(request.GET.get("month"), request.GET.get("year"))
-    context = get_dashboard_context(request.user, month, year)
+    context = get_dashboard_context(cast("Any", request.user), month, year)
     context["today"] = timezone.localdate()
     template = (
         "core/partials/dashboard/dashboard_content.html"

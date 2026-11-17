@@ -20,8 +20,8 @@ def build_request(user, htmx=False):
     Returns:
         The request.
     """
-    extra = {"HTTP_HX_REQUEST": "true"} if htmx else {}
-    request = RequestFactory().get("/some/page/?x=1", **extra)
+    headers = {"HX-Request": "true"} if htmx else None
+    request = RequestFactory().get("/some/page/?x=1", headers=headers)
     request.user = user
     return request
 
@@ -81,7 +81,7 @@ class HtmxLoginRequiredAnonymousTests(SimpleTestCase):
     def test_decorator_keeps_the_view_name(self):
         """``functools.wraps`` keeps the name and the docstring of the view."""
         self.assertEqual(plain_view.__name__, "plain_view")
-        self.assertIn("200", plain_view.__doc__)
+        self.assertIn("200", plain_view.__doc__ or "")
 
 
 class HtmxLoginRequiredAuthenticatedTests(TestCase):

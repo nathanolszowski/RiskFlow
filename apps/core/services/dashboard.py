@@ -74,16 +74,16 @@ def parse_period(
     """
     today = today or timezone.localdate()
     try:
-        month = int(month_raw)
+        month = int(month_raw or "")
         if not 1 <= month <= 12:
             raise ValueError
-    except (TypeError, ValueError):
+    except ValueError:
         month = today.month
     try:
-        year = int(year_raw)
+        year = int(year_raw or "")
         if not today.year - 2 <= year <= today.year:
             raise ValueError
-    except (TypeError, ValueError):
+    except ValueError:
         year = today.year
     return month, year
 
