@@ -97,7 +97,8 @@ class InspectionFolderUpdateForm(InspectionFolderForm):
 
     The company is fixed and the contact is limited to the active contacts of the
     company, plus the current one.
-    The transient ``CREATION`` phase is not selectable.
+    The transient ``CREATION`` phase and the ``ARCHIVED`` phase are not selectable,
+    unless the folder is in it.
     """
 
     class Meta(InspectionFolderForm.Meta):
@@ -119,13 +120,14 @@ class InspectionFolderUpdateForm(InspectionFolderForm):
         """
         super().__init__(*args, **kwargs)
 
-        # CREATION is only a transient phase: not selectable (unless the folder is still in it)
+        # CREATION is transient and ARCHIVED is set by archiving, not by hand: neither
+        # is selectable, unless the folder is still in it
+        hidden = {InspectionFolder.Phase.CREATION, InspectionFolder.Phase.ARCHIVED}
         phase_field = cast("forms.ChoiceField", self.fields["current_phase"])
         phase_field.choices = [
             (value, label)
             for value, label in cast("Iterable[tuple[Any, Any]]", phase_field.choices)
-            if value != InspectionFolder.Phase.CREATION
-            or value == self.instance.current_phase
+            if value not in hidden or value == self.instance.current_phase
         ]
 
         contact_field = self.fields.get("contact")

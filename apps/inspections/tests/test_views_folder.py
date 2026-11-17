@@ -189,7 +189,7 @@ class FolderInlineEditTests(FolderViewTestCase):
         self.url = reverse("inspections:folder_inline_update", args=[self.folder.pk])
 
     def test_get_renders_the_form_without_the_creation_phase(self):
-        """The edit form does not offer the transient ``Création`` phase."""
+        """The edit form offers neither the transient ``Création`` phase nor ``Archivé``."""
         response = self.htmx_get(self.url)
         self.assertTemplateUsed(
             response, "inspections/partials/folder/folder_update.html"
@@ -199,8 +199,27 @@ class FolderInlineEditTests(FolderViewTestCase):
             for value, _ in response.context["form"].fields["current_phase"].choices
         ]
         self.assertNotIn("CREATION", phases)
+        self.assertNotIn("ARCHIVED", phases)
         self.assertIn("PREPARATION", phases)
+
+    def test_archived_phase_is_kept_for_a_folder_in_it(self):
+        """A folder already in ``Archivé`` keeps that choice."""
+        folder = self.make_folder(current_phase=InspectionFolder.Phase.ARCHIVED)
+        response = self.htmx_get(
+            reverse("inspections:folder_inline_update", args=[folder.pk])
+        )
+        phases = [
+            value
+            for value, _ in response.context["form"].fields["current_phase"].choices
+        ]
         self.assertIn("ARCHIVED", phases)
+
+    def test_archived_phase_cannot_be_posted(self):
+        """Posting ``ARCHIVED`` is refused for a folder that is not in it."""
+        response = self.htmx_post(self.url, {"current_phase": "ARCHIVED"})
+        self.assertIn("current_phase", response.context["form"].errors)
+        self.folder.refresh_from_db()
+        self.assertEqual(self.folder.current_phase, InspectionFolder.Phase.PREPARATION)
 
     def test_creation_phase_is_kept_for_a_folder_still_in_it(self):
         """A folder that is still in ``Création`` keeps that choice."""
