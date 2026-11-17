@@ -323,6 +323,7 @@ class FormHelpersTests(TestCase):
     def test_get_form_field_reads_the_snapshot(self):
         """A field is found by id in the visit snapshot."""
         field = get_form_field(self.visit, "f_mesure")
+        assert field is not None
         self.assertEqual(field["type"], "number")
         self.assertEqual(field["unit"], "°C")
 

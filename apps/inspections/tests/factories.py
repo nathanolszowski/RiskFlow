@@ -3,10 +3,18 @@
 from copy import deepcopy
 from datetime import timedelta
 
-import factory
 from core.tests.factories import TrackedFactory
 from crm.tests.factories import CompanyFactory, ContactFactory
 from django.utils import timezone
+from factory.declarations import (
+    LazyAttribute,
+    LazyFunction,
+    SelfAttribute,
+    Sequence,
+    SubFactory,
+    Trait,
+)
+from factory.faker import Faker
 
 from inspections.models import (
     InspectionFolder,
@@ -93,23 +101,21 @@ class InspectionFolderFactory(TrackedFactory):
         archived: Archived folder (see ``TrackedFactory``).
     """
 
-    class Meta:
+    class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]
         """Bind the factory to the folder model."""
 
         model = InspectionFolder
 
-    created_by = factory.SubFactory("accounts.tests.factories.UserFactory")
-    company = factory.SubFactory(
-        CompanyFactory, created_by=factory.SelfAttribute("..created_by")
-    )
-    contact = factory.SubFactory(
+    created_by = SubFactory("accounts.tests.factories.UserFactory")
+    company = SubFactory(CompanyFactory, created_by=SelfAttribute("..created_by"))
+    contact = SubFactory(
         ContactFactory,
-        company=factory.SelfAttribute("..company"),
-        created_by=factory.SelfAttribute("..created_by"),
+        company=SelfAttribute("..company"),
+        created_by=SelfAttribute("..created_by"),
     )
-    address_line = factory.Faker("street_address")
-    postal_code = factory.Faker("postcode")
-    city = factory.Faker("city")
+    address_line = Faker("street_address")
+    postal_code = Faker("postcode")
+    city = Faker("city")
 
 
 class VisitTemplateFactory(TrackedFactory):
@@ -127,20 +133,20 @@ class VisitTemplateFactory(TrackedFactory):
             the name of a field.
     """
 
-    class Meta:
+    class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]
         """Bind the factory to the template model."""
 
         model = VisitTemplate
 
-    class Params:
+    class Params:  # pyright: ignore[reportIncompatibleVariableOverride]
         """Traits of the template factory."""
 
-        shared_template = factory.Trait(shared=True)
+        shared_template = Trait(shared=True)
 
-    created_by = factory.SubFactory("accounts.tests.factories.UserFactory")
-    name = factory.Sequence(lambda n: f"Template {n}")
+    created_by = SubFactory("accounts.tests.factories.UserFactory")
+    name = Sequence(lambda n: f"Template {n}")
     shared = False
-    schema = factory.LazyFunction(lambda: deepcopy(SAMPLE_SCHEMA))
+    schema = LazyFunction(lambda: deepcopy(SAMPLE_SCHEMA))
 
 
 class VisitInstanceFactory(TrackedFactory):
@@ -160,33 +166,31 @@ class VisitInstanceFactory(TrackedFactory):
         late: Scheduled visit whose ``due_date`` is three days ago.
     """
 
-    class Meta:
+    class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]
         """Bind the factory to the visit model."""
 
         model = VisitInstance
 
-    class Params:
+    class Params:  # pyright: ignore[reportIncompatibleVariableOverride]
         """Traits of the visit factory."""
 
-        validated = factory.Trait(
+        validated = Trait(
             current_status=VisitInstance.Status.VALIDATED,
-            completed_at=factory.LazyFunction(timezone.now),
+            completed_at=LazyFunction(timezone.now),
         )
-        late = factory.Trait(
+        late = Trait(
             current_status=VisitInstance.Status.SCHEDULED,
-            due_date=factory.LazyFunction(
-                lambda: timezone.localdate() - timedelta(days=3)
-            ),
+            due_date=LazyFunction(lambda: timezone.localdate() - timedelta(days=3)),
         )
 
-    folder = factory.SubFactory(InspectionFolderFactory)
-    created_by = factory.SelfAttribute("folder.created_by")
-    template = factory.SubFactory(
-        VisitTemplateFactory, created_by=factory.SelfAttribute("..created_by")
+    folder = SubFactory(InspectionFolderFactory)
+    created_by = SelfAttribute("folder.created_by")
+    template = SubFactory(
+        VisitTemplateFactory, created_by=SelfAttribute("..created_by")
     )
-    instance_schema = factory.LazyAttribute(lambda o: deepcopy(o.template.schema))
-    template_name = factory.LazyAttribute(lambda o: o.template.name)
-    data = factory.LazyFunction(lambda: {"answers": {}})
+    instance_schema = LazyAttribute(lambda o: deepcopy(o.template.schema))
+    template_name = LazyAttribute(lambda o: o.template.name)
+    data = LazyFunction(lambda: {"answers": {}})
 
 
 class RecommandationFactory(TrackedFactory):
@@ -200,12 +204,12 @@ class RecommandationFactory(TrackedFactory):
         archived: Archived recommendation (see ``TrackedFactory``).
     """
 
-    class Meta:
+    class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]
         """Bind the factory to the recommendation model."""
 
         model = Recommandation
 
-    folder = factory.SubFactory(InspectionFolderFactory)
-    created_by = factory.SelfAttribute("folder.created_by")
-    description = factory.Faker("sentence")
+    folder = SubFactory(InspectionFolderFactory)
+    created_by = SelfAttribute("folder.created_by")
+    description = Faker("sentence")
     topic = "Protection incendie"

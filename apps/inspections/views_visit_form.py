@@ -2,7 +2,7 @@
 
 from typing import Any, Optional
 
-from core.decorators import htmx_login_required
+from core.decorators import htmx_login_required, logged_user
 from django.core.exceptions import ValidationError
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import render
@@ -46,7 +46,7 @@ def visit_form(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the visit does not exist or belongs to another user.
     """
-    visit = get_visit_by_id(pk, request.user)
+    visit = get_visit_by_id(pk, logged_user(request))
     context = build_form_context(visit, request.GET.get("section"))
     return render(request, "inspections/visit_form.html", context)
 
@@ -69,7 +69,7 @@ def visit_form_section(request: HttpRequest, pk: int, section_id: str) -> HttpRe
     Raises:
         Http404: If the visit does not exist or belongs to another user.
     """
-    visit = get_visit_by_id(pk, request.user)
+    visit = get_visit_by_id(pk, logged_user(request))
     context = build_form_context(visit, section_id)
     context["oob"] = True
     return render(request, "inspections/partials/visit/visit_form_body.html", context)
@@ -118,7 +118,7 @@ def visit_save_answers(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the visit does not exist or belongs to another user.
     """
-    visit = get_visit_by_id(pk, request.user)
+    visit = get_visit_by_id(pk, logged_user(request))
     field_id = request.POST.get("field_id", "")
     section_id = request.POST.get("section_id")
     field = get_form_field(visit, field_id)
@@ -127,7 +127,7 @@ def visit_save_answers(request: HttpRequest, pk: int) -> HttpResponse:
 
     try:
         value = coerce_input(field, request.POST.get("value"))
-        visit = save_answers(visit.pk, request.user, {field_id: value})
+        visit = save_answers(visit.pk, logged_user(request), {field_id: value})
     except VisitLockedError:
         return HttpResponse("La visite est terminée ou archivée.", status=409)
     except ValidationError as e:
@@ -169,9 +169,9 @@ def visit_complete(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the visit does not exist or belongs to another user.
     """
-    visit = get_visit_by_id(pk, request.user)
+    visit = get_visit_by_id(pk, logged_user(request))
     try:
-        complete_visit(visit.pk, request.user)
+        complete_visit(visit.pk, logged_user(request))
     except VisitLockedError:
         return HttpResponse("La visite est archivée.", status=409)
     except AnswersValidationError as e:
@@ -209,9 +209,9 @@ def visit_reopen(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the visit does not exist, belongs to another user or is archived.
     """
-    visit = get_visit_by_id(pk, request.user)
+    visit = get_visit_by_id(pk, logged_user(request))
     try:
-        reopen_visit(visit, request.user)
+        reopen_visit(visit, logged_user(request))
     except VisitLockedError:
         raise Http404
     response = HttpResponse(status=204)
@@ -234,7 +234,7 @@ def visit_export_pdf(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the visit does not exist or belongs to another user.
     """
-    visit = get_visit_by_id(pk, request.user)
+    visit = get_visit_by_id(pk, logged_user(request))
     pdf = render_blank_questionnaire_pdf(visit)
     stamp = timezone.localdate().strftime("%Y%m%d")
     response = HttpResponse(pdf, content_type="application/pdf")

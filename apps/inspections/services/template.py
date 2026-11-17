@@ -336,8 +336,9 @@ def structure_from_post(post: QueryDict) -> dict[str, Any]:
                 field["options"] = [
                     o.strip() for o in raw.replace("\n", ",").split(",") if o.strip()
                 ]
-            if field_type == "number" and post.get(f"{prefix}-unit", "").strip():
-                field["unit"] = post.get(f"{prefix}-unit").strip()
+            unit = post.get(f"{prefix}-unit", "").strip()
+            if field_type == "number" and unit:
+                field["unit"] = unit
             fields.append(field)
             j += 1
         sections.append(

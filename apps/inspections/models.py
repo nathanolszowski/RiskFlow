@@ -149,12 +149,14 @@ class InspectionFolder(TrackingModel, AddressMixin):
     )
 
     if TYPE_CHECKING:
-        # Reverse relations (related_name), declared for Pylance only
+        # Foreign key ids and reverse relations (related_name), declared for Pylance only
+        company_id: int
+        contact_id: int | None
         visits: "RelatedManager[VisitInstance]"
         recommandations: "RelatedManager[Recommandation]"
         medias: "RelatedManager[Media]"
 
-    class Meta(TrackingModel.Meta):
+    class Meta(TrackingModel.Meta):  # pyright: ignore[reportIncompatibleVariableOverride]
         verbose_name = "Dossier d'inspection"
         verbose_name_plural = "Dossiers d'inspection"
         ordering = ["-updated_at"]
@@ -389,6 +391,10 @@ class VisitTemplate(TrackingModel):
         default=get_default_template_structure,
         verbose_name="Structure du template (JSON)",
     )
+
+    if TYPE_CHECKING:
+        # Reverse relation (related_name), declared for Pylance only
+        instances: "RelatedManager[VisitInstance]"
 
     class Meta(TrackingModel.Meta):
         verbose_name = "Modèle de visite"

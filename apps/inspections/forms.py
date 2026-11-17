@@ -1,6 +1,6 @@
 """Forms of the inspections app: folders, visits and recommendations."""
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from core.forms import enable_address_autocomplete
 from django import forms
@@ -10,6 +10,8 @@ from .models import InspectionFolder, Recommandation, VisitInstance, VisitTempla
 from .services.template import get_usable_templates
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from accounts.models import CustomUser
     from django.db.models import Model
 
@@ -49,7 +51,10 @@ class InspectionFolderForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         contact_field = self.fields.get("contact")
-        if isinstance(contact_field, forms.ModelChoiceField):
+        if (
+            isinstance(contact_field, forms.ModelChoiceField)
+            and contact_field.queryset is not None
+        ):
             if company:
                 contact_field.queryset = contact_field.queryset.filter(company=company)
                 contact_field.empty_label = "Aucun contact référent"
@@ -106,10 +111,10 @@ class InspectionFolderUpdateForm(InspectionFolderForm):
         super().__init__(*args, **kwargs)
 
         # CREATION is only a transient phase: not selectable (unless the folder is still in it)
-        phase_field = self.fields["current_phase"]
+        phase_field = cast("forms.ChoiceField", self.fields["current_phase"])
         phase_field.choices = [
             (value, label)
-            for value, label in phase_field.choices
+            for value, label in cast("Iterable[tuple[Any, Any]]", phase_field.choices)
             if value != InspectionFolder.Phase.CREATION
             or value == self.instance.current_phase
         ]
@@ -196,7 +201,8 @@ class VisitCreateForm(forms.Form):
             **kwargs: Keyword arguments passed to ``Form``.
         """
         super().__init__(*args, **kwargs)
-        self.fields["template"].queryset = get_usable_templates(user)
+        template_field = cast("forms.ModelChoiceField", self.fields["template"])
+        template_field.queryset = get_usable_templates(user)
 
 
 class RecommandationUpdateForm(forms.ModelForm):

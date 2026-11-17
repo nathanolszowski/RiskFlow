@@ -6,9 +6,11 @@ Stored files live in the temporary ``MEDIA_ROOT`` of the test settings.
 """
 
 from datetime import timedelta
+from typing import Any
 from unittest import mock
 
 from accounts.tests.factories import UserFactory
+from core.tests.helpers import MixinBase
 from crm.tests.factories import CompanyFactory, ContactFactory
 from django.core.exceptions import ValidationError
 from django.http import Http404
@@ -32,7 +34,7 @@ from inspections.tests.factories import (
 )
 
 
-class FolderTreeMixin:
+class FolderTreeMixin(MixinBase):
     """Create a folder holding a visit, a recommendation and a media (with one file each).
 
     Attributes:
@@ -227,7 +229,8 @@ class FolderPropertiesTests(TestCase):
     def test_phase_progress(self):
         """The progress bar marks the previous phases done and the next ones todo."""
         folder = InspectionFolderFactory(current_phase=InspectionFolder.Phase.VISIT)
-        progress = folder.phase_progress
+        progress: dict[str, Any] | None = folder.phase_progress
+        assert progress is not None
         states = [step["state"] for step in progress["steps"]]
         self.assertEqual(states, ["done", "done", "current", "todo", "todo", "todo"])
         self.assertEqual(progress["style"], "width: 40%")

@@ -2,7 +2,7 @@
 
 from typing import Any, Optional
 
-from core.decorators import htmx_login_required
+from core.decorators import htmx_login_required, logged_user
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
@@ -50,7 +50,7 @@ def _folder_id(request: HttpRequest) -> Optional[int]:
     raw = request.GET.get("folder") or request.POST.get("folder")
     if raw and raw.isdigit():
         # Ownership check: the folder must belong to the user
-        return get_inspection_folder_by_id(int(raw), request.user).pk
+        return get_inspection_folder_by_id(int(raw), logged_user(request)).pk
     return None
 
 
@@ -68,13 +68,10 @@ def _panel_context(request: HttpRequest, scope: Optional[str] = None) -> dict[st
     scope = scope or request.GET.get("scope") or request.POST.get("scope") or "mine"
     if scope not in TEMPLATE_SCOPES:
         scope = "mine"
-    status = (
-        request.GET.get("status")
-        if request.GET.get("status") in ("active", "archived")
-        else "all"
-    )
+    raw_status = request.GET.get("status")
+    status = raw_status if raw_status in ("active", "archived") else "all"
     query = request.GET.get("q", "").strip()
-    templates = list(get_filtered_templates(request.user, scope, query, status))
+    templates = list(get_filtered_templates(logged_user(request), scope, query, status))
     for template in templates:
         template.field_count = count_fields(template.schema)
         template.is_mine = template.created_by_id == request.user.pk
@@ -84,8 +81,8 @@ def _panel_context(request: HttpRequest, scope: Optional[str] = None) -> dict[st
         "q": query,
         "folder_id": _folder_id(request),
         "templates": templates,
-        "mine_count": get_filtered_templates(request.user, "mine").count(),
-        "shared_count": get_filtered_templates(request.user, "shared").count(),
+        "mine_count": get_filtered_templates(logged_user(request), "mine").count(),
+        "shared_count": get_filtered_templates(logged_user(request), "shared").count(),
     }
 
 
@@ -236,18 +233,19 @@ def _save_editor(
     errors = []
     if not context["name"].strip():
         errors.append("Le nom du template est obligatoire.")
+    schema = None
     try:
         schema = validate_editor_structure(context["structure"])
     except ValidationError as e:
         errors.extend(e.messages)
-    if errors:
+    if errors or schema is None:
         context["errors"] = errors
         return None, _render_editor(request, context, status=422)
 
     try:
         if template is None:
             template = create_template(
-                request.user,
+                logged_user(request),
                 context["name"],
                 context["description"],
                 context["shared"],
@@ -256,7 +254,7 @@ def _save_editor(
         else:
             template = update_template(
                 template,
-                request.user,
+                logged_user(request),
                 context["name"],
                 context["description"],
                 context["shared"],
@@ -313,7 +311,7 @@ def template_edit(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the template does not exist or belongs to another user.
     """
-    template = get_owned_template_by_id(pk, request.user)
+    template = get_owned_template_by_id(pk, logged_user(request))
 
     if request.method == "POST":
         _, error = _save_editor(request, template)
@@ -347,7 +345,7 @@ def template_read(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the template does not exist or cannot be read by the user.
     """
-    template = get_template_by_id(pk, request.user)
+    template = get_template_by_id(pk, logged_user(request))
     context = _editor_context(
         request,
         template,
@@ -379,7 +377,9 @@ def template_editor_operation(request: HttpRequest) -> HttpResponse:
     """
     pk = request.POST.get("template_pk")
     template = (
-        get_owned_template_by_id(int(pk), request.user) if pk and pk.isdigit() else None
+        get_owned_template_by_id(int(pk), logged_user(request))
+        if pk and pk.isdigit()
+        else None
     )
 
     context = _editor_from_post(request, template)
@@ -424,7 +424,9 @@ def template_duplicate(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the template does not exist or cannot be read by the user.
     """
-    duplicate_template(get_template_by_id(pk, request.user), request.user)
+    duplicate_template(
+        get_template_by_id(pk, logged_user(request)), logged_user(request)
+    )
     return _render_panel(request, "mine")
 
 
@@ -443,8 +445,8 @@ def template_toggle_share(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the template does not exist or belongs to another user.
     """
-    template = get_owned_template_by_id(pk, request.user)
-    set_template_shared(template, request.user, not template.shared)
+    template = get_owned_template_by_id(pk, logged_user(request))
+    set_template_shared(template, logged_user(request), not template.shared)
     return _render_panel(request, "mine")
 
 
@@ -486,7 +488,7 @@ def template_archive(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the template does not exist or belongs to another user.
     """
-    template = get_owned_template_by_id(pk, request.user)
+    template = get_owned_template_by_id(pk, logged_user(request))
 
     if request.method == "GET":
         return _template_modal(
@@ -504,7 +506,7 @@ def template_archive(request: HttpRequest, pk: int) -> HttpResponse:
             ],
         )
 
-    template.archive(user=request.user)
+    template.archive(user=logged_user(request))
     return _render_panel(request, "mine")
 
 
@@ -523,8 +525,8 @@ def template_unarchive(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the template does not exist or belongs to another user.
     """
-    template = get_owned_template_by_id(pk, request.user)
-    template.unarchive(user=request.user)
+    template = get_owned_template_by_id(pk, logged_user(request))
+    template.unarchive(user=logged_user(request))
     return _render_panel(request, "mine")
 
 
@@ -546,7 +548,7 @@ def template_delete(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the template does not exist or belongs to another user.
     """
-    template = get_owned_template_by_id(pk, request.user)
+    template = get_owned_template_by_id(pk, logged_user(request))
 
     if request.method == "GET":
         used = template.instances.count()

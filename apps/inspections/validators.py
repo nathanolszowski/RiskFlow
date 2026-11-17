@@ -354,12 +354,13 @@ def validate_answers(schema: dict, answers: Any, *, strict: bool = False) -> dic
     return cleaned
 
 
-def compute_progress(schema: dict, answers: dict) -> dict:
+def compute_progress(schema: dict, answers: Any) -> dict:
     """Compute the progress of a visit.
 
     Args:
         schema: Snapshot of the visit structure.
-        answers: Answers of the visit, ``{field id: value}``.
+        answers: Answers of the visit, ``{field id: value}``. Anything that is not a
+            dict (corrupted stored data) is treated as no answer.
 
     Returns:
         A dict with ``done`` (answered fields), ``total``, ``pct``,

@@ -2,8 +2,7 @@
 {% with progress=visit.progress %}
 <div class="flex flex-col gap-1.5">
   <span class="text-xs text-text-subtle">{{ progress.done }} / {{ progress.total }} champs</span>
-  <span class="h-1.5 overflow-hidden rounded-full bg-surface-tertiary">
-    <span class="block h-full rounded-full bg-brand-primary" style="width: {{ progress.pct }}%"></span>
-  </span>
+  <progress value="{{ progress.pct }}" max="100" aria-label="Progression de la visite"
+    class="h-1.5 w-full appearance-none overflow-hidden rounded-full bg-surface-tertiary [&::-webkit-progress-bar]:bg-surface-tertiary [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-brand-primary [&::-moz-progress-bar]:rounded-full [&::-moz-progress-bar]:bg-brand-primary"></progress>
 </div>
 {% endwith %}

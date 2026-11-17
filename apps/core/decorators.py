@@ -1,11 +1,14 @@
 """View decorators shared by all apps."""
 
 from functools import wraps
-from typing import Any, Callable, Optional
+from typing import TYPE_CHECKING, Any, Callable, Optional, cast
 
 from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import resolve_url
+
+if TYPE_CHECKING:
+    from accounts.models import CustomUser
 
 
 def htmx_login_required(
@@ -48,3 +51,18 @@ def htmx_login_required(
         return wrapper
 
     return decorator(view) if view is not None else decorator
+
+
+def logged_user(request: HttpRequest) -> "CustomUser":
+    """Return the logged-in user of a request, typed as ``CustomUser``.
+
+    For views protected by ``htmx_login_required`` (or ``login_required``): the user
+    is never anonymous there, so the cast only tells the type checker so.
+
+    Args:
+        request: Current request.
+
+    Returns:
+        The user of the request.
+    """
+    return cast("CustomUser", request.user)

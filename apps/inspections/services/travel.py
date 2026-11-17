@@ -88,7 +88,12 @@ def refresh_travel_estimate(
         TravelError: If the site or the starting point has no certified position or
             the services fail (the message is meant for the user).
     """
-    if not folder.has_coordinates or not folder.address_certified:
+    # Same as ``has_coordinates``, written out so that the type checker sees the values
+    if (
+        folder.latitude is None
+        or folder.longitude is None
+        or not folder.address_certified
+    ):
         raise TravelError(
             "L'adresse du site n'est pas certifiée : corrigez-la pour calculer le trajet."
         )
@@ -114,7 +119,11 @@ def refresh_travel_estimate(
         label = folder.travel_origin_label
         origin = (folder.travel_origin_latitude, folder.travel_origin_longitude)
     else:
-        if not user.address_certified or not user.has_coordinates:
+        if (
+            user.latitude is None
+            or user.longitude is None
+            or not user.address_certified
+        ):
             raise TravelError(
                 "Votre adresse n'est pas certifiée : complétez votre profil "
                 "ou choisissez un autre point de départ."

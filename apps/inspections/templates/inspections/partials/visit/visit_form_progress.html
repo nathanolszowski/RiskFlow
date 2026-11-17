@@ -4,7 +4,6 @@
     <span class="font-semibold text-text-main">{{ progress.done }} / {{ progress.total }} champs</span>
     <span class="text-text-subtle">{{ progress.pct }} %</span>
   </div>
-  <span class="h-2 overflow-hidden rounded-full bg-surface-tertiary">
-    <span class="block h-full rounded-full bg-brand-primary transition-all" style="width: {{ progress.pct }}%"></span>
-  </span>
+  <progress value="{{ progress.pct }}" max="100" aria-label="Progression de la visite"
+    class="h-2 w-full appearance-none overflow-hidden rounded-full bg-surface-tertiary [&::-webkit-progress-bar]:bg-surface-tertiary [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-brand-primary [&::-webkit-progress-value]:transition-all [&::-moz-progress-bar]:rounded-full [&::-moz-progress-bar]:bg-brand-primary"></progress>
 </div>

@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from core.decorators import htmx_login_required
+from core.decorators import htmx_login_required, logged_user
 from core.modals import delete_confirm_modal
 from core.services import delete_archived_instance
 from core.services.directory import (
@@ -66,7 +66,7 @@ def folder_list(request: HttpRequest) -> HttpResponse:
     Returns:
         The full page, first page of the filtered list.
     """
-    companies = get_companies_with_folders(request.user)
+    companies = get_companies_with_folders(logged_user(request))
     folders = get_filtered_folders(request)
 
     paginator = Paginator(folders, 15)
@@ -130,7 +130,7 @@ def company_folders_panel(request: HttpRequest, company_id: int) -> HttpResponse
         "inspections/partials/folder/company_folders_panel.html",
         {
             "company": company,
-            "folders": get_company_folders(company, request.user),
+            "folders": get_company_folders(company, logged_user(request)),
         },
     )
 
@@ -178,12 +178,12 @@ def folder_detail(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the folder does not exist or belongs to another user.
     """
-    folder = get_inspection_folder_by_id(pk, request.user)
+    folder = get_inspection_folder_by_id(pk, logged_user(request))
 
     context = {
         "folder": folder,
-        "travel_stale": is_travel_estimate_stale(folder, request.user),
-        "company_folders": get_company_folders(folder.company, request.user),
+        "travel_stale": is_travel_estimate_stale(folder, logged_user(request)),
+        "company_folders": get_company_folders(folder.company, logged_user(request)),
         # Lets the visit form send the inspector back to the visits tab (?tab=visit)
         "initial_tab": request.GET.get("tab"),
     }
@@ -214,7 +214,7 @@ def create_folder(request: HttpRequest) -> HttpResponse:
         form = InspectionFolderForm(request.POST, company=selected_company)
 
         if form.is_valid():
-            create_tracked_instance(form, request.user)
+            create_tracked_instance(form, logged_user(request))
 
             # From company
             if selected_company:
@@ -273,13 +273,13 @@ def folder_inline_update(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the folder does not exist or belongs to another user.
     """
-    folder = get_inspection_folder_by_id(pk, request.user)
+    folder = get_inspection_folder_by_id(pk, logged_user(request))
 
     if request.method == "POST":
         form = InspectionFolderUpdateForm(request.POST, instance=folder)
         if form.is_valid():
             folder = form.save(commit=False)
-            folder.updated_by = request.user
+            folder.updated_by = logged_user(request)
             folder.save()
             certify_address(folder)
             return render(
@@ -312,7 +312,7 @@ def folder_inline_read(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the folder does not exist or belongs to another user.
     """
-    folder = get_inspection_folder_by_id(pk, request.user)
+    folder = get_inspection_folder_by_id(pk, logged_user(request))
     return render(
         request,
         "inspections/partials/folder/folder_read.html",
@@ -338,7 +338,7 @@ def folder_archive(request: HttpRequest, folder_id: int) -> HttpResponse:
     Raises:
         Http404: If the folder does not exist or belongs to another user.
     """
-    folder = get_inspection_folder_by_id(folder_id, request.user)
+    folder = get_inspection_folder_by_id(folder_id, logged_user(request))
 
     if request.method == "GET":
         visits = folder.visits.filter(is_active=True).count()
@@ -367,7 +367,7 @@ def folder_archive(request: HttpRequest, folder_id: int) -> HttpResponse:
             },
         )
 
-    folder.archive(user=request.user)
+    folder.archive(user=logged_user(request))
 
     if request.headers.get("HX-Request"):
         response = HttpResponse()
@@ -392,8 +392,8 @@ def folder_unarchive(request: HttpRequest, folder_id: int) -> HttpResponse:
     Raises:
         Http404: If the folder does not exist or belongs to another user.
     """
-    folder = get_inspection_folder_by_id(folder_id, request.user)
-    folder.unarchive(user=request.user)
+    folder = get_inspection_folder_by_id(folder_id, logged_user(request))
+    folder.unarchive(user=logged_user(request))
 
     if request.headers.get("HX-Request"):
         response = HttpResponse()
@@ -437,7 +437,7 @@ def folder_delete(request: HttpRequest, folder_id: int) -> HttpResponse:
     Raises:
         Http404: If the folder does not exist or belongs to another user.
     """
-    folder = get_inspection_folder_by_id(folder_id, request.user)
+    folder = get_inspection_folder_by_id(folder_id, logged_user(request))
 
     if request.method == "GET":
         visits = folder.visits.count()
@@ -500,19 +500,19 @@ def visit_create(request: HttpRequest, folder_id: int) -> HttpResponse:
     Raises:
         Http404: If the folder does not exist or belongs to another user.
     """
-    folder = get_inspection_folder_by_id(folder_id, request.user)
+    folder = get_inspection_folder_by_id(folder_id, logged_user(request))
     if not folder.is_active:
         return HttpResponse("Le dossier est archivé.", status=409)
 
     if request.method == "POST":
-        form = VisitCreateForm(request.POST, user=request.user)
+        form = VisitCreateForm(request.POST, user=logged_user(request))
         if form.is_valid():
             try:
                 create_visit(
                     folder,
                     form.cleaned_data["template"],
                     form.cleaned_data["due_date"],
-                    request.user,
+                    logged_user(request),
                     due_time=form.cleaned_data["due_time"],
                 )
             except ValidationError as e:
@@ -533,7 +533,7 @@ def visit_create(request: HttpRequest, folder_id: int) -> HttpResponse:
         return response
 
     form = VisitCreateForm(
-        user=request.user,
+        user=logged_user(request),
         initial={
             "template": request.GET.get("template"),
             "due_date": timezone.localdate(),
@@ -562,13 +562,13 @@ def visit_update(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the visit does not exist or belongs to another user.
     """
-    visit = get_visit_by_id(pk, request.user)
+    visit = get_visit_by_id(pk, logged_user(request))
 
     if request.method == "POST":
         form = VisitInstanceUpdateForm(request.POST, instance=visit)
         if form.is_valid():
             visit = form.save(commit=False)
-            visit.updated_by = request.user
+            visit.updated_by = logged_user(request)
             visit.save()
             response = _render_visit_tab(request, visit.folder)
             response["HX-Trigger"] = "closeModal"
@@ -606,9 +606,9 @@ def visit_toggle_done(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the visit does not exist or belongs to another user.
     """
-    visit = get_visit_by_id(pk, request.user)
+    visit = get_visit_by_id(pk, logged_user(request))
     try:
-        set_visit_done(visit, request.user, request.POST.get("done") == "on")
+        set_visit_done(visit, logged_user(request), request.POST.get("done") == "on")
     except VisitLockedError:
         return HttpResponse("La visite est archivée.", status=409)
     return _render_visit_tab(request, visit.folder)
@@ -629,8 +629,8 @@ def visit_archive(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the visit does not exist or belongs to another user.
     """
-    visit = get_visit_by_id(pk, request.user)
-    visit.archive(user=request.user)
+    visit = get_visit_by_id(pk, logged_user(request))
+    visit.archive(user=logged_user(request))
 
     if request.headers.get("HX-Request"):
         # Re-render the current tab only, so the user stays on it
@@ -654,8 +654,8 @@ def visit_unarchive(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the visit does not exist or belongs to another user.
     """
-    visit = get_visit_by_id(pk, request.user)
-    visit.unarchive(user=request.user)
+    visit = get_visit_by_id(pk, logged_user(request))
+    visit.unarchive(user=logged_user(request))
 
     if request.headers.get("HX-Request"):
         # Re-render the current tab only, so the user stays on it
@@ -680,7 +680,7 @@ def visit_delete(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the visit does not exist or belongs to another user.
     """
-    visit = get_visit_by_id(pk, request.user)
+    visit = get_visit_by_id(pk, logged_user(request))
 
     if request.method == "GET":
         return delete_confirm_modal(
@@ -735,13 +735,13 @@ def recommandation_inline_update(request: HttpRequest, pk: int) -> HttpResponse:
         Http404: If the recommendation does not exist or its folder belongs to
             another user.
     """
-    rec = get_recommandation_by_id(pk, request.user)
+    rec = get_recommandation_by_id(pk, logged_user(request))
 
     if request.method == "POST":
         form = RecommandationUpdateForm(request.POST, instance=rec)
         if form.is_valid():
             rec = form.save(commit=False)
-            rec.updated_by = request.user
+            rec.updated_by = logged_user(request)
             rec.save()
             return render(
                 request,
@@ -774,7 +774,7 @@ def recommandation_inline_read(request: HttpRequest, pk: int) -> HttpResponse:
         Http404: If the recommendation does not exist or its folder belongs to
             another user.
     """
-    rec = get_recommandation_by_id(pk, request.user)
+    rec = get_recommandation_by_id(pk, logged_user(request))
     return render(
         request,
         "inspections/partials/recommandation/recommandation_read.html",
@@ -798,8 +798,8 @@ def recommandation_archive(request: HttpRequest, pk: int) -> HttpResponse:
         Http404: If the recommendation does not exist or its folder belongs to
             another user.
     """
-    rec = get_recommandation_by_id(pk, request.user)
-    rec.archive(user=request.user)
+    rec = get_recommandation_by_id(pk, logged_user(request))
+    rec.archive(user=logged_user(request))
 
     if request.headers.get("HX-Request"):
         # Re-render the current tab only, so the user stays on it
@@ -824,8 +824,8 @@ def recommandation_unarchive(request: HttpRequest, pk: int) -> HttpResponse:
         Http404: If the recommendation does not exist or its folder belongs to
             another user.
     """
-    rec = get_recommandation_by_id(pk, request.user)
-    rec.unarchive(user=request.user)
+    rec = get_recommandation_by_id(pk, logged_user(request))
+    rec.unarchive(user=logged_user(request))
 
     if request.headers.get("HX-Request"):
         # Re-render the current tab only, so the user stays on it
@@ -852,7 +852,7 @@ def recommandation_delete(request: HttpRequest, pk: int) -> HttpResponse:
         Http404: If the recommendation does not exist or its folder belongs to
             another user.
     """
-    rec = get_recommandation_by_id(pk, request.user)
+    rec = get_recommandation_by_id(pk, logged_user(request))
 
     if request.method == "GET":
         return delete_confirm_modal(
@@ -904,14 +904,16 @@ def folder_tab_overview(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the folder does not exist or belongs to another user.
     """
-    folder = get_inspection_folder_by_id(pk, request.user)
+    folder = get_inspection_folder_by_id(pk, logged_user(request))
     return render(
         request,
         "inspections/partials/tabs/tab_overview.html",
         {
             "folder": folder,
-            "travel_stale": is_travel_estimate_stale(folder, request.user),
-            "company_folders": get_company_folders(folder.company, request.user),
+            "travel_stale": is_travel_estimate_stale(folder, logged_user(request)),
+            "company_folders": get_company_folders(
+                folder.company, logged_user(request)
+            ),
         },
     )
 
@@ -937,14 +939,14 @@ def folder_travel(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the folder does not exist or belongs to another user.
     """
-    folder = get_inspection_folder_by_id(pk, request.user)
+    folder = get_inspection_folder_by_id(pk, logged_user(request))
     if not folder.is_active:
         return HttpResponse(status=409)
     error = ""
     try:
         refresh_travel_estimate(
             folder,
-            request.user,
+            logged_user(request),
             origin_address=request.POST.get("origin_address", ""),
             use_home=bool(request.POST.get("use_home")),
         )
@@ -955,7 +957,7 @@ def folder_travel(request: HttpRequest, pk: int) -> HttpResponse:
         "inspections/partials/folder/folder_travel.html",
         {
             "folder": folder,
-            "travel_stale": is_travel_estimate_stale(folder, request.user),
+            "travel_stale": is_travel_estimate_stale(folder, logged_user(request)),
             "travel_error": error,
         },
         status=422 if error else 200,
@@ -1003,7 +1005,7 @@ def folder_tab_visit(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the folder does not exist or belongs to another user.
     """
-    folder = get_inspection_folder_by_id(pk, request.user)
+    folder = get_inspection_folder_by_id(pk, logged_user(request))
     return _render_visit_tab(request, folder)
 
 
@@ -1046,7 +1048,7 @@ def folder_tab_recommandations(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the folder does not exist or belongs to another user.
     """
-    folder = get_inspection_folder_by_id(pk, request.user)
+    folder = get_inspection_folder_by_id(pk, logged_user(request))
     return _render_recommandations_tab(request, folder)
 
 
@@ -1065,7 +1067,7 @@ def folder_tab_reports(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the folder does not exist or belongs to another user.
     """
-    folder = get_inspection_folder_by_id(pk, request.user)
+    folder = get_inspection_folder_by_id(pk, logged_user(request))
     return render(
         request, "inspections/partials/tabs/tab_reports.html", {"folder": folder}
     )
