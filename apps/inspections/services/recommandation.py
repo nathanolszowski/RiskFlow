@@ -2,12 +2,15 @@
 
 from typing import TYPE_CHECKING
 
+from core.services import create_tracked_instance
 from django.shortcuts import get_object_or_404
 
-from inspections.models import Recommandation
+from inspections.models import InspectionFolder, Recommandation
 
 if TYPE_CHECKING:
     from accounts.models import CustomUser
+
+    from inspections.forms import RecommandationCreateForm
 
 
 def get_recommandation_by_id(pk: int, user: "CustomUser") -> Recommandation:
@@ -29,3 +32,20 @@ def get_recommandation_by_id(pk: int, user: "CustomUser") -> Recommandation:
         pk=pk,
         folder__created_by=user,
     )
+
+
+def create_recommandation(
+    form: "RecommandationCreateForm", folder: InspectionFolder, user: "CustomUser"
+) -> Recommandation:
+    """Create a recommendation in a folder from a valid form.
+
+    Args:
+        form: Valid creation form.
+        folder: Folder the recommendation belongs to.
+        user: User creating the recommendation, who must own the folder.
+
+    Returns:
+        The saved recommendation, open by default.
+    """
+    form.instance.folder = folder
+    return create_tracked_instance(form, user)

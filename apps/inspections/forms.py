@@ -217,3 +217,10 @@ class RecommandationUpdateForm(StyledFormMixin, forms.ModelForm):
             "description": forms.Textarea(attrs={"rows": 3}),
             "notes": forms.Textarea(attrs={"rows": 3}),
         }
+
+
+class RecommandationCreateForm(RecommandationUpdateForm):
+    """Create a recommendation: the status is not asked, a new one is open."""
+
+    class Meta(RecommandationUpdateForm.Meta):
+        fields = ["topic", "description", "priority", "due_date", "notes"]

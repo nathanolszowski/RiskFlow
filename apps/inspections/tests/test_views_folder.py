@@ -547,3 +547,65 @@ class FolderListDefaultStatusTests(FolderViewTestCase):
         self.assertContains(
             response, '<option value="" selected>Tous les statuts</option>', html=True
         )
+
+
+class RecommandationCreateTests(FolderViewTestCase):
+    """``recommandation_create``: modal of the recommendations tab."""
+
+    def setUp(self):
+        """Create a folder of the owner."""
+        super().setUp()
+        self.folder = self.make_folder()
+        self.url = reverse("inspections:recommandation_create", args=[self.folder.pk])
+        self.data = {
+            "topic": "Électricité",
+            "description": "Remplacer le tableau",
+            "priority": "HIGH",
+            "due_date": "2031-02-03",
+            "notes": "",
+        }
+
+    def test_get_renders_the_modal_without_status_field(self):
+        """The creation modal is shown and does not ask for the status."""
+        response = self.htmx_get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response,
+            "inspections/partials/recommandation/recommandation_create_modal.html",
+        )
+        self.assertNotIn("current_status", response.context["form"].fields)
+
+    def test_valid_post_creates_an_open_recommendation(self):
+        """A valid POST creates an open recommendation and closes the modal."""
+        response = self.htmx_post(self.url, self.data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["HX-Trigger"], "closeModal")
+        self.assertTemplateUsed(
+            response, "inspections/partials/tabs/tab_recommandations.html"
+        )
+        rec = self.folder.recommandations.get()
+        self.assertEqual(
+            (rec.priority, rec.current_status, rec.created_by, rec.updated_by),
+            ("HIGH", Recommandation.Status.OPEN, self.owner, self.owner),
+        )
+
+    def test_invalid_post_returns_the_modal_with_422(self):
+        """A POST without description re-renders the modal (422, retargeted)."""
+        response = self.htmx_post(self.url, {**self.data, "description": ""})
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(response["HX-Retarget"], "#modal-container")
+        self.assertFalse(self.folder.recommandations.exists())
+
+    def test_archived_folder_answers_409(self):
+        """An archived folder accepts no new recommendation."""
+        self.folder.archive(self.owner)
+        self.assertEqual(self.htmx_get(self.url).status_code, 409)
+        self.assertEqual(self.htmx_post(self.url, self.data).status_code, 409)
+        self.assertFalse(self.folder.recommandations.exists())
+
+    def test_tab_offers_the_button_only_for_an_active_folder(self):
+        """The tab shows the creation button, hidden once the folder is archived."""
+        tab = reverse("inspections:folder_tab_recommandations", args=[self.folder.pk])
+        self.assertContains(self.htmx_get(tab), self.url)
+        self.folder.archive(self.owner)
+        self.assertNotContains(self.htmx_get(tab), self.url)

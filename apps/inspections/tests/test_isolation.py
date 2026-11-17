@@ -40,6 +40,7 @@ FOLDER_ROUTES = [
     Route("inspections:folder_unarchive", "folder_id", POST),
     Route("inspections:folder_delete", "folder_id", BOTH),
     Route("inspections:visit_create", "folder_id", BOTH),
+    Route("inspections:recommandation_create", "folder_id", BOTH),
 ]
 VISIT_ROUTES = [
     Route("inspections:visit_update", "pk", BOTH),

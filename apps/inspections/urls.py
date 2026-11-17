@@ -122,6 +122,11 @@ urlpatterns = [
     ),
     # Recommandations
     path(
+        "dossier/<int:folder_id>/recommandation/nouvelle/",
+        views.recommandation_create,
+        name="recommandation_create",
+    ),
+    path(
         "recommandation/<int:pk>/edition/",
         views.recommandation_inline_update,
         name="recommandation_inline_update",

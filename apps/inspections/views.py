@@ -30,7 +30,10 @@ from inspections.services.inspectionfolder import (
     get_inspection_folder_by_id,
     update_folder,
 )
-from inspections.services.recommandation import get_recommandation_by_id
+from inspections.services.recommandation import (
+    create_recommandation,
+    get_recommandation_by_id,
+)
 from inspections.services.travel import (
     TravelError,
     is_travel_estimate_stale,
@@ -48,6 +51,7 @@ from inspections.services.visit import (
 from .forms import (
     InspectionFolderForm,
     InspectionFolderUpdateForm,
+    RecommandationCreateForm,
     RecommandationUpdateForm,
     VisitCreateForm,
     VisitInstanceUpdateForm,
@@ -722,6 +726,49 @@ def visit_delete(request: HttpRequest, pk: int) -> HttpResponse:
 
 @htmx_login_required
 @require_http_methods(["GET", "POST"])
+def recommandation_create(request: HttpRequest, folder_id: int) -> HttpResponse:
+    """Create a recommendation in a folder, from a modal of the recommendations tab.
+
+    Args:
+        request: Current request.
+        folder_id: Primary key of the folder.
+
+    Returns:
+        A 409 if the folder is archived. On GET, the modal
+        (``recommandation_create_modal.html``). On a valid POST, the recommendations
+        tab with ``HX-Trigger: closeModal``. On an invalid POST, the modal with its
+        errors (422).
+
+    Raises:
+        Http404: If the folder does not exist or belongs to another user.
+    """
+    folder = get_inspection_folder_by_id(folder_id, logged_user(request))
+    if not folder.is_active:
+        return HttpResponse("Le dossier est archivé.", status=409)
+
+    if request.method == "POST":
+        form = RecommandationCreateForm(request.POST)
+        if form.is_valid():
+            create_recommandation(form, folder, logged_user(request))
+            return close_modal(_render_recommandations_tab(request, folder))
+        response = render(
+            request,
+            "inspections/partials/recommandation/recommandation_create_modal.html",
+            {"folder": folder, "form": form},
+            status=422,
+        )
+        # The form targets the tab: the invalid modal must replace the modal instead
+        return retarget_modal(response)
+
+    return render(
+        request,
+        "inspections/partials/recommandation/recommandation_create_modal.html",
+        {"folder": folder, "form": RecommandationCreateForm()},
+    )
+
+
+@htmx_login_required
+@require_http_methods(["GET", "POST"])
 def recommandation_inline_update(request: HttpRequest, pk: int) -> HttpResponse:
     """Edit a recommendation from the recommendations tab (HTMX).
 
@@ -1036,6 +1083,7 @@ def _render_recommandations_tab(
                 "created_by", "updated_by"
             ),
             "active_count": folder.recommandations.filter(is_active=True).count(),
+            "folder": folder,
         },
     )
 

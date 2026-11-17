@@ -1,0 +1,70 @@
+{# Creation of a recommendation. Context: folder, form. #}
+<div id="rec-create-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+
+  <!-- Backdrop -->
+  <div class="fixed inset-0 bg-overlay/70 backdrop-blur-xs transition-opacity"
+    onclick="document.getElementById('rec-create-modal').remove()"></div>
+
+  <!-- Modal Content -->
+  <div class="relative flex max-h-[90vh] w-full max-w-xl flex-col rounded-xl border border-border-default bg-surface-primary shadow-2xl">
+
+    <div class="flex items-center justify-between border-b border-border-default px-6 py-4">
+      <h3 class="text-lg font-semibold text-text-main">Nouvelle recommandation</h3>
+      <button type="button" onclick="document.getElementById('rec-create-modal').remove()" aria-label="Fermer"
+        class="cursor-pointer text-text-subtle transition-colors hover:text-text-main">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+      </button>
+    </div>
+
+    <form hx-post="{% url 'inspections:recommandation_create' folder.id %}" hx-target="#tab-content" hx-swap="innerHTML"
+      hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' class="flex flex-col overflow-hidden">
+      {% csrf_token %}
+
+      <div class="space-y-4 overflow-y-auto p-6">
+        {% if form.non_field_errors %}
+        <div class="rounded-lg border border-status-danger-border bg-status-danger-bg p-2.5 text-xs text-status-danger">
+          {{ form.non_field_errors }}
+        </div>
+        {% endif %}
+
+        <div>
+          <label for="{{ form.topic.id_for_label }}" class="mb-1 block text-xs font-medium text-text-subtle">Sujet <span class="text-[10px] font-normal text-text-faded">(optionnel)</span></label>
+          {{ form.topic }}
+          {% if form.topic.errors %}<p class="mt-1 text-xs text-status-danger">{{ form.topic.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.description.id_for_label }}" class="mb-1 block text-xs font-medium text-text-subtle">Description <span class="text-status-danger">*</span></label>
+          {{ form.description }}
+          {% if form.description.errors %}<p class="mt-1 text-xs text-status-danger">{{ form.description.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label for="{{ form.priority.id_for_label }}" class="mb-1 block text-xs font-medium text-text-subtle">Priorité <span class="text-status-danger">*</span></label>
+            {{ form.priority }}
+            {% if form.priority.errors %}<p class="mt-1 text-xs text-status-danger">{{ form.priority.errors.0 }}</p>{% endif %}
+          </div>
+          <div>
+            <label for="{{ form.due_date.id_for_label }}" class="mb-1 block text-xs font-medium text-text-subtle">Date limite d'exécution <span class="text-[10px] font-normal text-text-faded">(optionnel)</span></label>
+            {{ form.due_date }}
+            {% if form.due_date.errors %}<p class="mt-1 text-xs text-status-danger">{{ form.due_date.errors.0 }}</p>{% endif %}
+          </div>
+        </div>
+
+        <div>
+          <label for="{{ form.notes.id_for_label }}" class="mb-1 block text-xs font-medium text-text-subtle">Notes <span class="text-[10px] font-normal text-text-faded">(optionnel)</span></label>
+          {{ form.notes }}
+          {% if form.notes.errors %}<p class="mt-1 text-xs text-status-danger">{{ form.notes.errors.0 }}</p>{% endif %}
+        </div>
+      </div>
+
+      <div class="flex justify-end space-x-3 border-t border-border-default bg-surface-primary/50 px-6 py-4">
+        <button type="button" onclick="document.getElementById('rec-create-modal').remove()"
+          class="cursor-pointer rounded-lg border border-border-default bg-surface-tertiary px-4 py-2 text-xs font-medium text-text-body transition-colors hover:bg-surface-secondary">Annuler</button>
+        <button type="submit"
+          class="cursor-pointer rounded-lg bg-brand-primary px-4 py-2 text-xs font-medium text-brand-on shadow-xs transition-colors hover:bg-brand-hover">Créer la recommandation</button>
+      </div>
+    </form>
+  </div>
+</div>

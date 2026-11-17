@@ -1,4 +1,13 @@
+{# Recommendations tab. Context: folder, recommandations, active_count. #}
 <div class="space-y-4">
+    {% if folder.is_active %}
+    <button type="button" hx-get="{% url 'inspections:recommandation_create' folder.id %}" hx-target="#modal-container" hx-swap="innerHTML"
+        class="inline-flex h-14 w-full cursor-pointer items-center justify-center gap-2.5 rounded-xl bg-brand-primary text-base font-bold text-brand-on shadow-xs transition-colors hover:bg-brand-hover">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        Ajouter une recommandation
+    </button>
+    {% endif %}
+
     <div class="flex justify-between items-center border-b border-border-default pb-3">
         <h3 class="text-lg font-bold text-text-main">Liste des Recommandations</h3>
         <span class="text-xs text-text-muted font-mono">{{ active_count }} Active{{ active_count|pluralize }} sur {{ recommandations|length }}</span>
