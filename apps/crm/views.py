@@ -3,6 +3,7 @@
 from typing import Any
 
 from core.decorators import htmx_login_required, logged_user
+from core.htmx import close_modal, htmx_redirect, htmx_refresh
 from core.http import filter_params
 from core.modals import confirm_modal, delete_confirm_modal
 from core.services import delete_archived_instance
@@ -165,13 +166,13 @@ def create_company(request: HttpRequest) -> HttpResponse:
             paginator = Paginator(companies, 15)
             page_obj = paginator.get_page(1)
 
-            response = render(
-                request,
-                "crm/partials/company/company_grid.html",
-                {"companies": page_obj, "page_obj": page_obj},
+            return close_modal(
+                render(
+                    request,
+                    "crm/partials/company/company_grid.html",
+                    {"companies": page_obj, "page_obj": page_obj},
+                )
             )
-            response["HX-Trigger"] = "closeModal"
-            return response
         else:
             return render(
                 request,
@@ -248,13 +249,6 @@ def company_inline_read(request: HttpRequest, pk: int) -> HttpResponse:
         "crm/partials/company/company_read.html",
         {"company": company},
     )
-
-
-def _refresh_response() -> HttpResponse:
-    """Return an HTMX response asking the browser to reload the current page."""
-    response = HttpResponse()
-    response["HX-Refresh"] = "true"
-    return response
 
 
 def _company_archive_modal(request: HttpRequest, company: Any) -> HttpResponse:
@@ -339,7 +333,7 @@ def company_archive(request: HttpRequest, pk: int) -> HttpResponse:
     company.archive(user=logged_user(request))
 
     if request.headers.get("HX-Request"):
-        return _refresh_response()
+        return htmx_refresh()
 
     return redirect("crm:company_detail", pk=company.pk)
 
@@ -363,7 +357,7 @@ def company_unarchive(request: HttpRequest, pk: int) -> HttpResponse:
     company.unarchive(user=logged_user(request))
 
     if request.headers.get("HX-Request"):
-        return _refresh_response()
+        return htmx_refresh()
 
     return redirect("crm:company_detail", pk=company.pk)
 
@@ -458,7 +452,7 @@ def company_sirene_refresh(request: HttpRequest, pk: int) -> HttpResponse:
             context["changes"] = get_sirene_changes(company, data)
             context["alert"] = get_cessation_alert(data)
             return render(request, template, context, status=422)
-        return _refresh_response()
+        return htmx_refresh()
 
     context["changes"] = get_sirene_changes(company, data)
     context["alert"] = get_cessation_alert(data)
@@ -570,21 +564,19 @@ def create_contact(request: HttpRequest) -> HttpResponse:
 
             # If created from a company detail page, refresh the page to show the new contact
             if company_id:
-                response = HttpResponse(status=204)
-                response["HX-Refresh"] = "true"
-                return response
+                return htmx_refresh(status=204)
             # Default behavior for global contact list view
             contacts = _contacts(request)
             paginator = Paginator(contacts, 15)
             page_obj = paginator.get_page(1)
 
-            response = render(
-                request,
-                "crm/partials/contact/contact_grid.html",
-                {"contacts": page_obj, "page_obj": page_obj},
+            return close_modal(
+                render(
+                    request,
+                    "crm/partials/contact/contact_grid.html",
+                    {"contacts": page_obj, "page_obj": page_obj},
+                )
             )
-            response["HX-Trigger"] = "closeModal"
-            return response
         else:
             return render(
                 request,
@@ -713,7 +705,7 @@ def contact_archive(request: HttpRequest, pk: int) -> HttpResponse:
     contact.archive(user=logged_user(request))
 
     if request.headers.get("HX-Request"):
-        return _refresh_response()
+        return htmx_refresh()
 
     return redirect("crm:contact_detail", pk=contact.pk)
 
@@ -737,20 +729,9 @@ def contact_unarchive(request: HttpRequest, pk: int) -> HttpResponse:
     contact.unarchive(user=logged_user(request))
 
     if request.headers.get("HX-Request"):
-        return _refresh_response()
+        return htmx_refresh()
 
     return redirect("crm:contact_detail", pk=contact.pk)
-
-
-def _redirect_response(url: str) -> HttpResponse:
-    """Return an HTMX response asking the browser to navigate to the given URL.
-
-    Args:
-        url: Destination, sent in the ``HX-Redirect`` header.
-    """
-    response = HttpResponse()
-    response["HX-Redirect"] = url
-    return response
 
 
 @htmx_login_required
@@ -818,7 +799,7 @@ def company_delete(request: HttpRequest, pk: int) -> HttpResponse:
     delete_archived_instance(company)
 
     if request.headers.get("HX-Request"):
-        return _redirect_response(reverse("crm:company_list"))
+        return htmx_redirect(reverse("crm:company_list"))
     return redirect("crm:company_list")
 
 
@@ -873,5 +854,5 @@ def contact_delete(request: HttpRequest, pk: int) -> HttpResponse:
     delete_archived_instance(contact)
 
     if request.headers.get("HX-Request"):
-        return _redirect_response(reverse("crm:contact_list"))
+        return htmx_redirect(reverse("crm:contact_list"))
     return redirect("crm:contact_list")

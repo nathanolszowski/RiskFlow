@@ -3,6 +3,7 @@
 from typing import Any
 
 from core.decorators import htmx_login_required, logged_user
+from core.htmx import close_modal, htmx_redirect, htmx_refresh, retarget_modal
 from core.http import filter_params
 from core.modals import confirm_modal, delete_confirm_modal
 from core.services import delete_archived_instance, update_tracked_form
@@ -240,22 +241,20 @@ def create_folder(request: HttpRequest) -> HttpResponse:
 
             # From company
             if selected_company:
-                response = HttpResponse(status=204)
-                response["HX-Refresh"] = "true"
-                return response
+                return htmx_refresh(status=204)
 
             # From folders list
             folders = _folders(request)
             paginator = Paginator(folders, 15)
             page_obj = paginator.get_page(1)
 
-            response = render(
-                request,
-                "inspections/partials/folder/folder_grid.html",
-                {"folders": page_obj, "page_obj": page_obj},
+            return close_modal(
+                render(
+                    request,
+                    "inspections/partials/folder/folder_grid.html",
+                    {"folders": page_obj, "page_obj": page_obj},
+                )
             )
-            response["HX-Trigger"] = "closeModal"
-            return response
 
         else:
             return render(
@@ -388,9 +387,7 @@ def folder_archive(request: HttpRequest, folder_id: int) -> HttpResponse:
     folder.archive(user=logged_user(request))
 
     if request.headers.get("HX-Request"):
-        response = HttpResponse()
-        response["HX-Refresh"] = "true"
-        return response
+        return htmx_refresh()
 
     return redirect("inspections:folder_detail", pk=folder.pk)
 
@@ -414,9 +411,7 @@ def folder_unarchive(request: HttpRequest, folder_id: int) -> HttpResponse:
     folder.unarchive(user=logged_user(request))
 
     if request.headers.get("HX-Request"):
-        response = HttpResponse()
-        response["HX-Refresh"] = "true"
-        return response
+        return htmx_refresh()
 
     return redirect("inspections:folder_detail", pk=folder.pk)
 
@@ -489,9 +484,7 @@ def folder_delete(request: HttpRequest, folder_id: int) -> HttpResponse:
     delete_archived_instance(folder)
 
     if request.headers.get("HX-Request"):
-        response = HttpResponse()
-        response["HX-Redirect"] = reverse("inspections:folder_list")
-        return response
+        return htmx_redirect(reverse("inspections:folder_list"))
     return redirect("inspections:folder_list")
 
 
@@ -536,9 +529,7 @@ def visit_create(request: HttpRequest, folder_id: int) -> HttpResponse:
             except ValidationError as e:
                 form.add_error("template", e)
             else:
-                response = _render_visit_tab(request, folder)
-                response["HX-Trigger"] = "closeModal"
-                return response
+                return close_modal(_render_visit_tab(request, folder))
         response = render(
             request,
             "inspections/partials/visit/visit_create_modal.html",
@@ -546,9 +537,7 @@ def visit_create(request: HttpRequest, folder_id: int) -> HttpResponse:
             status=422,
         )
         # The form targets the tab: the invalid modal must replace the modal instead
-        response["HX-Retarget"] = "#modal-container"
-        response["HX-Reswap"] = "innerHTML"
-        return response
+        return retarget_modal(response)
 
     form = VisitCreateForm(
         user=logged_user(request),
@@ -589,18 +578,15 @@ def visit_update(request: HttpRequest, pk: int) -> HttpResponse:
         form = VisitInstanceUpdateForm(request.POST, instance=visit)
         if form.is_valid():
             visit = update_tracked_form(form, logged_user(request))
-            response = _render_visit_tab(request, visit.folder)
-            response["HX-Trigger"] = "closeModal"
-            return response
+            return close_modal(_render_visit_tab(request, visit.folder))
         response = render(
             request,
             "inspections/partials/visit/visit_update_modal.html",
             {"visit": visit, "form": form},
             status=422,
         )
-        response["HX-Retarget"] = "#modal-container"
-        response["HX-Reswap"] = "innerHTML"
-        return response
+        # The form targets the tab: the invalid modal must replace the modal instead
+        return retarget_modal(response)
 
     form = VisitInstanceUpdateForm(instance=visit)
     return render(

@@ -3,6 +3,7 @@
 from typing import Any, Optional
 
 from core.decorators import htmx_login_required, logged_user
+from core.htmx import htmx_redirect
 from django.core.exceptions import ValidationError
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import render
@@ -187,11 +188,10 @@ def visit_complete(request: HttpRequest, pk: int) -> HttpResponse:
             status=422,
         )
 
-    response = HttpResponse(status=204)
-    response["HX-Redirect"] = (
-        reverse("inspections:folder_detail", args=[visit.folder_id]) + "?tab=visit"
+    return htmx_redirect(
+        reverse("inspections:folder_detail", args=[visit.folder_id]) + "?tab=visit",
+        status=204,
     )
-    return response
 
 
 @htmx_login_required
@@ -214,9 +214,7 @@ def visit_reopen(request: HttpRequest, pk: int) -> HttpResponse:
         reopen_visit(visit, logged_user(request))
     except VisitLockedError:
         raise Http404
-    response = HttpResponse(status=204)
-    response["HX-Redirect"] = reverse("inspections:visit_form", args=[visit.pk])
-    return response
+    return htmx_redirect(reverse("inspections:visit_form", args=[visit.pk]), status=204)
 
 
 @htmx_login_required

@@ -8,6 +8,7 @@ from django.views.decorators.http import require_GET, require_POST
 from django_htmx.middleware import HtmxDetails
 
 from core.decorators import htmx_login_required, logged_user
+from core.htmx import htmx_refresh
 from core.services.dashboard import get_dashboard_context, parse_period
 from core.services.geo import suggest
 from core.services.search import global_search as global_search_service
@@ -77,9 +78,7 @@ def toggle_theme(request: HttpRequest) -> HttpResponse:
     new_theme = "light" if current_theme == "dark" else "dark"
     request.session["theme"] = new_theme
     if request.headers.get("HX-Request"):
-        response = HttpResponse()
-        response["HX-Refresh"] = "true"
-        return response
+        return htmx_refresh()
 
     referer = request.META.get("HTTP_REFERER", "")
     if not url_has_allowed_host_and_scheme(

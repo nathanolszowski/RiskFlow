@@ -1,7 +1,9 @@
-"""Tests for the wording helpers (``core/text.py``) and the filter reading (``core/http.py``)."""
+"""Tests for ``core/text.py`` (wording), ``core/http.py`` (filters) and ``core/htmx.py``."""
 
+from django.http import HttpResponse
 from django.test import RequestFactory, SimpleTestCase
 
+from core.htmx import close_modal, htmx_redirect, htmx_refresh, retarget_modal
 from core.http import filter_params
 from core.text import agree, plural
 
@@ -39,4 +41,27 @@ class FilterParamsTests(SimpleTestCase):
         self.assertEqual(
             filter_params(request, "q", "phase", include_post=True),
             {"q": "get", "phase": "VISIT"},
+        )
+
+
+class HtmxResponsesTests(SimpleTestCase):
+    """``core/htmx.py``: the headers read by HTMX."""
+
+    def test_refresh_and_redirect(self):
+        """``htmx_refresh`` and ``htmx_redirect`` set their header and status."""
+        refresh = htmx_refresh(status=204)
+        self.assertEqual((refresh.status_code, refresh["HX-Refresh"]), (204, "true"))
+        redirect = htmx_redirect("/dossiers/")
+        self.assertEqual(
+            (redirect.status_code, redirect["HX-Redirect"]), (200, "/dossiers/")
+        )
+
+    def test_close_and_retarget_modal(self):
+        """The modal helpers add their headers to the given response."""
+        response = close_modal(HttpResponse("grid"))
+        self.assertEqual(response["HX-Trigger"], "closeModal")
+        response = retarget_modal(HttpResponse("modal", status=422))
+        self.assertEqual(
+            (response["HX-Retarget"], response["HX-Reswap"]),
+            ("#modal-container", "innerHTML"),
         )

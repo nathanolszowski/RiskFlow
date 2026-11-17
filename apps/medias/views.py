@@ -4,6 +4,7 @@ import re
 from typing import TYPE_CHECKING, Any, Optional, cast
 
 from core.decorators import htmx_login_required, logged_user
+from core.htmx import close_modal, retarget_modal
 from core.modals import delete_confirm_modal
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -142,9 +143,8 @@ def _invalid_modal(
     response = HttpResponse(
         f'{html}<div id="tab-content" hx-swap-oob="innerHTML">{tab}</div>', status=422
     )
-    response["HX-Retarget"] = "#modal-container"
-    response["HX-Reswap"] = "innerHTML"
-    return response
+    # The form targets the tab: the invalid modal must replace the modal instead
+    return retarget_modal(response)
 
 
 @htmx_login_required
@@ -232,9 +232,7 @@ def media_upload(request: HttpRequest, folder_id: int) -> HttpResponse:
                 except ValidationError as e:
                     errors.append((uploaded.name, " ".join(e.messages)))
             if not errors:
-                response = _render_medias_tab(request, folder)
-                response["HX-Trigger"] = "closeModal"
-                return response
+                return close_modal(_render_medias_tab(request, folder))
             return _invalid_modal(
                 request,
                 modal,
@@ -291,9 +289,7 @@ def media_update(request: HttpRequest, pk: int) -> HttpResponse:
             except ValidationError as e:
                 form.add_error("target", e)
             else:
-                response = _render_medias_tab(request, folder)
-                response["HX-Trigger"] = "closeModal"
-                return response
+                return close_modal(_render_medias_tab(request, folder))
         return _invalid_modal(request, modal, {"media": media, "form": form}, folder)
 
     return render(
