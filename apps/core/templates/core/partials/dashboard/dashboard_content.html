@@ -117,7 +117,7 @@
       <ul class="flex flex-col gap-2.5">
         {% for item in upcoming_visits %}
         <li class="{% if forloop.first %}-ml-5{% endif %}">
-          <a href="{% url 'inspections:folder_detail' item.visit.folder_id %}"
+          <a href="{% url 'inspections:folder_detail' item.visit.folder_id %}?tab=visit"
             class="flex min-h-16 items-center gap-4 rounded-xl border border-border-default bg-surface-secondary px-4 py-2.5 transition hover:border-border-hover">
             <div class="flex w-13 shrink-0 flex-col items-center leading-tight">
               <span class="text-[11px] uppercase tracking-widest text-text-subtle">{{ item.weekday }}</span>
