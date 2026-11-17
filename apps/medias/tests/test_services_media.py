@@ -166,6 +166,7 @@ class FolderUsageTests(TestCase):
         """Create a folder."""
         self.folder = InspectionFolderFactory()
 
+    @override_settings(MEDIA_FOLDER_QUOTA_MB=500)
     def test_empty_folder(self):
         """A folder without media uses nothing."""
         usage = get_folder_usage(self.folder)
