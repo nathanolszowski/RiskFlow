@@ -92,14 +92,14 @@ class ProcessImageTests(SimpleTestCase):
         result = process_image(make_jpeg((100, 100)))
         self.assertEqual(result.content_type, "image/jpeg")
         self.assertEqual(open_result(result.image).format, "JPEG")
-        self.assertTrue(result.image.name.endswith(".jpg"))
+        self.assertTrue((result.image.name or "").endswith(".jpg"))
 
     def test_png_with_alpha_stays_a_png(self):
         """A transparent PNG keeps its transparency, so it stays a PNG."""
         result = process_image(make_png_rgba())
         self.assertEqual(result.content_type, "image/png")
         self.assertEqual(open_result(result.image).format, "PNG")
-        self.assertTrue(result.image.name.endswith(".png"))
+        self.assertTrue((result.image.name or "").endswith(".png"))
 
     def test_thumbnail_is_at_most_400_pixels_and_without_exif(self):
         """The thumbnail fits in 400 px, is a JPEG and carries no EXIF."""

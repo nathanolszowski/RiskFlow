@@ -2,9 +2,10 @@
 
 from io import BytesIO
 
-import factory
 from core.tests.factories import TrackedFactory
 from django.core.files.uploadedfile import SimpleUploadedFile
+from factory.declarations import SelfAttribute, Sequence, SubFactory
+from factory.django import FileField
 from inspections.tests.factories import InspectionFolderFactory
 from PIL import Image
 
@@ -62,13 +63,13 @@ class MediaTagFactory(TrackedFactory):
         archived: Archived tag (see ``TrackedFactory``).
     """
 
-    class Meta:
+    class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]
         """Bind the factory to the tag model."""
 
         model = MediaTag
 
-    created_by = factory.SubFactory("accounts.tests.factories.UserFactory")
-    name = factory.Sequence(lambda n: f"tag{n}")
+    created_by = SubFactory("accounts.tests.factories.UserFactory")
+    name = Sequence(lambda n: f"tag{n}")
 
 
 class MediaFactory(TrackedFactory):
@@ -87,14 +88,14 @@ class MediaFactory(TrackedFactory):
         archived: Archived media (see ``TrackedFactory``).
     """
 
-    class Meta:
+    class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]
         """Bind the factory to the media model."""
 
         model = Media
 
-    folder = factory.SubFactory(InspectionFolderFactory)
-    created_by = factory.SelfAttribute("folder.created_by")
-    file = factory.django.FileField(filename="doc.pdf", data=b"%PDF-1.4\n%%EOF\n")
+    folder = SubFactory(InspectionFolderFactory)
+    created_by = SelfAttribute("folder.created_by")
+    file = FileField(filename="doc.pdf", data=b"%PDF-1.4\n%%EOF\n")
     original_name = "doc.pdf"
     content_type = "application/pdf"
     media_type = Media.MediaType.PDF

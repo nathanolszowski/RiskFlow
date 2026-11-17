@@ -20,11 +20,11 @@ def delete_media_files(sender: type[Media], instance: Media, **kwargs: object) -
         instance: Media that was deleted.
         **kwargs: Other signal arguments, unused.
     """
-    files = [f for f in (instance.file, instance.thumbnail) if f]
+    files = [(f.storage, f.name) for f in (instance.file, instance.thumbnail) if f.name]
 
     def _delete() -> None:
         """Remove the files from the storage."""
-        for f in files:
-            f.storage.delete(f.name)
+        for storage, name in files:
+            storage.delete(name)
 
     transaction.on_commit(_delete)

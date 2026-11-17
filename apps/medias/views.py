@@ -1,14 +1,16 @@
 """Views of the medias app: folder tab, upload, edition, protected file access, archiving."""
 
 import re
-from typing import BinaryIO, Optional
+from typing import TYPE_CHECKING, Any, Optional, cast
 
-from core.decorators import htmx_login_required
+from core.decorators import htmx_login_required, logged_user
 from core.modals import delete_confirm_modal
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.files.base import File
 from django.db.models.fields.files import FieldFile
 from django.http import FileResponse, Http404, HttpRequest, HttpResponse
+from django.http.response import HttpResponseBase
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -31,6 +33,9 @@ from .services.media import (
 )
 from .services.tags import get_folder_tags
 from .services.validation import ACCEPT_ATTRIBUTE
+
+if TYPE_CHECKING:
+    from django.forms import ChoiceField
 
 # Media types a browser can display inline; the Office files are always downloaded
 INLINE_MEDIA_TYPES = {Media.MediaType.IMAGE, Media.MediaType.PDF, Media.MediaType.VIDEO}
@@ -62,12 +67,12 @@ def _tab_context(
         "media_type": media_type,
         "target": target,
         "tag": tag,
-        "tags": get_folder_tags(folder, request.user),
+        "tags": get_folder_tags(folder, logged_user(request)),
         "media_types": Media.MediaType.choices,
         "targets": targets if targets is not None else target_choices(folder),
         "medias": get_filtered_medias(
             folder,
-            request.user,
+            logged_user(request),
             q=q,
             media_type=media_type,
             target=target,
@@ -78,6 +83,18 @@ def _tab_context(
         "active_count": folder.medias.filter(is_active=True).count(),
         "archived_count": folder.medias.filter(is_active=False).count(),
     }
+
+
+def _target_field_choices(form: MediaUploadForm) -> Any:
+    """Return the choices of the ``target`` field of the upload form.
+
+    Args:
+        form: The upload form.
+
+    Returns:
+        The choices of its ``target`` field.
+    """
+    return cast("ChoiceField", form.fields["target"]).choices
 
 
 def _render_medias_tab(request: HttpRequest, folder: InspectionFolder) -> HttpResponse:
@@ -145,7 +162,7 @@ def folder_tab_medias(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the folder does not exist or belongs to another user.
     """
-    folder = get_inspection_folder_by_id(pk, request.user)
+    folder = get_inspection_folder_by_id(pk, logged_user(request))
     return _render_medias_tab(request, folder)
 
 
@@ -169,7 +186,7 @@ def media_upload(request: HttpRequest, folder_id: int) -> HttpResponse:
     Raises:
         Http404: If the folder does not exist or belongs to another user.
     """
-    folder = get_inspection_folder_by_id(folder_id, request.user)
+    folder = get_inspection_folder_by_id(folder_id, logged_user(request))
     if not folder.is_active:
         return HttpResponse("Le dossier est archivé.", status=409)
 
@@ -205,7 +222,7 @@ def media_upload(request: HttpRequest, folder_id: int) -> HttpResponse:
                 try:
                     create_media(
                         folder,
-                        request.user,
+                        logged_user(request),
                         uploaded,
                         visit=visit,
                         recommandation=recommandation,
@@ -223,10 +240,10 @@ def media_upload(request: HttpRequest, folder_id: int) -> HttpResponse:
                 modal,
                 context(form, errors),
                 folder,
-                form.fields["target"].choices,
+                _target_field_choices(form),
             )
         return _invalid_modal(
-            request, modal, context(form), folder, form.fields["target"].choices
+            request, modal, context(form), folder, _target_field_choices(form)
         )
 
     form = MediaUploadForm(
@@ -251,7 +268,7 @@ def media_update(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the media does not exist or belongs to another user.
     """
-    media = get_media_by_id(pk, request.user)
+    media = get_media_by_id(pk, logged_user(request))
     folder = media.folder
     modal = "medias/partials/media/media_update_modal.html"
 
@@ -261,7 +278,7 @@ def media_update(request: HttpRequest, pk: int) -> HttpResponse:
             try:
                 update_media(
                     media,
-                    request.user,
+                    logged_user(request),
                     title=form.cleaned_data["title"],
                     notes=form.cleaned_data["notes"],
                     visit=form.visit,
@@ -284,7 +301,7 @@ def media_update(request: HttpRequest, pk: int) -> HttpResponse:
 class _Slice:
     """Read-only view on ``length`` bytes of an open file, for a partial response."""
 
-    def __init__(self, handle: BinaryIO, length: int) -> None:
+    def __init__(self, handle: File, length: int) -> None:
         """Wrap an open file, already positioned on the first byte to send.
 
         Args:
@@ -337,7 +354,7 @@ def _parse_range(header: str, size: int) -> Optional[tuple[int, int]]:
 
 def _serve(
     request: HttpRequest, media: Media, field: FieldFile, *, inline: bool
-) -> HttpResponse:
+) -> HttpResponseBase:
     """Serve a stored file; the caller has already checked the ownership.
 
     The file is streamed by Django, with byte ranges (needed by Safari/iPadOS
@@ -355,15 +372,16 @@ def _serve(
     Raises:
         Http404: If there is no file or it is missing from the storage.
     """
-    if not field:
+    name = field.name
+    if not name:
         raise Http404("Fichier introuvable.")
     disposition = content_disposition_header(not inline, media.original_name)
     storage = field.storage
     try:
-        handle = storage.open(field.name, "rb")
+        handle = storage.open(name, "rb")
     except FileNotFoundError:
         raise Http404("Fichier introuvable.")
-    size = storage.size(field.name)
+    size = storage.size(name)
     # Safari/iPadOS only plays a video served with byte ranges (206)
     range_header = request.headers.get("Range")
     if range_header:
@@ -391,14 +409,15 @@ def _serve(
         # Defense in depth: nothing served here may run scripts on the app origin
         # (the browser PDF viewer does not work in a sandboxed document)
         response["Content-Security-Policy"] = "sandbox"
-    response["Content-Disposition"] = disposition
+    if disposition:
+        response["Content-Disposition"] = disposition
     response["Cache-Control"] = "private, max-age=300"
     return response
 
 
 @htmx_login_required
 @require_GET
-def media_file(request: HttpRequest, pk: int) -> HttpResponse:
+def media_file(request: HttpRequest, pk: int) -> HttpResponseBase:
     """Serve the file of a media to its owner.
 
     Images, PDF and videos are displayed inline; ``?download=1`` forces the download
@@ -414,14 +433,14 @@ def media_file(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the media does not exist or belongs to another user.
     """
-    media = get_media_by_id(pk, request.user)
+    media = get_media_by_id(pk, logged_user(request))
     inline = media.media_type in INLINE_MEDIA_TYPES and not request.GET.get("download")
     return _serve(request, media, media.file, inline=inline)
 
 
 @htmx_login_required
 @require_GET
-def media_thumbnail(request: HttpRequest, pk: int) -> HttpResponse:
+def media_thumbnail(request: HttpRequest, pk: int) -> HttpResponseBase:
     """Serve the thumbnail of an image to its owner.
 
     Args:
@@ -434,7 +453,7 @@ def media_thumbnail(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the media does not exist, has no thumbnail or belongs to another user.
     """
-    media = get_media_by_id(pk, request.user)
+    media = get_media_by_id(pk, logged_user(request))
     return _serve(request, media, media.thumbnail, inline=True)
 
 
@@ -453,8 +472,8 @@ def media_archive(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the media does not exist or belongs to another user.
     """
-    media = get_media_by_id(pk, request.user)
-    archive_media(media, request.user)
+    media = get_media_by_id(pk, logged_user(request))
+    archive_media(media, logged_user(request))
     if request.headers.get("HX-Request"):
         return _render_medias_tab(request, media.folder)
     return redirect("inspections:folder_detail", pk=media.folder_id)
@@ -475,8 +494,8 @@ def media_unarchive(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the media does not exist or belongs to another user.
     """
-    media = get_media_by_id(pk, request.user)
-    unarchive_media(media, request.user)
+    media = get_media_by_id(pk, logged_user(request))
+    unarchive_media(media, logged_user(request))
     if request.headers.get("HX-Request"):
         return _render_medias_tab(request, media.folder)
     return redirect("inspections:folder_detail", pk=media.folder_id)
@@ -498,7 +517,7 @@ def media_delete(request: HttpRequest, pk: int) -> HttpResponse:
     Raises:
         Http404: If the media does not exist or belongs to another user.
     """
-    media = get_media_by_id(pk, request.user)
+    media = get_media_by_id(pk, logged_user(request))
 
     if request.method == "GET":
         return delete_confirm_modal(

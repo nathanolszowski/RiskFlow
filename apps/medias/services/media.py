@@ -211,15 +211,16 @@ def create_media(
 
     media.content_type = content_type
     media.size = size
-    media.file.save(stored.name, stored, save=False)
+    media.file.save(stored.name or "", stored, save=False)
     if thumbnail:
-        media.thumbnail.save(thumbnail.name, thumbnail, save=False)
+        media.thumbnail.save(thumbnail.name or "", thumbnail, save=False)
     try:
         media.save()
     except Exception:
         # The row was not created: do not leave orphan files in the storage
-        media.file.storage.delete(media.file.name)
-        if media.thumbnail:
+        if media.file.name:
+            media.file.storage.delete(media.file.name)
+        if media.thumbnail.name:
             media.thumbnail.storage.delete(media.thumbnail.name)
         raise
     set_media_tags(media, user, tag_names)

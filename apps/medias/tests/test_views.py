@@ -4,6 +4,8 @@ Each class has its own temporary ``MEDIA_ROOT``. Archive and delete views of med
 are covered here; the isolation (404 for another user) is in ``test_isolation.py``.
 """
 
+from typing import Any
+
 from core.tests.helpers import HtmxClientMixin
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
@@ -26,6 +28,19 @@ PDF = b"%PDF-1.4\n%%EOF\n"
 BODY = (
     b"%PDF-1.4\n" + bytes(range(256)) * 2
 )  # 521 bytes, every byte value is distinctive
+
+
+def streamed(response: Any) -> bytes:
+    """Read the whole body of a streamed file response.
+
+    Args:
+        response: Response of a file view (a ``FileResponse``; the test client types
+            it as a plain response, without ``streaming_content``).
+
+    Returns:
+        The bytes of the body.
+    """
+    return b"".join(response.streaming_content)
 
 
 def pdf(name="rapport.pdf", extra=b""):
@@ -64,7 +79,7 @@ class MediaViewTestCase(TempMediaRootMixin, HtmxClientMixin, TestCase):
         """
         return reverse(f"medias:{name}", args=args)
 
-    def make_media(self, **kwargs):
+    def make_media(self, **kwargs) -> Media:
         """Create a media of the folder.
 
         Args:
@@ -447,7 +462,7 @@ class MediaFileTests(MediaViewTestCase):
         """The whole file is served inline with its type, size and security headers."""
         response = self.client.get(self.file_url)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(b"".join(response.streaming_content), BODY)
+        self.assertEqual(streamed(response), BODY)
         self.assertEqual(response["Content-Type"], "application/pdf")
         self.assertEqual(response["Content-Length"], str(len(BODY)))
         self.assertEqual(response["Accept-Ranges"], "bytes")
@@ -464,7 +479,7 @@ class MediaFileTests(MediaViewTestCase):
         self.assertEqual(response.status_code, 206)
         self.assertEqual(response["Content-Range"], f"bytes 0-99/{len(BODY)}")
         self.assertEqual(response["Content-Length"], "100")
-        self.assertEqual(b"".join(response.streaming_content), BODY[:100])
+        self.assertEqual(streamed(response), BODY[:100])
 
     def test_open_ended_and_suffix_ranges(self):
         """``bytes=500-`` gives the end of the file, ``bytes=-21`` its last 21 bytes."""
@@ -472,10 +487,10 @@ class MediaFileTests(MediaViewTestCase):
         self.assertEqual(
             response["Content-Range"], f"bytes 500-{len(BODY) - 1}/{len(BODY)}"
         )
-        self.assertEqual(b"".join(response.streaming_content), BODY[500:])
+        self.assertEqual(streamed(response), BODY[500:])
         response = self.client.get(self.file_url, HTTP_RANGE="bytes=-21")
         self.assertEqual(response.status_code, 206)
-        self.assertEqual(b"".join(response.streaming_content), BODY[-21:])
+        self.assertEqual(streamed(response), BODY[-21:])
 
     def test_range_end_is_capped_to_the_file_size(self):
         """A last byte beyond the end is capped instead of refused."""
@@ -523,7 +538,7 @@ class MediaFileTests(MediaViewTestCase):
 
     def test_missing_file_is_404(self):
         """A media whose file disappeared from the storage answers 404."""
-        self.media.file.storage.delete(self.media.file.name)
+        self.media.file.storage.delete(self.media.file.name or "")
         self.assertEqual(self.client.get(self.file_url).status_code, 404)
 
     def test_thumbnail(self):
@@ -531,7 +546,7 @@ class MediaFileTests(MediaViewTestCase):
         response = self.client.get(self.url("media_thumbnail", self.photo.pk))
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response["Content-Disposition"].startswith("inline"))
-        self.assertTrue(b"".join(response.streaming_content).startswith(b"\xff\xd8"))
+        self.assertTrue(streamed(response).startswith(b"\xff\xd8"))
 
     def test_media_without_thumbnail_is_404(self):
         """A PDF has no thumbnail."""
@@ -583,7 +598,7 @@ class MediaArchiveDeleteTests(MediaViewTestCase):
     def test_delete_of_an_archived_media_removes_the_file(self):
         """The row and the stored file are removed, the tab is returned."""
         self.media.archive(self.owner)
-        storage, name = self.media.file.storage, self.media.file.name
+        storage, name = self.media.file.storage, self.media.file.name or ""
         response = self.htmx_get(self.url("media_delete", self.media.pk))
         self.assertFalse(response.context["blocking"])
         self.assertEqual(response.context["post_target"], "#tab-content")

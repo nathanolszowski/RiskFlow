@@ -3,10 +3,11 @@
 import shutil
 import tempfile
 
+from core.tests.helpers import MixinBase
 from django.test import override_settings
 
 
-class TempMediaRootMixin:
+class TempMediaRootMixin(MixinBase):
     """Give each test class its own temporary ``MEDIA_ROOT``, removed at the end.
 
     The test settings already point ``MEDIA_ROOT`` to a temporary folder, but a

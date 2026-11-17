@@ -1,6 +1,6 @@
 """Generic helpers for tracked models (create, update, archive, delete) and template context."""
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from django.forms import ModelForm
 from django.http import HttpRequest
@@ -10,6 +10,8 @@ from core.models import TrackingModel
 
 if TYPE_CHECKING:
     from accounts.models import CustomUser
+
+T = TypeVar("T", bound=TrackingModel)
 
 
 def create_tracked_instance(form: ModelForm, user: "CustomUser") -> TrackingModel:
@@ -31,8 +33,8 @@ def create_tracked_instance(form: ModelForm, user: "CustomUser") -> TrackingMode
 
 
 def update_tracked_instance(
-    instance: TrackingModel, user: "CustomUser", **fields_to_update: Any
-) -> TrackingModel:
+    instance: T, user: "CustomUser", **fields_to_update: Any
+) -> T:
     """Update a tracked instance with the provided fields.
 
     Only these fields, ``updated_by`` and ``updated_at`` are written to the
@@ -57,9 +59,7 @@ def update_tracked_instance(
     return instance
 
 
-def archive_tracked_instance(
-    instance: TrackingModel, user: "CustomUser"
-) -> TrackingModel:
+def archive_tracked_instance(instance: T, user: "CustomUser") -> T:
     """Archive a tracked instance, without cascading to its related records.
 
     Sets ``is_active`` to False and records the archive date and user.
@@ -79,9 +79,7 @@ def archive_tracked_instance(
     return instance
 
 
-def unarchive_tracked_instance(
-    instance: TrackingModel, user: "CustomUser"
-) -> TrackingModel:
+def unarchive_tracked_instance(instance: T, user: "CustomUser") -> T:
     """Unarchive a tracked instance, without cascading to its related records.
 
     Restores ``is_active`` and clears the archive date and user.

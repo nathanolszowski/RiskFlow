@@ -1,7 +1,7 @@
 """Forms of the medias app: multiple upload and edition of a media."""
 
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Optional, cast
 
 from django import forms
 from django.core.exceptions import ValidationError
@@ -165,7 +165,8 @@ class _TargetForm(forms.Form):
         """
         super().__init__(*args, **kwargs)
         self.folder = folder
-        self.fields["target"].choices = target_choices(folder, current_target)
+        target_field = cast("forms.ChoiceField", self.fields["target"])
+        target_field.choices = target_choices(folder, current_target)
         for field in self.fields.values():
             if not isinstance(
                 field.widget, (forms.FileInput, forms.CheckboxSelectMultiple)
@@ -220,7 +221,10 @@ class _TaggedForm(_TargetForm):
             **kwargs: Keyword arguments passed to ``Form``.
         """
         super().__init__(*args, **kwargs)
-        self.fields["existing_tags"].queryset = MediaTag.objects.filter(
+        tags_field = cast(
+            "forms.ModelMultipleChoiceField", self.fields["existing_tags"]
+        )
+        tags_field.queryset = MediaTag.objects.filter(
             created_by_id=self.folder.created_by_id, medias__isnull=False
         ).distinct()
 
@@ -237,7 +241,7 @@ class _TaggedForm(_TargetForm):
         """Return the ids of the checked tags, as strings, for the template."""
         return [str(value) for value in (self["existing_tags"].value() or [])]
 
-    def clean(self) -> dict[str, Any]:
+    def clean(self) -> Optional[dict[str, Any]]:
         """Check the number and the length of the tags.
 
         Returns:
@@ -259,7 +263,9 @@ class MediaUploadForm(_TaggedForm):
         notes: Notes applied to every file.
     """
 
-    files = MultipleFileField(
+    # ``files`` also names the uploaded files of the form: Django removes the field
+    # from the class attributes, so only the type checker sees a clash
+    files = MultipleFileField(  # pyright: ignore[reportAssignmentType]
         label="Fichiers",
         widget=MultipleFileInput(attrs={"accept": ACCEPT_ATTRIBUTE}),
         # An empty file is refused on its own by validate_upload, not for the whole batch

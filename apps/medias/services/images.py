@@ -204,6 +204,7 @@ def process_image(uploaded: UploadedFile) -> ProcessedImage:
     untouched = (
         img.size == original_size
         and original_format == ("PNG" if keep_alpha else "JPEG")
+        and uploaded.size is not None
         and len(data) >= uploaded.size
     )
     stem = os.path.splitext(uploaded.name or "image")[0]

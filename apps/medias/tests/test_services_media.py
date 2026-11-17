@@ -61,10 +61,9 @@ class CreateMediaTests(TempMediaRootMixin, TestCase):
     def test_pdf_is_stored_under_a_random_name(self):
         """The file goes to ``folders/<folder id>/<uuid>.pdf``, whatever its name."""
         media = create_media(self.folder, self.user, pdf("Rapport confidentiel.pdf"))
-        self.assertRegex(
-            media.file.name, rf"^folders/{self.folder.pk}/[0-9a-f]{{32}}\.pdf$"
-        )
-        self.assertTrue(media.file.storage.exists(media.file.name))
+        name = media.file.name or ""
+        self.assertRegex(name, rf"^folders/{self.folder.pk}/[0-9a-f]{{32}}\.pdf$")
+        self.assertTrue(media.file.storage.exists(name))
         self.assertEqual(media.original_name, "Rapport confidentiel.pdf")
 
     def test_deduced_fields(self):
@@ -88,7 +87,7 @@ class CreateMediaTests(TempMediaRootMixin, TestCase):
         self.assertEqual(media.media_type, "image")
         self.assertTrue(media.thumbnail)
         self.assertRegex(
-            media.thumbnail.name, rf"^folders/{self.folder.pk}/thumbnails/"
+            media.thumbnail.name or "", rf"^folders/{self.folder.pk}/thumbnails/"
         )
         self.assertEqual(media.metadata["camera"], "ACME")
         self.assertEqual(media.size, media.file.size)
@@ -290,7 +289,7 @@ class UpdateAndLifecycleTests(TempMediaRootMixin, TestCase):
 
     def setUp(self):
         """Create a media with a visit available as target."""
-        self.media = MediaFactory()
+        self.media: Media = MediaFactory()
         self.user = self.media.created_by
         self.visit = VisitInstanceFactory(
             folder=self.media.folder, created_by=self.user
@@ -340,7 +339,8 @@ class UpdateAndLifecycleTests(TempMediaRootMixin, TestCase):
             self.media.folder, self.user, make_jpeg((500, 400), name="p.jpg")
         )
         storage = media.file.storage
-        names = [media.file.name, media.thumbnail.name]
+        names = [n for n in (media.file.name, media.thumbnail.name) if n]
+        self.assertEqual(len(names), 2)
         self.assertTrue(all(storage.exists(n) for n in names))
         archive_media(media, self.user)
         with self.captureOnCommitCallbacks(execute=True):

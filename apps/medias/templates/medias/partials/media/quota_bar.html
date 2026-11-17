@@ -8,10 +8,9 @@
       {{ usage.used_bytes|filesize_fr }} / {{ usage.quota_bytes|filesize_fr }}
     </span>
   </div>
-  <div class="h-2.5 w-full overflow-hidden rounded-full bg-surface-tertiary">
-    <div class="h-full rounded-full transition-all {% if usage.level == 'full' %}bg-status-danger{% elif usage.level == 'warning' %}bg-status-warning{% else %}bg-brand-primary{% endif %}"
-      style="width: {{ usage.percent }}%"></div>
-  </div>
+  {# Visual only: the container above is the progressbar for assistive technologies #}
+  <progress value="{{ usage.percent }}" max="100" aria-hidden="true"
+    class="h-2.5 w-full appearance-none overflow-hidden rounded-full bg-surface-tertiary [&::-webkit-progress-bar]:bg-surface-tertiary [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:transition-all [&::-moz-progress-bar]:rounded-full {% if usage.level == 'full' %}[&::-webkit-progress-value]:bg-status-danger [&::-moz-progress-bar]:bg-status-danger{% elif usage.level == 'warning' %}[&::-webkit-progress-value]:bg-status-warning [&::-moz-progress-bar]:bg-status-warning{% else %}[&::-webkit-progress-value]:bg-brand-primary [&::-moz-progress-bar]:bg-brand-primary{% endif %}"></progress>
   {% if usage.level == 'full' %}
   <p class="mt-1.5 text-xs text-status-danger">Quota atteint : supprimez des médias pour en ajouter.</p>
   {% elif usage.level == 'warning' %}
