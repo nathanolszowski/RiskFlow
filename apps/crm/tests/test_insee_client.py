@@ -58,13 +58,28 @@ class InseeClientTestCase(SimpleTestCase):
         with mock.patch(GET_COMPANY, new=router):
             return INSEEApiClient.fetch_by_siret(siret), router
 
+    def fetch_ok(self, routes, siret=SIRET_SIEGE, naf=None):
+        """Call ``fetch_by_siret`` with a fake network and expect data back.
+
+        Args:
+            routes: Mapping ``{siret: response}`` served by the fake Sirene API.
+            siret: SIRET to look up.
+            naf: Response served by the fake NAF service (label fixture by default).
+
+        Returns:
+            A tuple ``(data, fake network)``, with ``data`` never ``None``.
+        """
+        data, router = self.fetch(routes, siret=siret, naf=naf)
+        assert data is not None
+        return data, router
+
 
 class FetchHeadOfficeTests(InseeClientTestCase):
     """``fetch_by_siret`` for a head office and for a secondary establishment."""
 
     def test_head_office_needs_a_single_call(self):
         """For a head office there is one request and the head office is itself."""
-        data, router = self.fetch({SIRET_SIEGE: ok("etab_siege_actif.json")})
+        data, router = self.fetch_ok({SIRET_SIEGE: ok("etab_siege_actif.json")})
         self.assertEqual(
             sirene_urls(router), [f"{INSEEApiClient.BASE_URL}/siret/{SIRET_SIEGE}"]
         )
@@ -74,7 +89,7 @@ class FetchHeadOfficeTests(InseeClientTestCase):
 
     def test_data_of_a_head_office(self):
         """The main fields are read and formatted."""
-        data, _ = self.fetch({SIRET_SIEGE: ok("etab_siege_actif.json")})
+        data, _ = self.fetch_ok({SIRET_SIEGE: ok("etab_siege_actif.json")})
         self.assertEqual(data["name"], "ACME INDUSTRIES")
         self.assertEqual(data["siret"], SIRET_SIEGE)
         self.assertEqual(data["siren"], "123456782")
@@ -88,7 +103,7 @@ class FetchHeadOfficeTests(InseeClientTestCase):
 
     def test_secondary_establishment_reads_the_head_office(self):
         """A second request asks SIREN + ``nicSiegeUniteLegale`` for the head office."""
-        data, router = self.fetch(
+        data, router = self.fetch_ok(
             {
                 SIRET_SECONDAIRE: ok("etab_secondaire.json"),
                 SIRET_SIEGE: ok("etab_siege_du_secondaire.json"),
@@ -108,7 +123,7 @@ class FetchHeadOfficeTests(InseeClientTestCase):
 
     def test_unreadable_head_office_keeps_its_siret_only(self):
         """If the second request fails, the head office SIRET is kept without details."""
-        data, router = self.fetch(
+        data, router = self.fetch_ok(
             {SIRET_SECONDAIRE: ok("etab_secondaire.json")}, siret=SIRET_SECONDAIRE
         )
         self.assertEqual(len(sirene_urls(router)), 2)
@@ -120,7 +135,7 @@ class FetchHeadOfficeTests(InseeClientTestCase):
         """Without ``nicSiegeUniteLegale`` there is no second request and no head office."""
         payload = load_fixture("etab_secondaire.json")
         del payload["etablissement"]["uniteLegale"]["nicSiegeUniteLegale"]
-        data, router = self.fetch(
+        data, router = self.fetch_ok(
             {SIRET_SECONDAIRE: fake_response(200, payload)}, siret=SIRET_SECONDAIRE
         )
         self.assertEqual(len(sirene_urls(router)), 1)
@@ -132,7 +147,7 @@ class FetchActivityTests(InseeClientTestCase):
 
     def test_activity_of_the_establishment_and_its_label(self):
         """The code of the establishment is used and its label is read."""
-        data, router = self.fetch({SIRET_SIEGE: ok("etab_siege_actif.json")})
+        data, router = self.fetch_ok({SIRET_SIEGE: ok("etab_siege_actif.json")})
         self.assertEqual(data["activity_naf25"], "62.01Z")
         self.assertEqual(data["activity_naf25_label"], "Programmation informatique")
         self.assertEqual(
@@ -142,7 +157,7 @@ class FetchActivityTests(InseeClientTestCase):
 
     def test_activity_falls_back_to_the_legal_unit(self):
         """Without code on the establishment, the one of the legal unit is used."""
-        data, _ = self.fetch(
+        data, _ = self.fetch_ok(
             {
                 SIRET_SECONDAIRE: ok("etab_secondaire.json"),
                 SIRET_SIEGE: ok("etab_siege_du_secondaire.json"),
@@ -153,14 +168,14 @@ class FetchActivityTests(InseeClientTestCase):
 
     def test_no_activity_at_all(self):
         """Without any NAF 2025 code both fields are empty and the label is not asked."""
-        data, router = self.fetch({SIRET_SIEGE: ok("etab_sans_naf25.json")})
+        data, router = self.fetch_ok({SIRET_SIEGE: ok("etab_sans_naf25.json")})
         self.assertEqual(data["activity_naf25"], "")
         self.assertEqual(data["activity_naf25_label"], "")
         self.assertEqual(naf_urls(router), [])
 
     def test_label_service_down_keeps_the_code(self):
         """If the label cannot be read, the code is still returned."""
-        data, _ = self.fetch(
+        data, _ = self.fetch_ok(
             {SIRET_SIEGE: ok("etab_siege_actif.json")}, naf=requests.ConnectionError
         )
         self.assertEqual(data["activity_naf25"], "62.01Z")
@@ -197,7 +212,7 @@ class FetchFailureTests(InseeClientTestCase):
     def test_establishment_list_fallback(self):
         """An ``etablissements`` list is accepted when ``etablissement`` is missing."""
         etab = load_fixture("etab_siege_actif.json")["etablissement"]
-        data, _ = self.fetch(
+        data, _ = self.fetch_ok(
             {SIRET_SIEGE: fake_response(200, {"etablissements": [etab]})}
         )
         self.assertEqual(data["siret"], SIRET_SIEGE)

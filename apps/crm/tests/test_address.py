@@ -77,6 +77,7 @@ class CreateCompanyAddressTests(CrmViewTestCase):
     def test_coordinates_in_the_form_are_ignored(self):
         """Coordinates cannot be posted: they are computed from the address."""
         company = self.post(latitude="1", longitude="2", address_certified="on")
+        assert company.latitude is not None
         self.assertAlmostEqual(float(company.latitude), 48.869141, places=5)
 
     def test_address_from_sirene_is_flagged(self):
@@ -128,7 +129,9 @@ class SireneAddressRefreshTests(TestCase):
         patcher = mock.patch(GEOCODING_GET, new=router)
         self.router = patcher.start()
         self.addCleanup(patcher.stop)
-        self.data = INSEEApiClient.fetch_by_siret(SIRET_SIEGE)
+        data = INSEEApiClient.fetch_by_siret(SIRET_SIEGE)
+        assert data is not None
+        self.data = data
         self.company = make_certified(
             CompanyFactory(
                 siret=SIRET_SIEGE,
@@ -165,6 +168,7 @@ class SireneAddressRefreshTests(TestCase):
         )
         self.assertEqual(company.address_source, Company.AddressSource.SIRENE)
         self.assertTrue(company.address_certified)
+        assert company.latitude is not None
         self.assertAlmostEqual(float(company.latitude), 48.869141, places=5)
 
     def test_geocoder_down_leaves_the_new_address_uncertified(self):
@@ -196,6 +200,7 @@ class SireneAddressRefreshTests(TestCase):
             apply_sirene_changes(company, self.user, self.data, ["address"]), []
         )
         company.refresh_from_db()
+        assert company.latitude is not None
         self.assertEqual(float(company.latitude), 1.5)
 
     def test_empty_sirene_address_never_blanks_the_client(self):

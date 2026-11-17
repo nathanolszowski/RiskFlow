@@ -80,10 +80,12 @@ class SireneTestCase(TestCase):
             siret: SIRET of the fixture.
 
         Returns:
-            The formatted Sirene data.
+            The formatted Sirene data, never ``None``.
         """
         with mock.patch(GET_COMPANY, new=sirene_router(routes((siret, fixture)))):
-            return INSEEApiClient.fetch_by_siret(siret)
+            data = INSEEApiClient.fetch_by_siret(siret)
+        assert data is not None
+        return data
 
 
 class CachedDataTests(SireneTestCase):
@@ -161,6 +163,7 @@ class AdministrativeStateTests(SimpleTestCase):
         closed = get_cessation_alert(
             {"establishment_state": "F", "closure_date": "2023-03-01", **hq}
         )
+        assert ceased is not None and closed is not None
         self.assertEqual(closed["kind"], "closed")
         self.assertEqual(closed["since"], date(2023, 3, 1))
 

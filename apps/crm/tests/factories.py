@@ -2,10 +2,18 @@
 
 from datetime import timedelta
 
-import factory
 from accounts.tests.factories import UserFactory
 from core.tests.factories import TrackedFactory
 from django.utils import timezone
+from factory.declarations import (
+    LazyAttribute,
+    LazyFunction,
+    SelfAttribute,
+    Sequence,
+    SubFactory,
+    Trait,
+)
+from factory.faker import Faker
 
 from crm.models import Company, Contact
 
@@ -25,33 +33,33 @@ class CompanyFactory(TrackedFactory):
         ceased: Whole company ceased (``administrative_state="C"``).
     """
 
-    class Meta:
+    class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]
         """Bind the factory to the company model."""
 
         model = Company
 
-    class Params:
+    class Params:  # pyright: ignore[reportIncompatibleVariableOverride]
         """Traits of the company factory."""
 
-        closed = factory.Trait(
+        closed = Trait(
             administrative_state=Company.SireneState.CLOSED,
-            closure_date=factory.LazyFunction(
+            closure_date=LazyFunction(
                 lambda: timezone.localdate() - timedelta(days=365)
             ),
         )
-        ceased = factory.Trait(administrative_state=Company.SireneState.CEASED)
+        ceased = Trait(administrative_state=Company.SireneState.CEASED)
 
-    created_by = factory.SubFactory(UserFactory)
-    updated_by = factory.SelfAttribute("created_by")
-    name = factory.Faker("company")
-    address_line = factory.Faker("street_address")
-    postal_code = factory.Faker("postcode")
-    city = factory.Faker("city")
-    siret = factory.Sequence(lambda n: f"{10_000_000_000_000 + n}")
-    siren = factory.LazyAttribute(lambda o: o.siret[:9])
+    created_by = SubFactory(UserFactory)
+    updated_by = SelfAttribute("created_by")
+    name = Faker("company")
+    address_line = Faker("street_address")
+    postal_code = Faker("postcode")
+    city = Faker("city")
+    siret = Sequence(lambda n: f"{10_000_000_000_000 + n}")
+    siren = LazyAttribute(lambda o: o.siret[:9])
     business_line = "Industrie"
     company_size_category = "PME"
-    creation_date = factory.Faker("date_object")
+    creation_date = Faker("date_object")
 
 
 class ContactFactory(TrackedFactory):
@@ -66,14 +74,14 @@ class ContactFactory(TrackedFactory):
         archived: Archived contact (see ``TrackedFactory``).
     """
 
-    class Meta:
+    class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]
         """Bind the factory to the contact model."""
 
         model = Contact
 
-    company = factory.SubFactory(CompanyFactory)
-    created_by = factory.SelfAttribute("company.created_by")
-    first_name = factory.Faker("first_name")
-    last_name = factory.Faker("last_name")
-    email = factory.Sequence(lambda n: f"contact{n}@example.com")
+    company = SubFactory(CompanyFactory)
+    created_by = SelfAttribute("company.created_by")
+    first_name = Faker("first_name")
+    last_name = Faker("last_name")
+    email = Sequence(lambda n: f"contact{n}@example.com")
     position = "Responsable sécurité"

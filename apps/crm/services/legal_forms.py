@@ -5,6 +5,8 @@ Source: INSEE, "Catégories juridiques" (cj_septembre_2022.xls, updated 1 Septem
 To refresh it, download the newest file from insee.fr and rebuild this dict.
 """
 
+from typing import Optional
+
 LEGAL_FORMS: dict[str, str] = {
     "0000": "Organisme de placement collectif en valeurs mobilières sans personnalité morale",
     "1000": "Entrepreneur individuel",
@@ -269,11 +271,12 @@ LEGAL_FORMS: dict[str, str] = {
 }
 
 
-def legal_form_label(value: str) -> str:
+def legal_form_label(value: Optional[str]) -> str:
     """Return the label of an INSEE legal form code.
 
     Args:
         value: A 4-digit code from Sirene (e.g. ``5499``), or free text typed by hand.
+            ``None`` or an empty value gives an empty string.
 
     Returns:
         The label of the code, or ``value`` unchanged when it is not a known code.

@@ -7,6 +7,7 @@ once when a client is imported or updated, then stored on the client.
 """
 
 import re
+from typing import Optional
 
 import requests
 from django.core.cache import cache
@@ -22,14 +23,14 @@ LABEL_CACHE_SECONDS = 30 * 24 * 3600
 UNKNOWN_CACHE_SECONDS = 24 * 3600
 
 
-def fetch_naf25_label(code: str) -> str:
+def fetch_naf25_label(code: Optional[str]) -> str:
     """Return the French label of a NAF 2025 sub-class code.
 
     Network errors are swallowed and not cached, so the next call tries again.
 
     Args:
-        code: NAF 2025 code, e.g. ``58.29Y``. Anything else gives an empty label
-            (the code is put in the URL, so it is checked first).
+        code: NAF 2025 code, e.g. ``58.29Y``. Anything else, ``None`` included, gives
+            an empty label (the code is put in the URL, so it is checked first).
 
     Returns:
         The label (e.g. ``Édition d’autres logiciels``), or an empty string if the

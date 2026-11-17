@@ -113,7 +113,7 @@ class Company(TrackingModel, AddressMixin):
         # Untyped on purpose: crm must not import inspections (inspections depends on crm, never the reverse)
         inspection_folders: "RelatedManager[Any]"
 
-    class Meta(TrackingModel.Meta):
+    class Meta(TrackingModel.Meta):  # pyright: ignore[reportIncompatibleVariableOverride]
         verbose_name = "Client"
         verbose_name_plural = "Clients"
         ordering = ["name"]
