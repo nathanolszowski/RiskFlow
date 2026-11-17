@@ -262,7 +262,8 @@ def media_update(request: HttpRequest, pk: int) -> HttpResponse:
         pk: Primary key of the media.
 
     Returns:
-        On GET, the form (``media_update_modal.html``). On a valid POST, the tab with
+        A 409 if the media or its folder is archived. On GET, the form
+        (``media_update_modal.html``). On a valid POST, the tab with
         ``HX-Trigger: closeModal``. On an invalid POST, the form with its errors (422).
 
     Raises:
@@ -270,6 +271,8 @@ def media_update(request: HttpRequest, pk: int) -> HttpResponse:
     """
     media = get_media_by_id(pk, logged_user(request))
     folder = media.folder
+    if not media.is_active or not folder.is_active:
+        return HttpResponse("Le média ou son dossier est archivé.", status=409)
     modal = "medias/partials/media/media_update_modal.html"
 
     if request.method == "POST":

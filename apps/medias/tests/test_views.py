@@ -431,6 +431,19 @@ class MediaUpdateTests(MediaViewTestCase):
         self.assertEqual(response.status_code, 422)
         self.assertIn("new_tags", response.context["form"].errors)
 
+    def test_archived_media_or_folder_cannot_be_edited(self):
+        """An archived media, or a media of an archived folder, answers 409."""
+        self.media.archive(self.owner)
+        self.assertEqual(self.htmx_get(self.update_url).status_code, 409)
+        self.media.unarchive(self.owner)
+        self.folder.archive(self.owner)
+        # A media left active in an archived folder (data from before the fix)
+        Media.objects.filter(pk=self.media.pk).update(is_active=True)
+        response = self.htmx_post(self.update_url, {"title": "x", "target": "folder"})
+        self.assertEqual(response.status_code, 409)
+        self.media.refresh_from_db()
+        self.assertEqual(self.media.title, "")
+
     def test_archived_target_stays_selectable(self):
         """An archived visit that is the current target stays in the choices."""
         self.media.visit = self.visit
