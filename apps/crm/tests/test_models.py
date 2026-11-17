@@ -7,7 +7,7 @@ company and contact services.
 from accounts.tests.factories import UserFactory
 from django.db.models import ProtectedError
 from django.http import Http404
-from django.test import RequestFactory, TestCase
+from django.test import TestCase
 from django.utils import timezone
 from inspections.tests.factories import InspectionFolderFactory
 
@@ -23,21 +23,6 @@ from crm.services.contact import (
     get_filtered_contacts,
 )
 from crm.tests.factories import CompanyFactory, ContactFactory
-
-
-def get_request(user, **params):
-    """Build a GET request of a user with query parameters.
-
-    Args:
-        user: User who makes the request.
-        **params: Query string parameters.
-
-    Returns:
-        The request.
-    """
-    request = RequestFactory().get("/", params)
-    request.user = user
-    return request
 
 
 class CompanyArchiveTests(TestCase):
@@ -275,20 +260,20 @@ class CompanyServicesTests(TestCase):
         """The clients of other users are listed and searchable."""
         for params in ({}, {"q": "Foreign"}, {"sort": "-created_at"}):
             with self.subTest(params=params):
-                found = get_filtered_companies(get_request(self.user, **params))
+                found = get_filtered_companies(self.user, **params)
                 self.assertIn(self.foreign, found)
 
     def test_default_list_is_active_companies_by_name(self):
         """By default archived companies are hidden and the list is sorted by name."""
         self.assertEqual(
-            list(get_filtered_companies(get_request(self.user))),
+            list(get_filtered_companies(self.user)),
             [self.foreign, self.quiet, self.busy],
         )
 
     def test_status_filter(self):
         """``archived`` shows the archived companies only."""
         self.assertEqual(
-            list(get_filtered_companies(get_request(self.user, status="archived"))),
+            list(get_filtered_companies(self.user, status="archived")),
             [self.archived],
         )
 
@@ -296,29 +281,26 @@ class CompanyServicesTests(TestCase):
         """The search matches the name, the SIREN, the SIRET and the reference."""
         for query in ("zeta", "111111111", "11111111111111", self.busy.reference):
             with self.subTest(query=query):
-                found = get_filtered_companies(get_request(self.user, q=query))
+                found = get_filtered_companies(self.user, q=query)
                 self.assertEqual(list(found), [self.busy])
 
     def test_sort_whitelist(self):
         """The folder count sort works, an unknown sort falls back to the name."""
-        by_count = get_filtered_companies(
-            get_request(self.user, sort="-inspection_folders_count")
-        )
+        by_count = get_filtered_companies(self.user, sort="-inspection_folders_count")
         self.assertEqual(by_count[0], self.busy)
-        fallback = get_filtered_companies(get_request(self.user, sort="siret; DROP"))
+        fallback = get_filtered_companies(self.user, sort="siret; DROP")
         self.assertEqual(list(fallback), [self.foreign, self.quiet, self.busy])
 
     def test_folder_count_only_counts_the_folders_of_the_user(self):
         """The count is the user's own: the folder of another user is not counted."""
         counts = {
-            c.pk: c.inspection_folders_count
-            for c in get_filtered_companies(get_request(self.user))
+            c.pk: c.inspection_folders_count for c in get_filtered_companies(self.user)
         }
         self.assertEqual(counts[self.busy.pk], 2)
         other_user = self.busy.inspection_folders.exclude(created_by=self.user).first()
         counts_other = {
             c.pk: c.inspection_folders_count
-            for c in get_filtered_companies(get_request(other_user.created_by))
+            for c in get_filtered_companies(other_user.created_by)
         }
         self.assertEqual(counts_other[self.busy.pk], 1)
 
@@ -358,27 +340,23 @@ class ContactServicesTests(TestCase):
 
     def test_list_shows_the_contacts_of_other_users(self):
         """Contacts of other users appear, and the search matches them."""
-        found = get_filtered_contacts(
-            get_request(self.user, q="lovelace", status="all")
-        )
+        found = get_filtered_contacts(q="lovelace", status="all")
         self.assertEqual(list(found), [self.foreign, self.ada])
 
     def test_default_list_is_active_newest_first(self):
         """By default only active contacts are listed, newest first."""
         self.assertEqual(
-            list(get_filtered_contacts(get_request(self.user))),
+            list(get_filtered_contacts()),
             [self.foreign, self.bob, self.ada],
         )
 
     def test_status_filter(self):
         """``archived`` lists archived contacts, any other value lists all of them."""
         self.assertEqual(
-            list(get_filtered_contacts(get_request(self.user, status="archived"))),
+            list(get_filtered_contacts(status="archived")),
             [self.old],
         )
-        self.assertEqual(
-            len(get_filtered_contacts(get_request(self.user, status="all"))), 4
-        )
+        self.assertEqual(len(get_filtered_contacts(status="all")), 4)
 
     def test_search(self):
         """The search matches the names, the email and the company name."""
@@ -389,15 +367,13 @@ class ContactServicesTests(TestCase):
         }
         for query, contacts in expected.items():
             with self.subTest(query=query):
-                found = list(get_filtered_contacts(get_request(self.user, q=query)))
+                found = list(get_filtered_contacts(q=query))
                 self.assertEqual(found, contacts)
 
     def test_company_filter_ignores_non_numeric_ids(self):
         """The company filter applies for a numeric id and is ignored otherwise."""
         self.assertEqual(
-            list(get_filtered_contacts(get_request(self.user, company=self.globex.pk))),
+            list(get_filtered_contacts(company=self.globex.pk)),
             [self.bob],
         )
-        self.assertEqual(
-            len(get_filtered_contacts(get_request(self.user, company="abc"))), 3
-        )
+        self.assertEqual(len(get_filtered_contacts(company="abc")), 3)

@@ -1,10 +1,12 @@
 """Views of the crm app: companies, contacts, archiving, deletion and INSEE search."""
 
-from typing import Any, Optional, cast
+from typing import Any
 
-from core.decorators import htmx_login_required
+from core.decorators import htmx_login_required, logged_user
+from core.http import filter_params
+from core.modals import confirm_modal, delete_confirm_modal
 from core.services import delete_archived_instance
-from core.services.geo import certify_address
+from core.text import agree, plural
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse
@@ -22,16 +24,25 @@ from crm.services.company import (
     get_companies_by_name,
     get_company_archive_impact,
     get_company_by_id,
+    get_company_delete_blockers,
     get_filtered_companies,
     get_sirene_changes,
     get_sirene_data,
     get_sirene_data_cached,
-    sync_sirene_status,
+    update_company,
+)
+from crm.services.company import (
+    create_company as create_company_service,
+)
+from crm.services.contact import (
+    create_contact as create_contact_service,
 )
 from crm.services.contact import (
     get_contact_archive_impact,
     get_contact_by_id,
+    get_contact_delete_blockers,
     get_filtered_contacts,
+    update_contact,
 )
 from crm.services.legal_forms import legal_form_label
 
@@ -40,6 +51,18 @@ from .forms import CompanyForm, ContactForm
 # ==========================================
 # ==== COMPANY SECTION =====================
 # ==========================================
+
+
+def _companies(request: HttpRequest) -> Any:
+    """Return the companies filtered by the ``q``, ``status`` and ``sort`` GET parameters."""
+    return get_filtered_companies(
+        logged_user(request), **filter_params(request, "q", "status", "sort")
+    )
+
+
+def _contacts(request: HttpRequest) -> Any:
+    """Return the contacts filtered by the ``q``, ``company`` and ``status`` GET parameters."""
+    return get_filtered_contacts(**filter_params(request, "q", "company", "status"))
 
 
 @htmx_login_required
@@ -53,7 +76,7 @@ def company_list(request: HttpRequest) -> HttpResponse:
     Returns:
         The full page.
     """
-    companies = get_filtered_companies(request)
+    companies = _companies(request)
 
     paginator = Paginator(companies, 15)
     page_obj = paginator.get_page(1)
@@ -80,7 +103,7 @@ def company_list_paginated(request: HttpRequest, page: int = 1) -> HttpResponse:
     Returns:
         The grid partial.
     """
-    companies = get_filtered_companies(request)
+    companies = _companies(request)
 
     paginator = Paginator(companies, 15)
     page_obj = paginator.get_page(page)
@@ -136,15 +159,9 @@ def create_company(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
         form = CompanyForm(request.POST)
         if form.is_valid():
-            company = form.save(commit=False)
-            company.created_by = request.user
-            company.updated_by = request.user
-            company.save()
-            certify_address(company)
-            # Store the Sirene state (closed?) and the head office of the client, shown on its page
-            sync_sirene_status(company, cast("Any", request.user))
+            create_company_service(form, logged_user(request))
 
-            companies = get_filtered_companies(request)
+            companies = _companies(request)
             paginator = Paginator(companies, 15)
             page_obj = paginator.get_page(1)
 
@@ -194,10 +211,7 @@ def company_inline_update(request: HttpRequest, pk: int) -> HttpResponse:
     if request.method == "POST":
         form = CompanyForm(request.POST, instance=company)
         if form.is_valid():
-            company = form.save(commit=False)
-            company.updated_by = request.user
-            company.save()
-            certify_address(company)
+            company = update_company(form, logged_user(request))
             return render(
                 request,
                 "crm/partials/company/company_read.html",
@@ -243,6 +257,63 @@ def _refresh_response() -> HttpResponse:
     return response
 
 
+def _company_archive_modal(request: HttpRequest, company: Any) -> HttpResponse:
+    """Render the archiving modal of a company, listing what follows and what stays.
+
+    Args:
+        request: Current request.
+        company: Company about to be archived.
+
+    Returns:
+        The confirmation modal.
+    """
+    impact = get_company_archive_impact(company)
+    sections = []
+    if impact["contacts"]:
+        n = len(impact["contacts"])
+        sections.append(
+            {
+                "title": f"{plural(n, 'contact')} {agree(n, 'actif')} "
+                f"{agree(n, 'sera', 'seront')} également {agree(n, 'archivé')} :",
+                "entries": [
+                    f"{c.first_name} {c.last_name}" for c in impact["contacts"]
+                ],
+                "note": "Au désarchivage du client, ces contacts resteront archivés.",
+            }
+        )
+    if impact["kept_contacts"]:
+        n = len(impact["kept_contacts"])
+        sections.append(
+            {
+                "warning": True,
+                "title": f"{plural(n, 'contact')} "
+                f"{agree(n, 'reste actif', 'restent actifs')} car "
+                f"{agree(n, 'référencé')} par un dossier actif :",
+                "entries": [
+                    f"{c.first_name} {c.last_name}" for c in impact["kept_contacts"]
+                ],
+            }
+        )
+    if impact["folders"]:
+        n = len(impact["folders"])
+        sections.append(
+            {
+                "warning": True,
+                "title": f"{plural(n, 'dossier')} d'inspection {agree(n, 'actif')} "
+                f"{agree(n, 'est lié', 'sont liés')} à ce client :",
+                "entries": [f.reference for f in impact["folders"]],
+                "note": "Ces dossiers restent actifs et ne sont pas archivés avec le client.",
+            }
+        )
+    return confirm_modal(
+        request,
+        title="Archiver ce client ?",
+        label=company.name,
+        post_url=reverse("crm:company_archive", args=[company.pk]),
+        sections=sections,
+    )
+
+
 @htmx_login_required
 @require_http_methods(["GET", "POST"])
 def company_archive(request: HttpRequest, pk: int) -> HttpResponse:
@@ -263,53 +334,9 @@ def company_archive(request: HttpRequest, pk: int) -> HttpResponse:
     company = get_company_by_id(pk)
 
     if request.method == "GET":
-        impact = get_company_archive_impact(company)
-        sections = []
-        if impact["contacts"]:
-            n = len(impact["contacts"])
-            sections.append(
-                {
-                    "title": f"{n} contact{'s' if n > 1 else ''} actif{'s' if n > 1 else ''} {'seront' if n > 1 else 'sera'} également archivé{'s' if n > 1 else ''} :",
-                    "entries": [
-                        str(c.first_name + " " + c.last_name)
-                        for c in impact["contacts"]
-                    ],
-                    "note": "Au désarchivage du client, ces contacts resteront archivés.",
-                }
-            )
-        if impact["kept_contacts"]:
-            n = len(impact["kept_contacts"])
-            sections.append(
-                {
-                    "warning": True,
-                    "title": f"{n} contact{'s' if n > 1 else ''} {'restent actifs' if n > 1 else 'reste actif'} car référencé{'s' if n > 1 else ''} par un dossier actif :",
-                    "entries": [
-                        f"{c.first_name} {c.last_name}" for c in impact["kept_contacts"]
-                    ],
-                }
-            )
-        if impact["folders"]:
-            n = len(impact["folders"])
-            sections.append(
-                {
-                    "warning": True,
-                    "title": f"{n} dossier{'s' if n > 1 else ''} d'inspection actif{'s' if n > 1 else ''} {'sont liés' if n > 1 else 'est lié'} à ce client :",
-                    "entries": [f.reference for f in impact["folders"]],
-                    "note": "Ces dossiers restent actifs et ne sont pas archivés avec le client.",
-                }
-            )
-        return render(
-            request,
-            "core/partials/modal/archive_confirm_modal.html",
-            {
-                "title": "Archiver ce client ?",
-                "object_label": company.name,
-                "post_url": reverse("crm:company_archive", args=[company.pk]),
-                "sections": sections,
-            },
-        )
+        return _company_archive_modal(request, company)
 
-    company.archive(user=cast("Any", request.user))
+    company.archive(user=logged_user(request))
 
     if request.headers.get("HX-Request"):
         return _refresh_response()
@@ -333,7 +360,7 @@ def company_unarchive(request: HttpRequest, pk: int) -> HttpResponse:
         Http404: If the company does not exist.
     """
     company = get_company_by_id(pk)
-    company.unarchive(user=cast("Any", request.user))
+    company.unarchive(user=logged_user(request))
 
     if request.headers.get("HX-Request"):
         return _refresh_response()
@@ -422,7 +449,7 @@ def company_sirene_refresh(request: HttpRequest, pk: int) -> HttpResponse:
         try:
             apply_sirene_changes(
                 company,
-                cast("Any", request.user),
+                logged_user(request),
                 data,
                 request.POST.getlist("fields"),
             )
@@ -455,7 +482,7 @@ def contact_list(request: HttpRequest) -> HttpResponse:
         The full page.
     """
     companies = get_companies_by_name()
-    contacts = get_filtered_contacts(request)
+    contacts = _contacts(request)
 
     paginator = Paginator(contacts, 15)
     page_obj = paginator.get_page(1)
@@ -483,7 +510,7 @@ def contact_list_paginated(request: HttpRequest, page: int = 1) -> HttpResponse:
     Returns:
         The grid partial.
     """
-    contacts = get_filtered_contacts(request)
+    contacts = _contacts(request)
 
     paginator = Paginator(contacts, 15)
     page_obj = paginator.get_page(page)
@@ -539,10 +566,7 @@ def create_contact(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
         form = ContactForm(request.POST)
         if form.is_valid():
-            contact = form.save(commit=False)
-            contact.created_by = request.user
-            contact.updated_by = request.user
-            contact.save()
+            create_contact_service(form, logged_user(request))
 
             # If created from a company detail page, refresh the page to show the new contact
             if company_id:
@@ -550,7 +574,7 @@ def create_contact(request: HttpRequest) -> HttpResponse:
                 response["HX-Refresh"] = "true"
                 return response
             # Default behavior for global contact list view
-            contacts = get_filtered_contacts(request)
+            contacts = _contacts(request)
             paginator = Paginator(contacts, 15)
             page_obj = paginator.get_page(1)
 
@@ -604,9 +628,7 @@ def contact_inline_update(request: HttpRequest, pk: int) -> HttpResponse:
     if request.method == "POST":
         form = ContactForm(request.POST, instance=contact)
         if form.is_valid():
-            contact = form.save(commit=False)
-            contact.updated_by = request.user
-            contact.save()
+            contact = update_contact(form, logged_user(request))
             return render(
                 request,
                 "crm/partials/contact/contact_read.html",
@@ -666,20 +688,21 @@ def contact_archive(request: HttpRequest, pk: int) -> HttpResponse:
     folders = get_contact_archive_impact(contact)
 
     if request.method == "GET":
-        context: dict[str, Any] = {
-            "title": "Archiver ce contact ?",
-            "object_label": f"{contact.first_name} {contact.last_name}",
-            "post_url": reverse("crm:contact_archive", args=[contact.pk]),
-        }
+        blocking = None
         if folders:
             n = len(folders)
-            context["blocking"] = {
-                "title": f"Archivage impossible : {n} dossier{'s' if n > 1 else ''} actif{'s' if n > 1 else ''} {'référencent' if n > 1 else 'référence'} ce contact.",
+            blocking = {
+                "title": f"Archivage impossible : {plural(n, 'dossier')} "
+                f"{agree(n, 'actif')} {agree(n, 'référence', 'référencent')} ce contact.",
                 "entries": [f.reference for f in folders],
                 "note": "Changez d'abord le contact référent sur ces dossiers, puis archivez le contact.",
             }
-        return render(
-            request, "core/partials/modal/archive_confirm_modal.html", context
+        return confirm_modal(
+            request,
+            title="Archiver ce contact ?",
+            label=f"{contact.first_name} {contact.last_name}",
+            post_url=reverse("crm:contact_archive", args=[contact.pk]),
+            blocking=blocking,
         )
 
     if folders.exists():
@@ -687,7 +710,7 @@ def contact_archive(request: HttpRequest, pk: int) -> HttpResponse:
             "Ce contact est référencé par un ou plusieurs dossiers actifs.", status=409
         )
 
-    contact.archive(user=cast("Any", request.user))
+    contact.archive(user=logged_user(request))
 
     if request.headers.get("HX-Request"):
         return _refresh_response()
@@ -711,26 +734,12 @@ def contact_unarchive(request: HttpRequest, pk: int) -> HttpResponse:
         Http404: If the contact does not exist.
     """
     contact = get_contact_by_id(pk)
-    contact.unarchive(user=cast("Any", request.user))
+    contact.unarchive(user=logged_user(request))
 
     if request.headers.get("HX-Request"):
         return _refresh_response()
 
     return redirect("crm:contact_detail", pk=contact.pk)
-
-
-def _plural(n: int, singular: str, plural: Optional[str] = None) -> str:
-    """Return ``'<n> <word>'``, with the word pluralized for n > 1.
-
-    Args:
-        n: Quantity.
-        singular: Singular form of the word.
-        plural: Plural form, ``singular`` followed by ``s`` by default.
-
-    Returns:
-        The quantity and the word.
-    """
-    return f"{n} {singular if n < 2 else plural or singular + 's'}"
 
 
 def _redirect_response(url: str) -> HttpResponse:
@@ -764,50 +773,45 @@ def company_delete(request: HttpRequest, pk: int) -> HttpResponse:
         Http404: If the company does not exist.
     """
     company = get_company_by_id(pk)
-    folders = company.inspection_folders.all()
-    contacts = company.contacts.all()
+    folders = get_company_delete_blockers(company)
 
     blocking = None
-    if company.is_active:
+    if folders:
+        n = len(folders)
         blocking = {
-            "title": "Suppression impossible : ce client n'est pas archivé.",
-            "note": "Archivez d'abord le client, puis supprimez-le.",
-        }
-    elif folders.exists():
-        blocking = {
-            "title": f"Suppression impossible : {_plural(len(folders), 'dossier')} d'inspection {'sont rattachés' if len(folders) > 1 else 'est rattaché'} à ce client.",
+            "title": f"Suppression impossible : {plural(n, 'dossier')} d'inspection "
+            f"{agree(n, 'est rattaché', 'sont rattachés')} à ce client.",
             "entries": [f.reference for f in folders],
             "note": "Supprimez d'abord ces dossiers (ils doivent être archivés), puis supprimez le client.",
         }
 
     if request.method == "GET":
-        context = {
-            "title": "Supprimer définitivement ce client ?",
-            "object_label": company.name,
-            "action_verb": "supprimer définitivement",
-            "confirm_label": "Supprimer définitivement",
-            "danger": True,
-            "post_url": reverse("crm:company_delete", args=[company.pk]),
-            "blocking": blocking,
-            "sections": [],
+        contacts = company.contacts.all()
+        section: dict[str, Any] = {
+            "warning": True,
+            "title": "Cette action est irréversible.",
         }
         if contacts:
-            context["sections"].append(
-                {
-                    "warning": True,
-                    "title": f"{_plural(len(contacts), 'contact')} {'seront supprimés' if len(contacts) > 1 else 'sera supprimé'} avec ce client :",
-                    "entries": [f"{c.first_name} {c.last_name}" for c in contacts],
-                    "note": "Cette action est irréversible.",
-                }
-            )
-        else:
-            context["sections"].append(
-                {"warning": True, "title": "Cette action est irréversible."}
-            )
-        return render(
-            request, "core/partials/modal/archive_confirm_modal.html", context
+            n = len(contacts)
+            section = {
+                "warning": True,
+                "title": f"{plural(n, 'contact')} "
+                f"{agree(n, 'sera supprimé', 'seront supprimés')} avec ce client :",
+                "entries": [f"{c.first_name} {c.last_name}" for c in contacts],
+                "note": "Cette action est irréversible.",
+            }
+        return delete_confirm_modal(
+            request,
+            company,
+            title="Supprimer définitivement ce client ?",
+            label=company.name,
+            post_url=reverse("crm:company_delete", args=[company.pk]),
+            sections=[section],
+            blocking=blocking,
         )
 
+    if company.is_active:
+        return HttpResponse("Le client doit être archivé.", status=409)
     if blocking:
         return HttpResponse(blocking["title"], status=409)
 
@@ -838,39 +842,31 @@ def contact_delete(request: HttpRequest, pk: int) -> HttpResponse:
         Http404: If the contact does not exist.
     """
     contact = get_contact_by_id(pk)
-    folders = contact.inspection_folders.all()
+    folders = get_contact_delete_blockers(contact)
 
     blocking = None
-    if contact.is_active:
+    if folders:
+        n = len(folders)
         blocking = {
-            "title": "Suppression impossible : ce contact n'est pas archivé.",
-            "note": "Archivez d'abord le contact, puis supprimez-le.",
-        }
-    elif folders.exists():
-        blocking = {
-            "title": f"Suppression impossible : {_plural(len(folders), 'dossier')} {'référencent' if len(folders) > 1 else 'référence'} ce contact.",
+            "title": f"Suppression impossible : {plural(n, 'dossier')} "
+            f"{agree(n, 'référence', 'référencent')} ce contact.",
             "entries": [f.reference for f in folders],
             "note": "Changez d'abord le contact référent sur ces dossiers, puis supprimez le contact.",
         }
 
     if request.method == "GET":
-        return render(
+        return delete_confirm_modal(
             request,
-            "core/partials/modal/archive_confirm_modal.html",
-            {
-                "title": "Supprimer définitivement ce contact ?",
-                "object_label": f"{contact.first_name} {contact.last_name}",
-                "action_verb": "supprimer définitivement",
-                "confirm_label": "Supprimer définitivement",
-                "danger": True,
-                "post_url": reverse("crm:contact_delete", args=[contact.pk]),
-                "blocking": blocking,
-                "sections": [
-                    {"warning": True, "title": "Cette action est irréversible."}
-                ],
-            },
+            contact,
+            title="Supprimer définitivement ce contact ?",
+            label=f"{contact.first_name} {contact.last_name}",
+            post_url=reverse("crm:contact_delete", args=[contact.pk]),
+            sections=[{"warning": True, "title": "Cette action est irréversible."}],
+            blocking=blocking,
         )
 
+    if contact.is_active:
+        return HttpResponse("Le contact doit être archivé.", status=409)
     if blocking:
         return HttpResponse(blocking["title"], status=409)
 

@@ -11,13 +11,16 @@ from datetime import date
 from typing import TYPE_CHECKING, Any
 
 import requests
-from core.services import update_tracked_instance
+from core.services import (
+    create_tracked_instance,
+    update_tracked_form,
+    update_tracked_instance,
+)
 from core.services.geo import certify_address
 from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db.models import Count, Q, QuerySet
-from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 
 from crm.models import Company
@@ -26,6 +29,8 @@ from crm.services.naf import fetch_naf25_label
 
 if TYPE_CHECKING:
     from accounts.models import CustomUser
+
+    from crm.forms import CompanyForm
 
 # Pseudo-field of the Sirene update: the postal address (writes ``address_line``,
 # ``postal_code``, ``city`` and ``citycode`` together, then geocodes it again)
@@ -344,17 +349,20 @@ def get_companies_by_name() -> QuerySet:
     return Company.objects.order_by("name")
 
 
-def get_filtered_companies(request: HttpRequest) -> QuerySet:
-    """Return the companies, filtered and sorted by the GET parameters.
+def get_filtered_companies(
+    user: "CustomUser", *, q: str = "", status: str = "active", sort: str = "name"
+) -> QuerySet:
+    """Return the companies, filtered and sorted.
 
     Companies are shared between all users. The folder count is the one of the
-    logged-in user (the folders of the others are not theirs to see).
+    given user (the folders of the others are not theirs to see).
 
     Args:
-        request: Current request. Reads ``q`` (search on name, SIREN, SIRET and
-            reference), ``status`` (``active`` by default, or ``archived``) and
-            ``sort`` (``name``, ``-created_at`` or ``-inspection_folders_count``,
-            anything else falls back to ``name``).
+        user: User looking at the list, whose folders are counted.
+        q: Search on name, SIREN, SIRET and reference.
+        status: ``active`` (default) or ``archived``, any other value for all.
+        sort: ``name``, ``-created_at`` or ``-inspection_folders_count``, anything
+            else falls back to ``name``.
 
     Returns:
         The companies, annotated with ``inspection_folders_count`` (own folders).
@@ -362,12 +370,11 @@ def get_filtered_companies(request: HttpRequest) -> QuerySet:
     companies = Company.objects.annotate(
         inspection_folders_count=Count(
             "inspection_folders",
-            filter=Q(inspection_folders__created_by=request.user),
+            filter=Q(inspection_folders__created_by=user),
         )
     )
 
-    # Recherche textuelle
-    q = request.GET.get("q", "").strip()
+    q = q.strip()
     if q:
         companies = companies.filter(
             Q(name__icontains=q)
@@ -376,23 +383,62 @@ def get_filtered_companies(request: HttpRequest) -> QuerySet:
             | Q(reference__icontains=q)
         )
 
-    # Filtre par statut
-    status = request.GET.get("status", "active").strip()
+    status = status.strip()
     if status == "active":
         companies = companies.filter(is_active=True)
     elif status == "archived":
         companies = companies.filter(is_active=False)
 
-    # Tri sécurisé
-    sort_by = request.GET.get("sort", "name")
     allowed_sorts = ["name", "-created_at", "-inspection_folders_count"]
+    return companies.order_by(sort if sort in allowed_sorts else "name")
 
-    if sort_by in allowed_sorts:
-        companies = companies.order_by(sort_by)
-    else:
-        companies = companies.order_by("name")  # Fallback par défaut
 
-    return companies
+def get_company_delete_blockers(company: Company) -> QuerySet:
+    """Return the folders that prevent the permanent deletion of a company.
+
+    Every folder counts, archived ones included (``PROTECT``), whoever owns it.
+
+    Args:
+        company: Company about to be deleted.
+
+    Returns:
+        The folders of the company.
+    """
+    return company.inspection_folders.all()
+
+
+def create_company(form: "CompanyForm", user: "CustomUser") -> Company:
+    """Create a company from a valid form, certify its address and read Sirene.
+
+    The Sirene state, head office and NAF 2025 activity are read again from the
+    SIRET (``sync_sirene_status``), never taken from the form.
+
+    Args:
+        form: Valid creation form.
+        user: User creating the company.
+
+    Returns:
+        The company.
+    """
+    company = create_tracked_instance(form, user)
+    certify_address(company)
+    sync_sirene_status(company, user)
+    return company
+
+
+def update_company(form: "CompanyForm", user: "CustomUser") -> Company:
+    """Save a valid edit form of a company and certify its address again if needed.
+
+    Args:
+        form: Valid edit form.
+        user: User editing the company.
+
+    Returns:
+        The company.
+    """
+    company = update_tracked_form(form, user)
+    certify_address(company)
+    return company
 
 
 def _sirene_value(field: str, value: Any) -> str:
