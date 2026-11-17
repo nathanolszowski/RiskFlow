@@ -19,6 +19,7 @@ from django.views.decorators.http import (
 from crm.services.company import (
     apply_sirene_changes,
     get_cessation_alert,
+    get_companies_by_name,
     get_company_archive_impact,
     get_company_by_id,
     get_filtered_companies,
@@ -35,7 +36,6 @@ from crm.services.contact import (
 from crm.services.legal_forms import legal_form_label
 
 from .forms import CompanyForm, ContactForm
-from .models import Company
 
 # ==========================================
 # ==== COMPANY SECTION =====================
@@ -450,7 +450,7 @@ def contact_list(request: HttpRequest) -> HttpResponse:
     Returns:
         The full page.
     """
-    companies = Company.objects.filter(created_by=request.user).order_by("name")
+    companies = get_companies_by_name()
     contacts = get_filtered_contacts(request)
 
     paginator = Paginator(contacts, 15)

@@ -580,3 +580,9 @@ class ContactListTests(CrmViewTestCase):
         other = ContactFactory(company=CompanyFactory(created_by=self.owner))
         response = self.client.get(self.list_url, {"company": other.company_id})
         self.assertEqual(list(response.context["contacts"]), [other])
+
+    def test_client_filter_offers_the_clients_of_the_other_users(self):
+        """The client filter lists every client, clients being shared between users."""
+        shared = CompanyFactory(created_by=self.other)
+        response = self.client.get(self.list_url)
+        self.assertIn(shared, response.context["companies"])

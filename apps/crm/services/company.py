@@ -332,6 +332,18 @@ def get_company_archive_impact(company: Company) -> dict[str, QuerySet]:
     }
 
 
+def get_companies_by_name() -> QuerySet:
+    """Return every company, by name, e.g. for the client filter of the contacts list.
+
+    Companies are shared between all users: the ones created by the others are
+    listed too.
+
+    Returns:
+        The companies, active or archived.
+    """
+    return Company.objects.order_by("name")
+
+
 def get_filtered_companies(request: HttpRequest) -> QuerySet:
     """Return the companies, filtered and sorted by the GET parameters.
 
