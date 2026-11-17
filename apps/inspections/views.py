@@ -266,14 +266,17 @@ def folder_inline_update(request: HttpRequest, pk: int) -> HttpResponse:
         pk: Primary key of the folder.
 
     Returns:
-        On GET, the pre-filled form (``folder_update.html``). On a valid POST, the
-        read fragment (``folder_read.html``). On an invalid POST, the form with its
-        errors (``folder_update.html``).
+        A 409 if the folder is archived. On GET, the pre-filled form
+        (``folder_update.html``). On a valid POST, the read fragment
+        (``folder_read.html``). On an invalid POST, the form with its errors
+        (``folder_update.html``).
 
     Raises:
         Http404: If the folder does not exist or belongs to another user.
     """
     folder = get_inspection_folder_by_id(pk, logged_user(request))
+    if not folder.is_active:
+        return HttpResponse("Le dossier est archivé.", status=409)
 
     if request.method == "POST":
         form = InspectionFolderUpdateForm(request.POST, instance=folder)
@@ -556,13 +559,16 @@ def visit_update(request: HttpRequest, pk: int) -> HttpResponse:
         pk: Primary key of the visit.
 
     Returns:
-        On GET, the form (``visit_update_modal.html``). On a valid POST, the visit tab
-        with ``HX-Trigger: closeModal``. On an invalid POST, the form with its errors (422).
+        A 409 if the visit or its folder is archived. On GET, the form
+        (``visit_update_modal.html``). On a valid POST, the visit tab with
+        ``HX-Trigger: closeModal``. On an invalid POST, the form with its errors (422).
 
     Raises:
         Http404: If the visit does not exist or belongs to another user.
     """
     visit = get_visit_by_id(pk, logged_user(request))
+    if not visit.is_active or not visit.folder.is_active:
+        return HttpResponse("La visite ou son dossier est archivé.", status=409)
 
     if request.method == "POST":
         form = VisitInstanceUpdateForm(request.POST, instance=visit)
@@ -727,15 +733,18 @@ def recommandation_inline_update(request: HttpRequest, pk: int) -> HttpResponse:
         pk: Primary key of the recommendation.
 
     Returns:
-        On GET, the pre-filled form (``recommandation_update.html``). On a valid POST,
-        the read fragment (``recommandation_read.html``). On an invalid POST, the form
-        with its errors (``recommandation_update.html``).
+        A 409 if the recommendation or its folder is archived. On GET, the pre-filled
+        form (``recommandation_update.html``). On a valid POST, the read fragment
+        (``recommandation_read.html``). On an invalid POST, the form with its errors
+        (``recommandation_update.html``).
 
     Raises:
         Http404: If the recommendation does not exist or its folder belongs to
             another user.
     """
     rec = get_recommandation_by_id(pk, logged_user(request))
+    if not rec.is_active or not rec.folder.is_active:
+        return HttpResponse("La recommandation ou son dossier est archivé.", status=409)
 
     if request.method == "POST":
         form = RecommandationUpdateForm(request.POST, instance=rec)

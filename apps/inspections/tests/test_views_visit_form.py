@@ -439,6 +439,20 @@ class VisitUpdateTests(VisitFormTestCase):
         self.visit.refresh_from_db()
         self.assertIsNone(self.visit.due_date)
 
+    def test_archived_visit_or_folder_cannot_be_edited(self):
+        """An archived visit, or a visit of an archived folder, answers 409."""
+        url = self.url("visit_update", self.visit.pk)
+        self.visit.archive(self.owner)
+        self.assertEqual(self.htmx_get(url).status_code, 409)
+        self.visit.unarchive(self.owner)
+        self.visit.folder.archive(self.owner)
+        # A visit left active in an archived folder (data from before the fix)
+        VisitInstance.objects.filter(pk=self.visit.pk).update(is_active=True)
+        response = self.htmx_post(url, {"due_date": "2031-01-02"})
+        self.assertEqual(response.status_code, 409)
+        self.visit.refresh_from_db()
+        self.assertIsNone(self.visit.due_date)
+
     def test_answers_are_not_editable_through_the_planning_form(self):
         """Extra posted fields (answers, status, schema) are ignored."""
         self.htmx_post(

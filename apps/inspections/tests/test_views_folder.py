@@ -243,6 +243,19 @@ class FolderInlineEditTests(FolderViewTestCase):
         )
         self.assertContains(response, self.folder.reference)
 
+    def test_archived_folder_cannot_be_edited(self):
+        """An archived folder answers 409 to the form and to the POST, and keeps its notes."""
+        self.folder.archive(self.owner)
+        self.assertEqual(self.htmx_get(self.url).status_code, 409)
+        response = self.htmx_post(self.url, {"notes": "Modifié"})
+        self.assertEqual(response.status_code, 409)
+        self.folder.refresh_from_db()
+        self.assertNotEqual(self.folder.notes, "Modifié")
+        read = self.htmx_get(
+            reverse("inspections:folder_inline_read", args=[self.folder.pk])
+        )
+        self.assertNotContains(read, self.url)
+
 
 class RecommandationInlineTests(FolderViewTestCase):
     """``recommandation_inline_update`` and ``recommandation_inline_read``."""
@@ -255,6 +268,27 @@ class RecommandationInlineTests(FolderViewTestCase):
         self.url = reverse(
             "inspections:recommandation_inline_update", args=[self.rec.pk]
         )
+
+    def test_archived_recommendation_cannot_be_edited(self):
+        """An archived recommendation, or one of an archived folder, answers 409."""
+        self.rec.archive(self.owner)
+        self.assertEqual(self.htmx_get(self.url).status_code, 409)
+        self.rec.unarchive(self.owner)
+        self.folder.archive(self.owner)
+        # A recommendation left active in an archived folder (data from before the fix)
+        Recommandation.objects.filter(pk=self.rec.pk).update(is_active=True)
+        response = self.htmx_post(self.url, {"topic": "Modifié"})
+        self.assertEqual(response.status_code, 409)
+        self.rec.refresh_from_db()
+        self.assertNotEqual(self.rec.topic, "Modifié")
+
+    def test_archived_recommendation_hides_the_edit_button(self):
+        """The tab offers no edit button for an archived recommendation."""
+        self.rec.archive(self.owner)
+        response = self.htmx_get(
+            reverse("inspections:folder_tab_recommandations", args=[self.folder.pk])
+        )
+        self.assertNotContains(response, self.url)
 
     def test_get_renders_the_form(self):
         """The edit form is pre-filled."""
