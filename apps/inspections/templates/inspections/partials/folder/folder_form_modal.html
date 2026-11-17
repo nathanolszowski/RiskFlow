@@ -1,0 +1,116 @@
+<div id="create-folder-modal"
+     class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-overlay/70 backdrop-blur-xs transition-opacity"
+         onclick="document.getElementById('create-folder-modal').remove()"></div>
+
+    <!-- Modal Content -->
+    <div class="relative flex max-h-[90vh] w-full max-w-2xl flex-col rounded-xl border border-border-default bg-surface-primary shadow-2xl transition-all">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between border-b border-border-default px-6 py-4">
+            <h3 class="text-lg font-semibold text-text-main">
+                Nouveau Dossier d'Inspection
+            </h3>
+            <button type="button" 
+                    onclick="document.getElementById('create-folder-modal').remove()"
+                    class="text-text-subtle hover:text-text-main transition-colors cursor-pointer">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Main Form -->
+        <form hx-post="{% url 'inspections:create_folder' %}{% if selected_company %}?company={{ selected_company.id }}{% endif %}" 
+              hx-target="#folder-grid-container" 
+              hx-swap="innerHTML"
+              hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' 
+              class="flex flex-col overflow-hidden">
+            {% csrf_token %}
+
+            <div class="space-y-6 overflow-y-auto p-6 max-h-[70vh]">
+
+                <!-- Main infos -->
+                <div>
+                    <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-light">
+                        Informations Principales
+                    </h4>
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        
+                        <div class="sm:col-span-2">
+                            <label class="mb-1 block text-xs font-medium text-text-subtle">
+                                {{ form.company.label }} <span class="text-status-danger">*</span>
+                            </label>
+                            {% if selected_company %}
+                                <input type="text" 
+                                       value="{{ selected_company.name }}" 
+                                       disabled 
+                                       class="w-full rounded-lg border border-border-default bg-surface-secondary p-2.5 text-sm text-text-main opacity-75 cursor-not-allowed">
+                                <input type="hidden" name="company" value="{{ selected_company.id }}">
+                            {% else %}
+                                {{ form.company }}
+                            {% endif %}
+                            {% if form.company.errors %}
+                                <p class="mt-1 text-xs text-status-danger">{{ form.company.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <label class="mb-1 block text-xs font-medium text-text-subtle">
+                                {{ form.contact.label }} <span class="text-[10px] text-text-faded font-normal">(optionnel)</span>
+                            </label>
+                            <div id="contact-field">
+                                {% include "inspections/partials/folder/folder_contact_field.html" %}
+                            </div>
+                            {% if form.contact.errors %}
+                                <p class="mt-1 text-xs text-status-danger">{{ form.contact.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Details -->
+                <div class="border-t border-border-default pt-4">
+                    <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-light">
+                        Détails du site & Notes
+                    </h4>
+                    <div class="space-y-4">
+                        <div>
+                            <p class="mb-1 block text-xs font-medium text-text-subtle">
+                                Adresse du site d'inspection <span class="text-[10px] text-text-faded font-normal">(optionnel)</span>
+                            </p>
+                            {% include "core/partials/ui/address_fields.html" %}
+                        </div>
+
+                        <!-- Notes internes -->
+                        <div>
+                            <label class="mb-1 block text-xs font-medium text-text-subtle">
+                                {{ form.notes.label }} <span class="text-[10px] text-text-faded font-normal">(optionnel)</span>
+                            </label>
+                            {{ form.notes }}
+                            {% if form.notes.errors %}
+                                <p class="mt-1 text-xs text-status-danger">{{ form.notes.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer Actions -->
+            <div class="flex justify-end space-x-3 border-t border-border-default bg-surface-primary/50 px-6 py-4">
+                <button type="button" 
+                        onclick="document.getElementById('create-folder-modal').remove()"
+                        class="rounded-lg border border-border-default bg-surface-tertiary px-4 py-2 text-xs font-medium text-text-body hover:bg-surface-secondary transition-colors cursor-pointer">
+                    Annuler
+                </button>
+                <button type="submit"
+                        class="rounded-lg bg-brand-primary hover:bg-brand-hover px-4 py-2 text-xs font-medium text-brand-on transition-colors cursor-pointer shadow-xs">
+                    Créer le dossier
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,227 @@
+{% extends "core/app_layout.html" %}
+{% load static %}
+
+{% block page_title %}{{ company.name }} — Fiche client{% endblock page_title %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
+{% endblock extra_head %}
+
+{% block app_content %}
+<div class="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+
+  <!-- Main Header with Back Button, Archive Action and Edit Button -->
+  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between border-b border-border-default pb-5 gap-4">
+    <div class="flex items-center gap-4 min-w-0">
+      <div
+        class="w-12 h-12 rounded-xl bg-brand-primary/10 border border-brand-primary/20 text-brand-light font-bold flex items-center justify-center text-lg uppercase shrink-0">
+        {{ company.name|slice:":2" }}
+      </div>
+      <div class="min-w-0">
+        <div class="flex items-center gap-3">
+          <h1 class="text-2xl font-bold text-text-main tracking-tight truncate">{{ company.name }}</h1>
+          {% include "core/partials/ui/status_badge.html" with is_active=company.is_active %}
+        </div>
+        {% if company.reference %}
+        <p class="text-xs text-text-subtle font-mono mt-0.5">Réf. Client : {{ company.reference }}</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Main Actions aligned on a single row -->
+    <div class="flex items-center gap-2.5 shrink-0 overflow-x-auto pb-1 lg:pb-0">
+      <a href="{% url 'crm:company_list' %}"
+        class="inline-flex items-center gap-1.5 rounded-lg bg-surface-tertiary hover:bg-surface-secondary border border-border-default px-3.5 py-2 text-xs font-medium text-text-body transition-colors whitespace-nowrap">
+        ← Retour à la liste
+      </a>
+
+      <!-- Archive Action -->
+      {% if not company.is_active %}
+        <button type="button" 
+                hx-post="{% url 'crm:company_unarchive' company.id %}"
+                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                hx-confirm="Voulez-vous vraiment désarchiver ce client ? Ses contacts archivés resteront archivés."
+                class="inline-flex items-center gap-1.5 rounded-lg bg-surface-secondary px-3.5 py-2 text-xs font-semibold text-text-main hover:bg-surface-tertiary border border-border-default transition-colors cursor-pointer whitespace-nowrap">
+          <svg class="w-3.5 h-3.5 text-text-subtle shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+          </svg>
+          Désarchiver
+        </button>
+        <button type="button" hx-get="{% url 'crm:company_delete' company.id %}" hx-target="#modal-container" hx-swap="innerHTML"
+                class="inline-flex items-center gap-1.5 rounded-lg bg-surface-tertiary px-3.5 py-2 text-xs font-semibold text-status-danger hover:bg-status-danger-bg hover:border-status-danger-border border border-border-default transition-colors cursor-pointer whitespace-nowrap shrink-0" title="Supprimer définitivement">
+          <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg> Supprimer
+        </button>
+      {% else %}
+        <button type="button" 
+                hx-get="{% url 'crm:company_archive' company.id %}"
+                hx-target="#modal-container" hx-swap="innerHTML"
+                class="inline-flex items-center gap-1.5 rounded-lg bg-surface-tertiary px-3.5 py-2 text-xs font-semibold text-text-muted hover:text-status-danger hover:bg-status-danger-bg hover:border-status-danger-border border border-border-default transition-colors cursor-pointer whitespace-nowrap">
+          <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v1a2 2 0 01-2 2M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+          </svg>
+          Archiver
+        </button>
+      {% endif %}
+
+      {% if company.is_active %}
+      <button type="button" hx-get="{% url 'crm:company_sirene_refresh' company.pk %}" hx-target="#modal-container" hx-swap="innerHTML"
+        class="inline-flex items-center gap-1.5 rounded-lg bg-surface-tertiary hover:bg-surface-secondary border border-border-default px-3.5 py-2 text-xs font-semibold text-text-body transition-colors cursor-pointer whitespace-nowrap"
+        title="Comparer la fiche avec l'API Sirene">
+        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        Actualiser (Sirene)
+      </button>
+      {% endif %}
+
+      {% if company.is_active %}
+      <button type="button" hx-get="{% url 'crm:company_inline_update' company.pk %}" hx-target="#company-left-column"
+        hx-swap="outerHTML"
+        class="inline-flex items-center gap-1.5 rounded-lg bg-brand-primary hover:bg-brand-hover px-3.5 py-2 text-xs font-semibold text-brand-on shadow-xs transition-colors cursor-pointer whitespace-nowrap">
+        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+        </svg>
+        Éditer la fiche
+      </button>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Single Column Layout -->
+  <div class="space-y-6">
+
+    {% include "core/partials/tracking/tracking_info.html" with object=company %}
+
+    {% if company.cessation_alert %}
+    {% include "crm/partials/company/company_cessation_alert.html" with alert=company.cessation_alert company_name=company.name siret=company.siret note="Constaté lors du dernier import ou de la dernière actualisation Sirene : utilisez « Actualiser (Sirene) » pour revérifier." %}
+    {% endif %}
+
+    <!-- BLOCK 1: Company Information (through HTMX) -->
+    <div id="company-left-column">
+      {% include "crm/partials/company/company_read.html" %}
+    </div>
+
+    <!-- BLOCK 2: Linked Contacts -->
+    <div
+      class="bg-surface-primary border border-border-default rounded-2xl p-5 backdrop-blur-xs space-y-5 transition-colors">
+      <div class="flex items-center justify-between border-b border-border-default pb-4">
+        <div class="flex items-center gap-2.5">
+          <h2 class="text-base font-bold text-text-main tracking-tight">Contacts liés</h2>
+          <span
+            class="inline-flex items-center justify-center px-2 py-0.5 text-xs font-semibold rounded-full bg-brand-primary/10 border border-brand-primary/20 text-brand-light">
+            {{ company.contacts.count|default:0 }}
+          </span>
+        </div>
+
+        {% if company.is_active %}
+        <button type="button" hx-get="{% url 'crm:create_contact' %}?company={{ company.id }}"
+          hx-target="#modal-container" hx-swap="innerHTML"
+          class="inline-flex items-center gap-1.5 rounded-lg bg-brand-primary hover:bg-brand-hover px-3 py-1.5 text-xs font-semibold text-brand-on shadow-xs transition-colors cursor-pointer shrink-0">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          Nouveau contact
+        </button>
+        {% endif %}
+      </div>
+
+      <!-- Contact Grid List -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {% for contact in company.contacts.all %}
+        <div
+          class="bg-surface-secondary/60 hover:bg-surface-secondary border border-border-default rounded-xl p-4 transition-colors flex items-center justify-between gap-4">
+
+          <!-- Contact Details -->
+          <div class="space-y-1 min-w-0">
+            <div class="flex items-center gap-2">
+              <a href="{% url 'crm:contact_detail' contact.id %}"
+                class="text-sm font-semibold text-text-main hover:text-brand-light hover:underline truncate transition-colors">
+                {{ contact.get_full_name|default:contact.first_name|add:" "|add:contact.last_name }}
+              </a>
+              {% if not contact.is_active %}
+              <span
+                class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-status-warning-bg text-status-warning border border-status-warning-border shrink-0">
+                Archivé
+              </span>
+              {% endif %}
+              {% if contact.is_primary %}
+              <span
+                class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-status-warning-bg text-status-warning border border-status-warning-border shrink-0">
+                Principal
+              </span>
+              {% endif %}
+            </div>
+
+            {% if contact.job_title %}
+            <p class="text-xs text-brand-light/90">{{ contact.job_title }}</p>
+            {% endif %}
+
+            <div class="space-y-0.5 pt-1 text-xs text-text-subtle">
+              {% if contact.email %}
+              <p class="truncate flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-text-faded shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 002-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <a href="mailto:{{ contact.email }}" class="hover:underline hover:text-text-main">{{ contact.email}}</a>
+              </p>
+              {% endif %}
+              {% if contact.phone %}
+              <p class="truncate flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-text-faded shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                </svg>
+                <a href="tel:{{ contact.phone }}" class="hover:underline hover:text-text-main">{{ contact.phone }}</a>
+              </p>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Navigation Arrow -->
+          <div class="flex items-center shrink-0">
+            <a href="{% url 'crm:contact_detail' contact.id %}"
+              class="p-1.5 text-text-subtle hover:text-text-main bg-surface-tertiary hover:bg-surface-secondary border border-border-default rounded-lg transition-colors"
+              title="Voir la fiche contact">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </a>
+          </div>
+
+        </div>
+        {% empty %}
+        <div
+          class="col-span-full py-8 text-center bg-surface-secondary/30 rounded-xl border border-dashed border-border-default space-y-1">
+          <p class="text-sm font-medium text-text-subtle">Aucun contact lié</p>
+          <p class="text-xs text-text-faded">Aucun interlocuteur n'a encore été associé à ce client.</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- BLOCK 3: Linked Inspection Folders (rendered by the inspections app) -->
+    <div id="company-folders-panel"
+      hx-get="{% url 'inspections:company_folders_panel' company.id %}"
+      hx-trigger="load" hx-swap="outerHTML">
+      <div class="bg-surface-primary border border-border-default rounded-2xl p-5 text-sm text-text-faded">
+        Chargement des dossiers…
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Container for HTMX Modals -->
+  <div id="modal-container"></div>
+
+</div>
+
+{% endblock app_content %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
+<script src="{% static 'core/address_map.js' %}" defer></script>
+{% endblock extra_js %}

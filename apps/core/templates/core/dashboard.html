@@ -1,0 +1,10 @@
+{% extends "core/app_layout.html" %}
+
+{% block page_title %}Bonjour, {{ user.username }}{% endblock page_title %}
+{% block page_subtitle %}Votre activité d'inspection en un coup d'œil.{% endblock page_subtitle %}
+
+{% block app_content %}
+<div id="dashboard-content">
+  {% include "core/partials/dashboard/dashboard_content.html" %}
+</div>
+{% endblock app_content %}

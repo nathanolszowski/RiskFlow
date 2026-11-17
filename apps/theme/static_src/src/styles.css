@@ -1,0 +1,261 @@
+@import "tailwindcss";
+
+@source "../../../**/*.{html,py,js}";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/**
+ * ==============================================================================
+ * RISKFLOW — SYSTEM THEME & DESIGN TOKENS
+ * ==============================================================================
+ */
+
+/* ------------------------------------------------------------------------------
+ * DARK THEME (default)
+ * ------------------------------------------------------------------------------ */
+:root,
+[data-theme="dark"] {
+  /* Backgrounds */
+  --bg-app: #0B1612;
+  --bg-surface-primary: #13241C;
+  --bg-surface-secondary: #0D1A14;
+  --bg-surface-tertiary: #1B3329;
+  --bg-surface-hover: #1B3329;
+  --bg-surface-muted: #0F1C16;
+  --bg-surface-modal: #13241C;
+
+  /* Inputs & Controls */
+  --bg-input: #0D1A14;
+  --border-input: #2A4C3D;
+  --placeholder-input: #5F7A6D;
+
+  /* Bordures */
+  --border-color-default: #2A4C3D;
+  --border-color-subtle: rgba(35, 66, 54, 0.6);
+  --border-color-hover: #3F6B58;
+  --border-color-divider: #2A4C3D;
+
+  /* Typography & Texts */
+  --text-main: #F4F2DF;
+  --text-body: #E3E2CD;
+  --text-muted: #C2CBB7;
+  --text-subtle: #93A99C;
+  --text-faded: #7B9285;
+  --text-ghost: #56705F;
+
+  /* Primary (Mint) */
+  --color-primary: #3AB795;
+  --color-primary-hover: #52C9A9;
+  --color-primary-light: #86E3C6;
+  --color-primary-bg: rgba(58, 183, 149, 0.14);
+  --color-primary-border: rgba(58, 183, 149, 0.4);
+
+  --color-on-primary: #06231B;
+
+  /* Folder cards */
+  --bg-card: #1A3027;
+  --border-card: #3F6B58;
+  --bg-card-inset: #122219;
+  --card-segment: #2F5645;
+  --card-shadow-value: 0 10px 28px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.35);
+
+  /* Chart series (dashboard donut) */
+  --chart-1: #FFCF56;
+  --chart-2: #3AB795;
+  --chart-3: #86BAA1;
+  --chart-4: #5B8DEF;
+  --chart-5: #C792EA;
+
+  /* Success */
+  --color-success: #A0E8AF;
+  --color-success-bg: rgba(160, 232, 175, 0.12);
+  --color-success-border: rgba(160, 232, 175, 0.3);
+
+  /* Warning (Amber) */
+  --color-warning: #FFCF56;
+  --color-warning-bg: rgba(255, 207, 86, 0.12);
+  --color-warning-border: rgba(255, 207, 86, 0.32);
+
+  /* Danger / Errors (Rose & Red) */
+  --color-danger: #F4938A;
+  --color-danger-hover: #F0766A;
+  --color-danger-bg: rgba(244, 147, 138, 0.12);
+  --color-danger-border: rgba(244, 147, 138, 0.3);
+
+  /* Neutral Controls */
+  --color-neutral-bg: #1B3329;
+  --color-neutral-text: #93A99C;
+  --color-neutral-border: #2A4C3D;
+}
+
+/* ------------------------------------------------------------------------------
+ * LIGHT THEME
+ * ------------------------------------------------------------------------------ */
+[data-theme="light"] {
+  /* Backgrounds */
+  --bg-app: #EDEAD0;
+  --bg-surface-primary: #F4F1DB;
+  --bg-surface-secondary: #EBE8CC;
+  --bg-surface-tertiary: #E1DDBB;
+  --bg-surface-hover: #E1DDBB;
+  --bg-surface-muted: #F0EDD6;
+  --bg-surface-modal: #F8F6E6;
+
+  /* Inputs & Controls */
+  --bg-input: #F8F6E6;
+  --border-input: #BFC59E;
+  --placeholder-input: #8AA096;
+
+  /* Bordures */
+  --border-color-default: #CFD2AF;
+  --border-color-subtle: #E1E1C6;
+  --border-color-hover: #86BAA1;
+  --border-color-divider: #CFD2AF;
+
+  /* Typography & Texts */
+  --text-main: #12332B;
+  --text-body: #234A40;
+  --text-muted: #3A5E53;
+  --text-subtle: #4F7166;
+  --text-faded: #6E8C80;
+  --text-ghost: #A9BDB1;
+
+  /* Primary (Mint) */
+  --color-primary: #3AB795;
+  --color-primary-hover: #2FA384;
+  --color-primary-light: #1F7F66;
+  --color-primary-bg: rgba(58, 183, 149, 0.14);
+  --color-primary-border: rgba(58, 183, 149, 0.45);
+
+  --color-on-primary: #0B2E25;
+
+  /* Folder cards */
+  --bg-card: #FBF9EC;
+  --border-card: #BFC59E;
+  --bg-card-inset: #F1EED6;
+  --card-segment: #D6D9B8;
+  --card-shadow-value: 0 8px 22px rgba(18, 51, 43, 0.14), 0 1px 3px rgba(18, 51, 43, 0.12);
+
+  /* Chart series (dashboard donut) */
+  --chart-1: #EDB400;
+  --chart-2: #3AB795;
+  --chart-3: #1E6B57;
+  --chart-4: #2F5FC4;
+  --chart-5: #8E4FBF;
+
+  /* Success */
+  --color-success: #1B7A3E;
+  --color-success-bg: rgba(160, 232, 175, 0.45);
+  --color-success-border: rgba(75, 180, 100, 0.5);
+
+  /* Warning (Amber) */
+  --color-warning: #7A5200;
+  --color-warning-bg: rgba(255, 207, 86, 0.32);
+  --color-warning-border: rgba(224, 170, 30, 0.65);
+
+  /* Danger / Errors (Rose & Red) */
+  --color-danger: #B42318;
+  --color-danger-hover: #911B12;
+  --color-danger-bg: rgba(180, 35, 24, 0.08);
+  --color-danger-border: rgba(180, 35, 24, 0.3);
+
+  /* Neutral Controls */
+  --color-neutral-bg: #E1DDBB;
+  --color-neutral-text: #3A5E53;
+  --color-neutral-border: #CFD2AF;
+}
+
+/* ------------------------------------------------------------------------------
+ * TAILWIND V4 THEME MAPPING
+ * ------------------------------------------------------------------------------ */
+@theme {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Colors exposed as utility classes (e.g. bg-app-bg, text-text-body, border-border-default) */
+  --color-app-bg: var(--bg-app);
+  --color-surface-primary: var(--bg-surface-primary);
+  --color-surface-secondary: var(--bg-surface-secondary);
+  --color-surface-tertiary: var(--bg-surface-tertiary);
+  --color-surface-hover: var(--bg-surface-hover);
+  --color-surface-muted: var(--bg-surface-muted);
+  --color-surface-modal: var(--bg-surface-modal);
+
+  --color-border-default: var(--border-color-default);
+  --color-border-subtle: var(--border-color-subtle);
+  --color-border-hover: var(--border-color-hover);
+  --color-border-divider: var(--border-color-divider);
+
+  --color-text-main: var(--text-main);
+  --color-text-body: var(--text-body);
+  --color-text-muted: var(--text-muted);
+  --color-text-subtle: var(--text-subtle);
+  --color-text-faded: var(--text-faded);
+  --color-text-ghost: var(--text-ghost);
+
+  --color-brand-primary: var(--color-primary);
+  --color-brand-hover: var(--color-primary-hover);
+  --color-brand-light: var(--color-primary-light);
+  --color-brand-on: var(--color-on-primary);
+
+  --color-card: var(--bg-card);
+  --color-card-border: var(--border-card);
+  --color-card-inset: var(--bg-card-inset);
+  --color-card-segment: var(--card-segment);
+  --shadow-card: var(--card-shadow-value);
+  --color-brand-bg: var(--color-primary-bg);
+  --color-brand-border: var(--color-primary-border);
+
+  --color-status-success: var(--color-success);
+  --color-status-success-bg: var(--color-success-bg);
+  --color-status-success-border: var(--color-success-border);
+
+  --color-status-warning: var(--color-warning);
+  --color-status-warning-bg: var(--color-warning-bg);
+  --color-status-warning-border: var(--color-warning-border);
+
+  --color-status-danger: var(--color-danger);
+  --color-status-danger-hover: var(--color-danger-hover);
+  --color-status-danger-bg: var(--color-danger-bg);
+  --color-status-danger-border: var(--color-danger-border);
+
+  /* Backdrop of the modals and drawers, dimmed with an opacity (bg-overlay/70) */
+  --color-overlay: #000;
+}
+
+/* ------------------------------------------------------------------------------
+ * BASE & TYPOGRAPHY
+ * ------------------------------------------------------------------------------ */
+:root {
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+
+  --transition-theme: background-color 200ms ease, border-color 200ms ease, color 200ms ease;
+}
+
+body {
+  background-color: var(--bg-app);
+  color: var(--text-body);
+  font-family: var(--font-sans);
+  transition: var(--transition-theme);
+}
+
+/* ------------------------------------------------------------------------------
+ * FORM COMPONENTS
+ * ------------------------------------------------------------------------------ */
+@layer components {
+  /* Input standard / Select / Textarea */
+  .form-input {
+    @apply w-full rounded-lg border border-border-default bg-surface-secondary p-2.5 
+           text-sm text-text-main placeholder:text-text-faded 
+           focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary 
+           transition cursor-pointer;
+  }
+
+  .form-input-readonly {
+    @apply w-full rounded-lg border border-border-default bg-surface-tertiary p-2.5 
+           text-sm text-text-muted opacity-60 cursor-not-allowed focus:outline-none transition;
+  }
+}

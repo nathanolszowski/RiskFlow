@@ -1,5 +1,4 @@
-"""
-URL configuration for config project.
+"""Root URL configuration: admin, apps and the browser reload route (DEBUG only).
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/6.0/topics/http/urls/
@@ -12,13 +11,24 @@ Class-based views
     2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
 Including another URLconf
     1. Import the include() function: from django.urls import include, path
+from django.views.generic import RedirectView
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
+from django.conf import settings
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import include, path
+from django.views.generic import RedirectView
 
 urlpatterns = [
-    path("__reload__/", include("django_browser_reload.urls")),
-    path('admin/', admin.site.urls),
-    path('', include('accounts.urls')),
+    path("", RedirectView.as_view(pattern_name="core:dashboard"), name="root"),
+    path("admin/", admin.site.urls),
+    path("auth/", include("accounts.urls", namespace="accounts")),
+    path("home/", include("core.urls", namespace="core")),
+    path("", include("inspections.urls", namespace="inspections")),
+    path("", include("medias.urls", namespace="medias")),
+    path("", include("crm.urls", namespace="crm")),
 ]
+
+if settings.DEBUG:
+    urlpatterns.append(path("__reload__/", include("django_browser_reload.urls")))

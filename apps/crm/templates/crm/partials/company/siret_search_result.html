@@ -1,0 +1,61 @@
+{% if found %}
+<!-- Visual confirmation -->
+<div class="rounded-lg border border-status-success-border bg-status-success-bg p-3 text-xs text-status-success">
+       ✓ Données de <strong>{{ name }}</strong> récupérées et injectées dans le formulaire !
+       {% if legal_structure_label and legal_structure_label != legal_structure %}<br>Forme juridique ({{ legal_structure }}) : {{ legal_structure_label }}{% endif %}
+</div>
+
+{% if activity_naf25 %}
+<div class="rounded-lg border border-border-default bg-surface-secondary p-3 text-xs text-text-body">
+       <strong>Activité principale (NAF 2025)</strong> : {% if activity_naf25_label %}{{ activity_naf25_label }} ({{ activity_naf25 }}){% else %}{{ activity_naf25 }}{% endif %}
+</div>
+{% endif %}
+
+{% if headquarters_siret and headquarters_siret != siret %}
+<div class="rounded-lg border border-border-default bg-surface-secondary p-3 text-xs text-text-body">
+       <strong>Siège social</strong> (SIRET {{ headquarters_siret }}){% if headquarters_address %} : {{ headquarters_address }}{% endif %}
+       {% if headquarters_state == "A" %}<span class="font-semibold text-status-success"> · en activité</span>{% elif headquarters_state == "F" %}<span class="font-semibold text-status-danger"> · fermé</span>{% endif %}
+</div>
+{% elif headquarters_siret == siret %}
+<div class="rounded-lg border border-border-default bg-surface-secondary p-3 text-xs text-text-body">Cet établissement est le <strong>siège social</strong>.</div>
+{% endif %}
+
+{% if alert %}
+{% include "crm/partials/company/company_cessation_alert.html" with company_name=name siret=siret note="Information indicative : le client peut quand même être créé, l'état sera indiqué sur sa fiche." %}
+{% endif %}
+
+<!-- Swaps HTMX Out-Of-Band (hx-swap-oob="true") : Replace the content of the inputs by their ID -->
+<input type="text" id="id_name" name="name" value="{{ name }}" hx-swap-oob="true"
+       class="w-full rounded-lg border border-border-default bg-surface-tertiary p-2.5 text-sm text-text-main focus:border-brand-primary focus:ring-brand-primary">
+
+<input type="text" id="id_siren" name="siren" value="{{ siren }}" hx-swap-oob="true"
+       class="w-full rounded-lg border border-border-default bg-surface-tertiary p-2.5 text-sm text-text-main focus:border-brand-primary focus:ring-brand-primary">
+
+<input type="text" id="id_siret" name="siret" value="{{ siret }}" hx-swap-oob="true"
+       class="w-full rounded-lg border border-border-default bg-surface-tertiary p-2.5 text-sm text-text-main focus:border-brand-primary focus:ring-brand-primary">
+
+<input type="text" id="id_business_line" name="business_line" value="{{ business_line }}" hx-swap-oob="true"
+       class="w-full rounded-lg border border-border-default bg-surface-tertiary p-2.5 text-sm text-text-main focus:border-brand-primary focus:ring-brand-primary">
+
+<input type="text" id="id_company_size_category" name="company_size_category" value="{{ company_size_category }}"
+       hx-swap-oob="true"
+       class="w-full rounded-lg border border-border-default bg-surface-tertiary p-2.5 text-sm text-text-main focus:border-brand-primary focus:ring-brand-primary">
+
+<input type="text" id="id_creation_date" name="creation_date" value="{{ creation_date }}" hx-swap-oob="true"
+       class="w-full rounded-lg border border-border-default bg-surface-tertiary p-2.5 text-sm text-text-main focus:border-brand-primary focus:ring-brand-primary">
+
+<input type="text" id="id_address_line" name="address_line" value="{{ address_line }}" hx-swap-oob="true"
+       class="form-input" autocomplete="off" hx-get="{% url 'core:address_suggestions' %}"
+       hx-trigger="input changed delay:300ms" hx-target="#address-suggestions" hx-swap="innerHTML">
+
+<input type="text" id="id_postal_code" name="postal_code" value="{{ postal_code }}" hx-swap-oob="true"
+       class="form-input">
+
+<input type="text" id="id_city" name="city" value="{{ city }}" hx-swap-oob="true"
+       class="form-input">
+
+{% elif query %}
+<div class="rounded-lg border border-status-warning-border bg-status-warning-bg p-2.5 text-xs text-status-warning">
+       Aucun établissement trouvé pour le SIRET "{{ query }}".
+</div>
+{% endif %}

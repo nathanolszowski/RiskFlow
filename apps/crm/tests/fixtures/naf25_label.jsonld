@@ -1,0 +1,24 @@
+[
+  {
+    "@id": "http://id.insee.fr/codes/naf2025/sousClasse/62.01Z",
+    "@type": [
+      "http://www.w3.org/2004/02/skos/core#Concept"
+    ],
+    "http://www.w3.org/2004/02/skos/core#prefLabel": [
+      {
+        "@language": "fr",
+        "@value": "Programmation informatique"
+      },
+      {
+        "@language": "en",
+        "@value": "Computer programming"
+      }
+    ]
+  },
+  {
+    "@id": "http://id.insee.fr/codes/naf2025/sousClasse",
+    "@type": [
+      "http://www.w3.org/2004/02/skos/core#ConceptScheme"
+    ]
+  }
+]

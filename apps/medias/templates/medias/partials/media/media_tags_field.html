@@ -1,0 +1,22 @@
+{# Tags of a media: the user's tags as checkable chips, then a field for new ones. Context: form. #}
+<div class="space-y-3">
+  <p class="block text-xs font-semibold uppercase tracking-wider text-brand-light">Tags</p>
+
+  {% if form.fields.existing_tags.queryset %}
+  <div class="flex flex-wrap gap-2" role="group" aria-label="Tags existants">
+    {% for tag in form.fields.existing_tags.queryset %}
+    <label class="cursor-pointer">
+      <input type="checkbox" name="existing_tags" value="{{ tag.pk }}" class="peer sr-only"
+        {% if tag.pk|stringformat:"s" in form.selected_tag_ids %}checked{% endif %}>
+      <span class="inline-flex h-10 items-center rounded-full border border-border-default bg-surface-secondary px-4 text-sm font-medium text-text-body transition-colors peer-checked:border-brand-primary peer-checked:bg-brand-bg peer-checked:text-brand-light peer-focus-visible:ring-2 peer-focus-visible:ring-brand-primary">{{ tag.name }}</span>
+    </label>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div>
+    <label for="{{ form.new_tags.id_for_label }}" class="mb-1.5 block text-xs text-text-subtle">{{ form.new_tags.label }} · {{ form.new_tags.help_text }}</label>
+    {{ form.new_tags }}
+    {% if form.new_tags.errors %}<p class="mt-1 text-xs text-status-danger">{{ form.new_tags.errors.0 }}</p>{% endif %}
+  </div>
+</div>

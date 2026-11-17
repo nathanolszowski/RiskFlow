@@ -1,0 +1,59 @@
+<div id="folder-info"
+    class="h-full rounded-2xl border border-border-default bg-surface-primary p-6 backdrop-blur-xs transition-colors">
+
+    <div class="flex items-center justify-between gap-3 mb-4">
+        <h3 class="text-lg font-bold text-text-main">Informations du Dossier</h3>
+        {% if folder.is_active %}
+        <button type="button" hx-get="{% url 'inspections:folder_inline_update' folder.pk %}" hx-target="#folder-info"
+            hx-swap="outerHTML"
+            class="inline-flex items-center gap-1.5 rounded-lg bg-brand-primary hover:bg-brand-hover px-3.5 py-2 text-xs font-semibold text-brand-on shadow-xs transition-colors cursor-pointer whitespace-nowrap">
+            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+            Éditer le dossier
+        </button>
+        {% endif %}
+    </div>
+
+    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+        <div>
+            <dt class="text-xs text-text-faded">Référence</dt>
+            <dd class="text-text-body font-mono">{{ folder.reference }}</dd>
+        </div>
+        <div>
+            <dt class="text-xs text-text-faded">Phase</dt>
+            <dd class="text-text-body">{{ folder.get_current_phase_display }}</dd>
+        </div>
+        <div>
+            <dt class="text-xs text-text-faded">Contact référent</dt>
+            <dd class="text-text-body">
+                {% if folder.contact %}
+                <a href="{% url 'crm:contact_detail' folder.contact.pk %}" class="text-brand-light hover:underline">
+                    {{ folder.contact.first_name }} {{ folder.contact.last_name }}
+                </a>
+                {% if folder.contact.position %}<span class="text-text-subtle"> — {{ folder.contact.position }}</span>{% endif %}
+                {% else %}
+                <span class="text-text-faded italic">Non renseigné</span>
+                {% endif %}
+            </dd>
+        </div>
+        <div>
+            <dt class="text-xs text-text-faded">Adresse du site d'inspection</dt>
+            <dd class="text-text-body">
+                {% if folder.full_address %}{{ folder.full_address }} {% include "core/partials/ui/address_badge.html" with obj=folder %}{% else %}<span class="text-text-faded italic">Non renseignée</span>{% endif %}
+            </dd>
+        </div>
+        <div class="sm:col-span-2">
+            <dt class="text-xs text-text-faded">Notes internes</dt>
+            <dd class="text-text-body whitespace-pre-line">
+                {% if folder.notes %}{{ folder.notes }}{% else %}<span class="text-text-faded italic">Aucune note.</span>{% endif %}
+            </dd>
+        </div>
+    </dl>
+</div>
+
+{% if refresh_tracking %}
+{% include "core/partials/tracking/tracking_info.html" with object=folder oob=True %}
+{% include "inspections/partials/folder/folder_progress.html" with oob=True %}
+{% endif %}

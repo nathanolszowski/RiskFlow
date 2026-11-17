@@ -1,0 +1,14 @@
+.git
+.github
+.claude
+.venv
+.env
+.coverage
+htmlcov
+docs
+media
+logs
+staticfiles
+__pycache__
+*.pyc
+node_modules

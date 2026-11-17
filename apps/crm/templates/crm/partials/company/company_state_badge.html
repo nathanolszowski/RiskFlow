@@ -1,0 +1,10 @@
+{# Administrative state reported by Sirene at the last import or update, as a line of text. Context: state (A, F, C or empty). #}
+{% if state == "F" %}
+<p class="mt-0.5 truncate text-xs font-semibold text-status-danger" title="Selon Sirene, à la dernière vérification">Établissement fermé</p>
+{% elif state == "C" %}
+<p class="mt-0.5 truncate text-xs font-semibold text-status-danger" title="Selon Sirene, à la dernière vérification">Entreprise cessée</p>
+{% elif state == "A" %}
+<p class="mt-0.5 truncate text-xs font-semibold text-status-success" title="Selon Sirene, à la dernière vérification">Établissement en activité</p>
+{% else %}
+<p class="mt-0.5 truncate text-xs italic text-text-subtle" title="Utilisez « Actualiser (Sirene) » sur la fiche pour le vérifier">Établissement non vérifié</p>
+{% endif %}

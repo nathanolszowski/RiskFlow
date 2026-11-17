@@ -1,0 +1,21 @@
+{# Navigation between the sections. Out of band when oob (after a save or a change of section). #}
+<nav id="visit-nav" {% if oob %}hx-swap-oob="true"{% endif %} aria-label="Sections du formulaire"
+  class="flex shrink-0 gap-2 overflow-x-auto border-b border-border-default bg-surface-secondary p-3 md:w-72 md:flex-col md:overflow-y-auto md:border-b-0 md:border-r md:p-4">
+  <span class="hidden px-2 pb-1 text-[11px] font-bold uppercase tracking-widest text-text-subtle md:block">Sections</span>
+  {% for item in nav %}
+  <button type="button" hx-get="{% url 'inspections:visit_form_section' visit.pk item.id %}" hx-target="#visit-form-body" hx-swap="innerHTML"
+    hx-sync="#visit-form:queue all" {% if item.current %}aria-current="true"{% endif %}
+    class="flex min-h-16 min-w-52 cursor-pointer items-center gap-3 rounded-xl border p-3 text-left transition-colors md:min-w-0 {% if item.current %}border-brand-primary bg-brand-bg{% else %}border-transparent hover:bg-surface-hover{% endif %}">
+    <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 text-[13px] font-bold {% if item.complete %}border-brand-primary bg-brand-primary text-brand-on{% else %}border-border-hover text-text-muted{% endif %}">
+      {% if item.complete %}✓{% else %}{{ item.number }}{% endif %}
+    </span>
+    <span class="flex min-w-0 flex-1 flex-col gap-0.5">
+      <span class="truncate text-[15px] font-semibold text-text-main">{{ item.title }}</span>
+      <span class="text-xs text-text-subtle">{{ item.done }} / {{ item.total }} champs</span>
+    </span>
+  </button>
+  {% endfor %}
+  <div class="mt-auto hidden rounded-lg border border-dashed border-border-hover p-3 text-xs leading-relaxed text-text-subtle md:block">
+    Les réponses s'enregistrent automatiquement. Vous pouvez quitter et reprendre plus tard.
+  </div>
+</nav>

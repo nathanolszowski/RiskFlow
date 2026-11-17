@@ -1,0 +1,36 @@
+{
+  "header": {
+    "statut": 200,
+    "message": "ok"
+  },
+  "etablissement": {
+    "siren": "123456782",
+    "siret": "12345678200010",
+    "dateCreationEtablissement": "2010-01-01",
+    "etablissementSiege": true,
+    "uniteLegale": {
+      "denominationUniteLegale": "ACME INDUSTRIES",
+      "categorieJuridiqueUniteLegale": "5710",
+      "categorieEntreprise": "PME",
+      "activitePrincipaleUniteLegale": "62.01Z",
+      "etatAdministratifUniteLegale": "C",
+      "nicSiegeUniteLegale": "00010",
+      "dateCreationUniteLegale": "2010-01-01"
+    },
+    "adresseEtablissement": {
+      "numeroVoieEtablissement": "10",
+      "typeVoieEtablissement": "RUE",
+      "libelleVoieEtablissement": "DE LA PAIX",
+      "codePostalEtablissement": "75002",
+      "libelleCommuneEtablissement": "PARIS"
+    },
+    "periodesEtablissement": [
+      {
+        "dateDebut": "2022-01-01",
+        "etatAdministratifEtablissement": "F",
+        "changementEtatAdministratifEtablissement": true,
+        "activitePrincipaleEtablissement": "62.01Z"
+      }
+    ]
+  }
+}

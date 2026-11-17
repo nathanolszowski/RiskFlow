@@ -1,0 +1,19 @@
+{# Storage used by the folder against its approximate quota. Context: usage (used_bytes, quota_bytes, percent, level). #}
+{% load medias_extras %}
+<div class="min-w-0 flex-1" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ usage.percent }}"
+  aria-label="Stockage du dossier">
+  <div class="mb-1.5 flex items-baseline justify-between gap-3 text-xs">
+    <span class="font-semibold text-text-main">Stockage du dossier</span>
+    <span class="tabular-nums {% if usage.level == 'full' %}font-semibold text-status-danger{% elif usage.level == 'warning' %}font-semibold text-status-warning{% else %}text-text-subtle{% endif %}">
+      {{ usage.used_bytes|filesize_fr }} / {{ usage.quota_bytes|filesize_fr }}
+    </span>
+  </div>
+  {# Visual only: the container above is the progressbar for assistive technologies #}
+  <progress value="{{ usage.percent }}" max="100" aria-hidden="true"
+    class="h-2.5 w-full appearance-none overflow-hidden rounded-full bg-surface-tertiary [&::-webkit-progress-bar]:bg-surface-tertiary [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:transition-all [&::-moz-progress-bar]:rounded-full {% if usage.level == 'full' %}[&::-webkit-progress-value]:bg-status-danger [&::-moz-progress-bar]:bg-status-danger{% elif usage.level == 'warning' %}[&::-webkit-progress-value]:bg-status-warning [&::-moz-progress-bar]:bg-status-warning{% else %}[&::-webkit-progress-value]:bg-brand-primary [&::-moz-progress-bar]:bg-brand-primary{% endif %}"></progress>
+  {% if usage.level == 'full' %}
+  <p class="mt-1.5 text-xs text-status-danger">Quota atteint : supprimez des médias pour en ajouter.</p>
+  {% elif usage.level == 'warning' %}
+  <p class="mt-1.5 text-xs text-status-warning">Le quota du dossier est presque atteint.</p>
+  {% endif %}
+</div>

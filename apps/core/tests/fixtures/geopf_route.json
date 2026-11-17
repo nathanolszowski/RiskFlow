@@ -1,0 +1,36 @@
+{
+ "resource": "bdtopo-osrm",
+ "resourceVersion": "2026-10-20",
+ "start": "2.290019,49.897465",
+ "end": "2.352566,48.857266",
+ "profile": "car",
+ "optimization": "fastest",
+ "geometry": {
+  "coordinates": [
+   [
+    2.290019,
+    49.897465
+   ],
+   [
+    2.289766,
+    49.897165
+   ]
+  ],
+  "type": "LineString"
+ },
+ "crs": "EPSG:4326",
+ "distanceUnit": "kilometer",
+ "timeUnit": "minute",
+ "distance": 143.3889,
+ "duration": 119.99333333333334,
+ "constraints": [],
+ "portions": [
+  {
+   "start": "2.290019,49.897465",
+   "end": "2.352566,48.857266",
+   "distance": 143.3889,
+   "duration": 119.99333333333334,
+   "steps": []
+  }
+ ]
+}

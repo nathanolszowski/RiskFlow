@@ -1,0 +1,8 @@
+{# Status of a visit. Context: visit. A planned visit whose date is over is shown as late. #}
+{% if visit.current_status == 'VALIDATED' %}
+<span class="inline-flex items-center rounded-full border border-status-success-border bg-status-success-bg px-2.5 py-1 text-xs font-semibold text-status-success">Effectuée</span>
+{% elif visit.is_late %}
+<span class="inline-flex items-center rounded-full border border-status-danger-border bg-status-danger-bg px-2.5 py-1 text-xs font-semibold text-status-danger">En retard</span>
+{% else %}
+<span class="inline-flex items-center rounded-full border border-brand-border bg-brand-bg px-2.5 py-1 text-xs font-semibold text-brand-light">Planifiée</span>
+{% endif %}

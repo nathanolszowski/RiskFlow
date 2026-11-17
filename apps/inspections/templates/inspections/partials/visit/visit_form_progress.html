@@ -1,0 +1,9 @@
+{# Counter and bar of the header. Out of band when oob. #}
+<div id="visit-progress" {% if oob %}hx-swap-oob="true"{% endif %} class="flex w-full shrink-0 flex-col gap-1.5 sm:w-60">
+  <div class="flex justify-between text-[13px]">
+    <span class="font-semibold text-text-main">{{ progress.done }} / {{ progress.total }} champs</span>
+    <span class="text-text-subtle">{{ progress.pct }} %</span>
+  </div>
+  <progress value="{{ progress.pct }}" max="100" aria-label="Progression de la visite"
+    class="h-2 w-full appearance-none overflow-hidden rounded-full bg-surface-tertiary [&::-webkit-progress-bar]:bg-surface-tertiary [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-brand-primary [&::-webkit-progress-value]:transition-all [&::-moz-progress-bar]:rounded-full [&::-moz-progress-bar]:bg-brand-primary"></progress>
+</div>

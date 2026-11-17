@@ -1,0 +1,36 @@
+{% comment %}
+  Champs d'adresse partagés (AddressMixin) : rue, code postal, ville.
+  Contexte : form (ModelForm d'un modèle avec AddressMixin), required (bool, affiche * si vrai).
+  La certification (coordonnées) est calculée côté serveur : aucun champ de coordonnées ici.
+{% endcomment %}
+<div class="grid grid-cols-6 gap-x-4 gap-y-3" data-address-fields>
+  <div class="col-span-6">
+    <label for="{{ form.address_line.id_for_label }}" class="mb-1 block text-xs font-medium text-text-subtle">
+      {{ form.address_line.label }}{% if required %} *{% endif %}
+    </label>
+    <div class="relative">
+      {{ form.address_line }}
+      <div id="address-suggestions" data-address-suggestions></div>
+    </div>
+    {% for error in form.address_line.errors %}<p class="mt-1 text-xs text-status-danger">{{ error }}</p>{% endfor %}
+  </div>
+  <div class="col-span-2">
+    <label for="{{ form.postal_code.id_for_label }}" class="mb-1 block text-xs font-medium text-text-subtle">
+      {{ form.postal_code.label }}{% if required %} *{% endif %}
+    </label>
+    {{ form.postal_code }}
+    {% for error in form.postal_code.errors %}<p class="mt-1 text-xs text-status-danger">{{ error }}</p>{% endfor %}
+  </div>
+  <div class="col-span-4">
+    <label for="{{ form.city.id_for_label }}" class="mb-1 block text-xs font-medium text-text-subtle">
+      {{ form.city.label }}{% if required %} *{% endif %}
+    </label>
+    {{ form.city }}
+    {% for error in form.city.errors %}<p class="mt-1 text-xs text-status-danger">{{ error }}</p>{% endfor %}
+  </div>
+  {% if form.instance.pk and form.instance.full_address %}
+  <div class="col-span-6">
+    {% include "core/partials/ui/address_badge.html" with obj=form.instance %}
+  </div>
+  {% endif %}
+</div>

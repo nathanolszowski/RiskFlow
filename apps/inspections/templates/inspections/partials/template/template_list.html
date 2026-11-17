@@ -1,0 +1,65 @@
+{# Cards of the templates. Context: scope, folder_id, templates. #}
+<div id="template-list" class="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto pr-1">
+  {% for t in templates %}
+  <div class="flex flex-col gap-2.5 rounded-xl border border-border-default bg-surface-secondary p-3.5 {% if not t.is_active %}opacity-70{% endif %}">
+    <div class="flex items-center justify-between gap-2.5">
+      <span class="min-w-0 truncate text-[15px] font-semibold text-text-main">{{ t.name }}</span>
+      <span class="flex shrink-0 items-center gap-1.5">
+        {% if t.shared %}
+        <span class="inline-flex items-center rounded-md bg-brand-bg px-2 py-0.5 text-xs font-semibold text-brand-light">Partagé</span>
+        {% endif %}
+        {% if t.is_active %}
+        <span class="rounded-md border border-status-success-border bg-status-success-bg px-2 py-0.5 text-xs font-semibold text-status-success">Actif</span>
+        {% else %}
+        <span class="rounded-md border border-status-warning-border bg-status-warning-bg px-2 py-0.5 text-xs font-semibold text-status-warning">Archivé</span>
+        {% endif %}
+      </span>
+    </div>
+    <div class="truncate text-xs text-text-subtle">
+      {% if t.is_mine %}Moi{% else %}Par {{ t.created_by }}{% endif %} · modifié le {{ t.updated_at|date:"d/m/Y" }} · {{ t.field_count }} champ{{ t.field_count|pluralize }}
+    </div>
+
+    <div class="flex flex-wrap items-center justify-end gap-1.5"
+      hx-target="#template-drawer-content" hx-swap="innerHTML"
+      hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+      hx-vals='{"scope": "{{ scope }}", "folder": "{{ folder_id|default:"" }}"}'>
+      {% if t.is_active %}
+      {% if t.is_mine %}
+      <button type="button" hx-get="{% url 'inspections:template_edit' t.pk %}?folder={{ folder_id|default:'' }}"
+        class="cursor-pointer rounded-md border border-border-hover px-2.5 py-1.5 text-xs font-semibold text-text-main transition-colors hover:bg-surface-hover">Modifier</button>
+      {% else %}
+      <button type="button" hx-get="{% url 'inspections:template_read' t.pk %}?folder={{ folder_id|default:'' }}"
+        class="cursor-pointer rounded-md border border-border-hover px-2.5 py-1.5 text-xs font-semibold text-text-main transition-colors hover:bg-surface-hover">Consulter</button>
+      {% endif %}
+      {% if folder_id %}
+      <button type="button" hx-get="{% url 'inspections:visit_create' folder_id %}?template={{ t.pk }}"
+        hx-target="#modal-container" hx-on::after-request="document.getElementById('template-drawer')?.remove()"
+        class="cursor-pointer rounded-md border border-border-hover px-2.5 py-1.5 text-xs font-semibold text-text-main transition-colors hover:bg-surface-hover">Utiliser</button>
+      {% endif %}
+      <button type="button" hx-post="{% url 'inspections:template_duplicate' t.pk %}"
+        class="cursor-pointer rounded-md border border-border-default px-2.5 py-1.5 text-xs font-semibold text-text-muted transition-colors hover:text-text-main">
+        {% if t.is_mine %}Dupliquer{% else %}Copier dans mes templates{% endif %}
+      </button>
+      {% endif %}
+
+      {% if t.is_mine %}
+      {% if t.is_active %}
+      <button type="button" hx-get="{% url 'inspections:template_archive' t.pk %}?folder={{ folder_id|default:'' }}" hx-target="#modal-container"
+        class="cursor-pointer rounded-md border border-border-default px-2.5 py-1.5 text-xs font-semibold text-text-muted transition-colors hover:text-text-main">Archiver</button>
+      {% else %}
+      <button type="button" hx-post="{% url 'inspections:template_unarchive' t.pk %}"
+        class="cursor-pointer rounded-md border border-border-default px-2.5 py-1.5 text-xs font-semibold text-text-main transition-colors hover:bg-surface-tertiary">Désarchiver</button>
+      <button type="button" hx-get="{% url 'inspections:template_delete' t.pk %}?folder={{ folder_id|default:'' }}" hx-target="#modal-container"
+        class="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-status-danger-border px-2.5 py-1.5 text-xs font-semibold text-status-danger transition-colors hover:bg-status-danger-bg">
+        <svg class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>Supprimer
+      </button>
+      {% endif %}
+      {% endif %}
+    </div>
+  </div>
+  {% empty %}
+  <p class="rounded-xl border border-dashed border-border-default p-6 text-center text-sm text-text-muted">
+    {% if scope == 'shared' %}Aucun template n'a été partagé avec vous.{% else %}Aucun template. Créez-en un pour préparer vos visites.{% endif %}
+  </p>
+  {% endfor %}
+</div>
