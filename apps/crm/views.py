@@ -6,10 +6,10 @@ from core.decorators import htmx_login_required, logged_user
 from core.htmx import close_modal, htmx_redirect, htmx_refresh
 from core.http import filter_params
 from core.modals import confirm_modal, delete_confirm_modal
+from core.pagination import paginate
 from core.services import delete_archived_instance
 from core.text import agree, plural
 from django.core.exceptions import ValidationError
-from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -66,6 +66,24 @@ def _contacts(request: HttpRequest) -> Any:
     return get_filtered_contacts(**filter_params(request, "q", "company", "status"))
 
 
+def _render_company_grid(request: HttpRequest, page: int = 1) -> HttpResponse:
+    """Render one page of the filtered companies grid.
+
+    Args:
+        request: Current request, with the filters of the list.
+        page: Page number.
+
+    Returns:
+        The grid partial.
+    """
+    page_obj = paginate(_companies(request), page)
+    return render(
+        request,
+        "crm/partials/company/company_grid.html",
+        {"companies": page_obj, "page_obj": page_obj},
+    )
+
+
 @htmx_login_required
 @require_GET
 def company_list(request: HttpRequest) -> HttpResponse:
@@ -79,8 +97,7 @@ def company_list(request: HttpRequest) -> HttpResponse:
     """
     companies = _companies(request)
 
-    paginator = Paginator(companies, 15)
-    page_obj = paginator.get_page(1)
+    page_obj = paginate(companies)
 
     return render(
         request,
@@ -99,24 +116,12 @@ def company_list_paginated(request: HttpRequest, page: int = 1) -> HttpResponse:
 
     Args:
         request: Current request, with the ``q``, ``status`` and ``sort`` filters.
-        page: Page number, 15 companies per page.
+        page: Page number (``core.pagination.PAGE_SIZE`` companies per page).
 
     Returns:
         The grid partial.
     """
-    companies = _companies(request)
-
-    paginator = Paginator(companies, 15)
-    page_obj = paginator.get_page(page)
-
-    return render(
-        request,
-        "crm/partials/company/company_grid.html",
-        {
-            "companies": page_obj,
-            "page_obj": page_obj,
-        },
-    )
+    return _render_company_grid(request, page)
 
 
 @htmx_login_required
@@ -162,17 +167,7 @@ def create_company(request: HttpRequest) -> HttpResponse:
         if form.is_valid():
             create_company_service(form, logged_user(request))
 
-            companies = _companies(request)
-            paginator = Paginator(companies, 15)
-            page_obj = paginator.get_page(1)
-
-            return close_modal(
-                render(
-                    request,
-                    "crm/partials/company/company_grid.html",
-                    {"companies": page_obj, "page_obj": page_obj},
-                )
-            )
+            return close_modal(_render_company_grid(request))
         else:
             return render(
                 request,
@@ -464,6 +459,24 @@ def company_sirene_refresh(request: HttpRequest, pk: int) -> HttpResponse:
 # ==========================================
 
 
+def _render_contact_grid(request: HttpRequest, page: int = 1) -> HttpResponse:
+    """Render one page of the filtered contacts grid.
+
+    Args:
+        request: Current request, with the filters of the list.
+        page: Page number.
+
+    Returns:
+        The grid partial.
+    """
+    page_obj = paginate(_contacts(request), page)
+    return render(
+        request,
+        "crm/partials/contact/contact_grid.html",
+        {"contacts": page_obj, "page_obj": page_obj},
+    )
+
+
 @htmx_login_required
 @require_GET
 def contact_list(request: HttpRequest) -> HttpResponse:
@@ -478,8 +491,7 @@ def contact_list(request: HttpRequest) -> HttpResponse:
     companies = get_companies_by_name()
     contacts = _contacts(request)
 
-    paginator = Paginator(contacts, 15)
-    page_obj = paginator.get_page(1)
+    page_obj = paginate(contacts)
 
     return render(
         request,
@@ -499,24 +511,12 @@ def contact_list_paginated(request: HttpRequest, page: int = 1) -> HttpResponse:
 
     Args:
         request: Current request, with the ``q``, ``company`` and ``status`` filters.
-        page: Page number, 15 contacts per page.
+        page: Page number (``core.pagination.PAGE_SIZE`` contacts per page).
 
     Returns:
         The grid partial.
     """
-    contacts = _contacts(request)
-
-    paginator = Paginator(contacts, 15)
-    page_obj = paginator.get_page(page)
-
-    return render(
-        request,
-        "crm/partials/contact/contact_grid.html",
-        {
-            "contacts": page_obj,
-            "page_obj": page_obj,
-        },
-    )
+    return _render_contact_grid(request, page)
 
 
 @htmx_login_required
@@ -566,17 +566,7 @@ def create_contact(request: HttpRequest) -> HttpResponse:
             if company_id:
                 return htmx_refresh(status=204)
             # Default behavior for global contact list view
-            contacts = _contacts(request)
-            paginator = Paginator(contacts, 15)
-            page_obj = paginator.get_page(1)
-
-            return close_modal(
-                render(
-                    request,
-                    "crm/partials/contact/contact_grid.html",
-                    {"contacts": page_obj, "page_obj": page_obj},
-                )
-            )
+            return close_modal(_render_contact_grid(request))
         else:
             return render(
                 request,

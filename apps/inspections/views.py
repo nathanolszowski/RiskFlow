@@ -6,6 +6,7 @@ from core.decorators import htmx_login_required, logged_user
 from core.htmx import close_modal, htmx_redirect, htmx_refresh, retarget_modal
 from core.http import filter_params
 from core.modals import confirm_modal, delete_confirm_modal
+from core.pagination import paginate
 from core.services import delete_archived_instance, update_tracked_form
 from core.services.directory import (
     get_companies_with_folders,
@@ -14,7 +15,6 @@ from core.services.directory import (
 )
 from core.text import agree, plural
 from django.core.exceptions import ValidationError
-from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -77,6 +77,24 @@ def _folders(request: HttpRequest) -> Any:
     )
 
 
+def _render_folder_grid(request: HttpRequest, page: int = 1) -> HttpResponse:
+    """Render one page of the filtered folders grid.
+
+    Args:
+        request: Current request, with the filters of the list.
+        page: Page number.
+
+    Returns:
+        The grid partial.
+    """
+    page_obj = paginate(_folders(request), page)
+    return render(
+        request,
+        "inspections/partials/folder/folder_grid.html",
+        {"folders": page_obj, "page_obj": page_obj},
+    )
+
+
 @htmx_login_required
 @require_GET
 def folder_list(request: HttpRequest) -> HttpResponse:
@@ -92,8 +110,7 @@ def folder_list(request: HttpRequest) -> HttpResponse:
     companies = get_companies_with_folders(logged_user(request))
     folders = _folders(request)
 
-    paginator = Paginator(folders, 15)
-    page_obj = paginator.get_page(1)
+    page_obj = paginate(folders)
 
     return render(
         request,
@@ -165,24 +182,12 @@ def folder_list_paginated(request: HttpRequest, page: int = 1) -> HttpResponse:
 
     Args:
         request: Current request, with the same filters as ``folder_list``.
-        page: Page number, 15 folders per page.
+        page: Page number (``core.pagination.PAGE_SIZE`` folders per page).
 
     Returns:
         The grid partial.
     """
-    folders = _folders(request)
-
-    paginator = Paginator(folders, 15)
-    page_obj = paginator.get_page(page)
-
-    return render(
-        request,
-        "inspections/partials/folder/folder_grid.html",
-        {
-            "folders": page_obj,
-            "page_obj": page_obj,
-        },
-    )
+    return _render_folder_grid(request, page)
 
 
 @htmx_login_required
@@ -244,17 +249,7 @@ def create_folder(request: HttpRequest) -> HttpResponse:
                 return htmx_refresh(status=204)
 
             # From folders list
-            folders = _folders(request)
-            paginator = Paginator(folders, 15)
-            page_obj = paginator.get_page(1)
-
-            return close_modal(
-                render(
-                    request,
-                    "inspections/partials/folder/folder_grid.html",
-                    {"folders": page_obj, "page_obj": page_obj},
-                )
-            )
+            return close_modal(_render_folder_grid(request))
 
         else:
             return render(
