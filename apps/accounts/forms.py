@@ -1,6 +1,6 @@
 """Forms of the profile page."""
 
-from core.forms import enable_address_autocomplete
+from core.forms import StyledFormMixin, enable_address_autocomplete
 from django import forms
 from django.contrib.auth.forms import PasswordChangeForm
 
@@ -13,20 +13,13 @@ INPUT_CLASS = (
 )
 
 
-class StyledFormMixin:
-    """Give every widget of the form the shared input classes."""
+class ProfileFormMixin(StyledFormMixin):
+    """Style of the profile inputs, more compact than the ``form-input`` of the app."""
 
-    # Type-only: provided by the form class this mixin is combined with.
-    fields: dict[str, forms.Field]
-
-    def __init__(self, *args, **kwargs):
-        """Apply the input classes once the fields exist."""
-        super().__init__(*args, **kwargs)
-        for field in self.fields.values():
-            field.widget.attrs["class"] = INPUT_CLASS
+    input_class = INPUT_CLASS
 
 
-class EmailForm(StyledFormMixin, forms.ModelForm):
+class EmailForm(ProfileFormMixin, forms.ModelForm):
     """Edit the e-mail address (required here, optional on the model)."""
 
     email = forms.EmailField(label="Nouvelle adresse e-mail")
@@ -38,7 +31,7 @@ class EmailForm(StyledFormMixin, forms.ModelForm):
         fields = ["email"]
 
 
-class AddressForm(StyledFormMixin, forms.ModelForm):
+class AddressForm(ProfileFormMixin, forms.ModelForm):
     """Edit the home address."""
 
     class Meta:
@@ -68,7 +61,7 @@ class AddressForm(StyledFormMixin, forms.ModelForm):
         enable_address_autocomplete(self)
 
 
-class ProfilePasswordForm(StyledFormMixin, PasswordChangeForm):
+class ProfilePasswordForm(ProfileFormMixin, PasswordChangeForm):
     """Password change form with French labels and the shared input classes."""
 
     def __init__(self, *args, **kwargs):

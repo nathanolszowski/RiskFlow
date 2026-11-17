@@ -2,7 +2,7 @@
 
 from typing import TYPE_CHECKING, Any, cast
 
-from core.forms import enable_address_autocomplete
+from core.forms import StyledFormMixin, enable_address_autocomplete
 from django import forms
 from django.db.models import Q
 from django.urls import reverse
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from django.db.models import Model
 
 
-class InspectionFolderForm(forms.ModelForm):
+class InspectionFolderForm(StyledFormMixin, forms.ModelForm):
     """Create a folder: company, referent contact, site address and notes.
 
     A new folder skips the ``CREATION`` phase and starts at ``PREPARATION``.
@@ -40,7 +40,7 @@ class InspectionFolderForm(forms.ModelForm):
         company: "Model | None" = None,
         **kwargs: Any,
     ) -> None:
-        """Set the initial phase of a new folder and style the widgets.
+        """Set the initial phase of a new folder and limit the contacts to the company.
 
         Args:
             *args: Positional arguments passed to ``ModelForm``.
@@ -69,8 +69,6 @@ class InspectionFolderForm(forms.ModelForm):
         if not self.instance.pk:
             self.instance.current_phase = InspectionFolder.Phase.PREPARATION
 
-        for name, field in self.fields.items():
-            field.widget.attrs.update({"class": "form-input"})
         enable_address_autocomplete(self)
 
         company_field = self.fields.get("company")
@@ -139,7 +137,7 @@ class InspectionFolderUpdateForm(InspectionFolderForm):
             contact_field.empty_label = "Aucun contact référent"
 
 
-class VisitInstanceUpdateForm(forms.ModelForm):
+class VisitInstanceUpdateForm(StyledFormMixin, forms.ModelForm):
     """Edit form for the planning data of a visit: date, appointment time and notes.
 
     The status is not edited here: see ``set_visit_done``.
@@ -158,20 +156,8 @@ class VisitInstanceUpdateForm(forms.ModelForm):
             "notes": forms.Textarea(attrs={"rows": 3}),
         }
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        """Style the widgets.
 
-        Args:
-            *args: Positional arguments passed to ``ModelForm``.
-            **kwargs: Keyword arguments passed to ``ModelForm``.
-        """
-        super().__init__(*args, **kwargs)
-
-        for name, field in self.fields.items():
-            field.widget.attrs.update({"class": "form-input"})
-
-
-class VisitCreateForm(forms.Form):
+class VisitCreateForm(StyledFormMixin, forms.Form):
     """Preparation of a visit: a usable template (own or shared) and a date.
 
     Attributes:
@@ -191,17 +177,13 @@ class VisitCreateForm(forms.Form):
     )
     due_date = forms.DateField(
         label="Date de la visite",
-        widget=forms.DateInput(
-            attrs={"type": "date", "class": "form-input"}, format="%Y-%m-%d"
-        ),
+        widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
         error_messages={"required": "Indiquez la date de la visite."},
     )
     due_time = forms.TimeField(
         label="Heure de rendez-vous",
         required=False,
-        widget=forms.TimeInput(
-            attrs={"type": "time", "class": "form-input"}, format="%H:%M"
-        ),
+        widget=forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
     )
 
     def __init__(self, *args: Any, user: "CustomUser", **kwargs: Any) -> None:
@@ -217,7 +199,7 @@ class VisitCreateForm(forms.Form):
         template_field.queryset = get_usable_templates(user)
 
 
-class RecommandationUpdateForm(forms.ModelForm):
+class RecommandationUpdateForm(StyledFormMixin, forms.ModelForm):
     """Create or edit a recommendation: topic, description, priority, status, date and notes."""
 
     class Meta:
@@ -235,15 +217,3 @@ class RecommandationUpdateForm(forms.ModelForm):
             "description": forms.Textarea(attrs={"rows": 3}),
             "notes": forms.Textarea(attrs={"rows": 3}),
         }
-
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        """Style the widgets.
-
-        Args:
-            *args: Positional arguments passed to ``ModelForm``.
-            **kwargs: Keyword arguments passed to ``ModelForm``.
-        """
-        super().__init__(*args, **kwargs)
-
-        for name, field in self.fields.items():
-            field.widget.attrs.update({"class": "form-input"})

@@ -3,6 +3,7 @@
 from functools import cached_property
 from typing import TYPE_CHECKING, Any, Optional, cast
 
+from core.forms import StyledFormMixin
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import Q
@@ -137,7 +138,7 @@ def split_target(
     return None, None
 
 
-class _TargetForm(forms.Form):
+class _TargetForm(StyledFormMixin, forms.Form):
     """Common part: choice of the target of the media.
 
     Attributes:
@@ -167,11 +168,6 @@ class _TargetForm(forms.Form):
         self.folder = folder
         target_field = cast("forms.ChoiceField", self.fields["target"])
         target_field.choices = target_choices(folder, current_target)
-        for field in self.fields.values():
-            if not isinstance(
-                field.widget, (forms.FileInput, forms.CheckboxSelectMultiple)
-            ):
-                field.widget.attrs.setdefault("class", "form-input")
 
     @cached_property
     def _resolved_target(

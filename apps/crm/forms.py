@@ -2,14 +2,14 @@
 
 from typing import Any
 
-from core.forms import enable_address_autocomplete
+from core.forms import StyledFormMixin, enable_address_autocomplete
 from django import forms
 from django.db.models import Q
 
 from .models import Company, Contact
 
 
-class CompanyForm(forms.ModelForm):
+class CompanyForm(StyledFormMixin, forms.ModelForm):
     """Create or edit a company.
 
     Optional fields are declared as not required, and every widget gets the
@@ -27,6 +27,24 @@ class CompanyForm(forms.ModelForm):
         widget=forms.Textarea(attrs={"rows": 2}), required=False
     )
     website = forms.URLField(required=False)
+
+    placeholders = {
+        "name": "ex: ACME Industries",
+        "siren": "ex: 775652126",
+        "siret": "ex: 77565212602114",
+        "vat_number": "ex: FR12775652126",
+        "legal_structure": "ex: SAS, SARL...",
+        "business_line": "ex: Industrie métallurgique",
+        "company_size_category": "ex: PME / ETI / GE",
+        "nb_employees": "ex: 50",
+        "creation_date": "ex: 2015-06-12",
+        "website": "ex: https://www.exemple.fr",
+        "address_line": "ex: 12 Rue de la Paix",
+        "postal_code": "ex: 75002",
+        "city": "ex: Paris",
+        "labels": "ex: ISO 9001, ISO 27001",
+        "executive_board": "ex: Jean Dupont (PDG)",
+    }
 
     class Meta:
         model = Company
@@ -55,16 +73,13 @@ class CompanyForm(forms.ModelForm):
         }
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        """Style the widgets, make the reference read-only and set the placeholders.
+        """Require the address, enable its autocomplete and make the reference read-only.
 
         Args:
             *args: Positional arguments passed to ``ModelForm``.
             **kwargs: Keyword arguments passed to ``ModelForm``.
         """
         super().__init__(*args, **kwargs)
-
-        for field in self.fields.values():
-            field.widget.attrs["class"] = "form-input"
 
         # The address was mandatory when it was a single text field
         for name in ("address_line", "postal_code", "city"):
@@ -77,30 +92,8 @@ class CompanyForm(forms.ModelForm):
         reference_field.disabled = True
         reference_field.widget.attrs["class"] = "form-input-readonly"
 
-        placeholders = {
-            "name": "ex: ACME Industries",
-            "siren": "ex: 775652126",
-            "siret": "ex: 77565212602114",
-            "vat_number": "ex: FR12775652126",
-            "legal_structure": "ex: SAS, SARL...",
-            "business_line": "ex: Industrie métallurgique",
-            "company_size_category": "ex: PME / ETI / GE",
-            "nb_employees": "ex: 50",
-            "creation_date": "ex: 2015-06-12",
-            "website": "ex: https://www.exemple.fr",
-            "address_line": "ex: 12 Rue de la Paix",
-            "postal_code": "ex: 75002",
-            "city": "ex: Paris",
-            "labels": "ex: ISO 9001, ISO 27001",
-            "executive_board": "ex: Jean Dupont (PDG)",
-        }
-        for field_name, placeholder_text in placeholders.items():
-            field = self.fields.get(field_name)
-            if field:
-                field.widget.attrs["placeholder"] = placeholder_text
 
-
-class ContactForm(forms.ModelForm):
+class ContactForm(StyledFormMixin, forms.ModelForm):
     """Create or edit a contact.
 
     Optional fields are declared as not required, and every widget gets the
@@ -110,6 +103,15 @@ class ContactForm(forms.ModelForm):
     email = forms.EmailField(required=False)
     phone_number_fix = forms.CharField(required=False)
     phone_number_mobile = forms.CharField(required=False)
+
+    placeholders = {
+        "first_name": "ex: Jean",
+        "last_name": "ex: Dupont",
+        "email": "jean.dupont@exemple.fr",
+        "phone_number_fix": "ex: 01 23 45 67 89",
+        "phone_number_mobile": "ex: 06 12 34 56 78",
+        "position": "ex: Responsable Achat",
+    }
 
     class Meta:
         model = Contact
@@ -124,7 +126,7 @@ class ContactForm(forms.ModelForm):
         ]
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        """Style the widgets, set the company empty label and the placeholders.
+        """Offer the active companies only and set the company empty label.
 
         Every active company can be chosen (companies are shared between users), plus
         the current company of an edited contact even if it is archived.
@@ -135,9 +137,6 @@ class ContactForm(forms.ModelForm):
         """
         super().__init__(*args, **kwargs)
 
-        for name, field in self.fields.items():
-            field.widget.attrs.update({"class": "form-input"})
-
         company_field = self.fields.get("company")
         if isinstance(company_field, forms.ModelChoiceField):
             company_field.empty_label = "Sélectionnez un client"
@@ -146,15 +145,3 @@ class ContactForm(forms.ModelForm):
                 Q(is_active=True) | Q(pk=self.instance.company_id)
             ).order_by("name")
         # Placeholders
-        placeholders = {
-            "first_name": "ex: Jean",
-            "last_name": "ex: Dupont",
-            "email": "jean.dupont@exemple.fr",
-            "phone_number_fix": "ex: 01 23 45 67 89",
-            "phone_number_mobile": "ex: 06 12 34 56 78",
-            "position": "ex: Responsable Achat",
-        }
-        for field_name, placeholder_text in placeholders.items():
-            field = self.fields.get(field_name)
-            if field:
-                field.widget.attrs["placeholder"] = placeholder_text
