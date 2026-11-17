@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 from core.forms import enable_address_autocomplete
 from django import forms
+from django.db.models import Q
 from django.urls import reverse
 
 from .models import InspectionFolder, Recommandation, VisitInstance, VisitTemplate
@@ -44,7 +45,7 @@ class InspectionFolderForm(forms.ModelForm):
         Args:
             *args: Positional arguments passed to ``ModelForm``.
             company: Company the folder is created for, if known: the contacts are then
-                limited to its own. Without it, a new folder offers no contact until a
+                limited to its own active ones. Archived companies are never offered. Without it, a new folder offers no contact until a
                 company is chosen (the company field reloads the contact field).
             **kwargs: Keyword arguments passed to ``ModelForm``.
         """
@@ -56,7 +57,9 @@ class InspectionFolderForm(forms.ModelForm):
             and contact_field.queryset is not None
         ):
             if company:
-                contact_field.queryset = contact_field.queryset.filter(company=company)
+                contact_field.queryset = contact_field.queryset.filter(
+                    company=company, is_active=True
+                )
                 contact_field.empty_label = "Aucun contact référent"
             elif not self.instance.pk:
                 contact_field.queryset = contact_field.queryset.none()
@@ -71,8 +74,13 @@ class InspectionFolderForm(forms.ModelForm):
         enable_address_autocomplete(self)
 
         company_field = self.fields.get("company")
-        if isinstance(company_field, forms.ModelChoiceField):
+        if (
+            isinstance(company_field, forms.ModelChoiceField)
+            and company_field.queryset is not None
+        ):
             company_field.empty_label = "Sélectionnez un client"
+            # A folder is never created for an archived company
+            company_field.queryset = company_field.queryset.filter(is_active=True)
             # Choosing a company reloads the contact field with the contacts of that company
             company_field.widget.attrs.update(
                 {
@@ -87,7 +95,8 @@ class InspectionFolderForm(forms.ModelForm):
 class InspectionFolderUpdateForm(InspectionFolderForm):
     """Edit form for an existing folder.
 
-    The company is fixed and the contact is limited to the contacts of the company.
+    The company is fixed and the contact is limited to the active contacts of the
+    company, plus the current one.
     The transient ``CREATION`` phase is not selectable.
     """
 
@@ -121,9 +130,10 @@ class InspectionFolderUpdateForm(InspectionFolderForm):
 
         contact_field = self.fields.get("contact")
         if self.instance.pk and isinstance(contact_field, forms.ModelChoiceField):
-            contact_field.queryset = self.instance.company.contacts.order_by(
-                "last_name", "first_name"
-            )
+            # Archived contacts are not offered, except the current one of the folder
+            contact_field.queryset = self.instance.company.contacts.filter(
+                Q(is_active=True) | Q(pk=self.instance.contact_id)
+            ).order_by("last_name", "first_name")
             contact_field.empty_label = "Aucun contact référent"
 
 

@@ -122,6 +122,32 @@ class CreateFolderTests(FolderViewTestCase):
                 self.assertIn("contact", response.context["form"].errors)
         self.assertEqual(InspectionFolder.objects.count(), 0)
 
+    def test_archived_client_is_refused(self):
+        """A folder cannot be created for an archived client, nor from its page."""
+        self.company.archive(self.owner)
+        response = self.htmx_post(self.url, {"company": self.company.pk})
+        self.assertEqual(response.status_code, 422)
+        self.assertIn("company", response.context["form"].errors)
+        self.assertEqual(InspectionFolder.objects.count(), 0)
+        panel = self.htmx_get(
+            reverse("inspections:company_folders_panel", args=[self.company.pk])
+        )
+        self.assertNotContains(panel, self.url)
+
+    def test_archived_contact_is_refused(self):
+        """An archived contact of the client is neither offered nor accepted."""
+        self.other_contact.archive(self.owner)
+        field = reverse("inspections:folder_contact_field")
+        response = self.htmx_get(field, {"company": self.company.pk})
+        self.assertEqual(
+            set(response.context["form"].fields["contact"].queryset), {self.contact}
+        )
+        response = self.htmx_post(
+            self.url, {"company": self.company.pk, "contact": self.other_contact.pk}
+        )
+        self.assertEqual(response.status_code, 422)
+        self.assertIn("contact", response.context["form"].errors)
+
     def test_phase_cannot_be_posted_at_creation(self):
         """A posted phase is ignored: the folder starts in PREPARATION."""
         self.htmx_post(
@@ -193,6 +219,13 @@ class FolderInlineEditTests(FolderViewTestCase):
         response = self.htmx_get(self.url)
         queryset = response.context["form"].fields["contact"].queryset
         self.assertEqual(set(queryset), {self.contact, self.other_contact})
+
+    def test_archived_contacts_are_offered_only_when_current(self):
+        """An archived contact is not offered, except the current contact of the folder."""
+        self.contact.archive(self.owner)
+        self.other_contact.archive(self.owner)
+        queryset = self.htmx_get(self.url).context["form"].fields["contact"].queryset
+        self.assertEqual(set(queryset), {self.contact})
 
     def test_valid_post_returns_the_read_fragment(self):
         """A valid POST saves the folder, records the user and returns the read view."""
