@@ -16,6 +16,9 @@ INPUT_CLASS = (
 class StyledFormMixin:
     """Give every widget of the form the shared input classes."""
 
+    # Type-only: provided by the form class this mixin is combined with.
+    fields: dict[str, forms.Field]
+
     def __init__(self, *args, **kwargs):
         """Apply the input classes once the fields exist."""
         super().__init__(*args, **kwargs)

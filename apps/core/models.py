@@ -191,6 +191,12 @@ class TrackingModel(models.Model):
         null=True,
     )
 
+    # Type-only declarations: Django adds the ``<fk>_id`` attributes at runtime, but
+    # static checkers (Pylance) cannot see them. No value, so no field or migration.
+    created_by_id: int
+    updated_by_id: int | None
+    archived_by_id: int | None
+
     class Meta:
         abstract = True  # <--- Django will not create a database table for this model, but other models can inherit from it to get these fields.
 
