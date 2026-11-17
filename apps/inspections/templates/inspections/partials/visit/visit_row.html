@@ -47,11 +47,13 @@
       <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10h14V9M10 13h4"/></svg>
     </button>
     {% else %}
+    {% if folder.is_active %}
     <button type="button" hx-post="{% url 'inspections:visit_unarchive' visit.pk %}" hx-target="#tab-content" hx-swap="innerHTML"
       hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' hx-confirm="Voulez-vous vraiment désarchiver cette visite ?"
       class="cursor-pointer rounded-lg border border-border-default bg-surface-secondary px-3 py-2 text-xs font-semibold text-text-main transition-colors hover:bg-surface-tertiary">
       Désarchiver
     </button>
+    {% endif %}
     <button type="button" hx-get="{% url 'inspections:visit_delete' visit.pk %}" hx-target="#modal-container" hx-swap="innerHTML"
       aria-label="Supprimer définitivement" title="Supprimer définitivement"
       class="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-status-danger-border text-status-danger transition-colors hover:bg-status-danger-bg">

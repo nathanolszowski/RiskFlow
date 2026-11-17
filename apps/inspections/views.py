@@ -648,19 +648,22 @@ def visit_archive(request: HttpRequest, pk: int) -> HttpResponse:
 @htmx_login_required
 @require_POST
 def visit_unarchive(request: HttpRequest, pk: int) -> HttpResponse:
-    """Unarchive a visit.
+    """Unarchive a visit, unless its folder is archived.
 
     Args:
         request: Current request.
         pk: Primary key of the visit.
 
     Returns:
-        The current tab for an HTMX request, otherwise a redirect to the folder.
+        A 409 if the folder is archived (unarchive the folder instead). Otherwise
+        the current tab for an HTMX request, or a redirect to the folder.
 
     Raises:
         Http404: If the visit does not exist or belongs to another user.
     """
     visit = get_visit_by_id(pk, logged_user(request))
+    if not visit.folder.is_active:
+        return HttpResponse("Le dossier est archivé.", status=409)
     visit.unarchive(user=logged_user(request))
 
     if request.headers.get("HX-Request"):
@@ -820,20 +823,23 @@ def recommandation_archive(request: HttpRequest, pk: int) -> HttpResponse:
 @htmx_login_required
 @require_POST
 def recommandation_unarchive(request: HttpRequest, pk: int) -> HttpResponse:
-    """Unarchive a recommendation.
+    """Unarchive a recommendation, unless its folder is archived.
 
     Args:
         request: Current request.
         pk: Primary key of the recommendation.
 
     Returns:
-        The current tab for an HTMX request, otherwise a redirect to the folder.
+        A 409 if the folder is archived (unarchive the folder instead). Otherwise
+        the current tab for an HTMX request, or a redirect to the folder.
 
     Raises:
         Http404: If the recommendation does not exist or its folder belongs to
             another user.
     """
     rec = get_recommandation_by_id(pk, logged_user(request))
+    if not rec.folder.is_active:
+        return HttpResponse("Le dossier est archivé.", status=409)
     rec.unarchive(user=logged_user(request))
 
     if request.headers.get("HX-Request"):

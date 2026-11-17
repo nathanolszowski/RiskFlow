@@ -361,6 +361,20 @@ class VisitArchiveDeleteTests(ModalAssertionsMixin, HtmxClientMixin, TestCase):
         self.visit.refresh_from_db()
         self.assertTrue(self.visit.is_active)
 
+    def test_unarchive_in_an_archived_folder_is_409(self):
+        """A visit archived with its folder stays archived: unarchiving it alone is a 409."""
+        self.folder.archive(self.owner)
+        response = self.htmx_post(self.url("visit_unarchive"))
+        self.assertEqual(response.status_code, 409)
+        self.visit.refresh_from_db()
+        self.assertFalse(self.visit.is_active)
+        tab = self.htmx_get(
+            reverse("inspections:folder_tab_visit", args=[self.folder.pk]),
+            {"status": "archived"},
+        )
+        self.assertContains(tab, self.visit.display_template_name)
+        self.assertNotContains(tab, self.url("visit_unarchive"))
+
     def test_archive_without_htmx_redirects_to_the_folder(self):
         """A classic POST redirects to the folder."""
         response = self.client.post(self.url("visit_archive"))
@@ -433,6 +447,19 @@ class RecommandationArchiveDeleteTests(ModalAssertionsMixin, HtmxClientMixin, Te
         self.assertTemplateUsed(response, REC_TAB)
         self.rec.refresh_from_db()
         self.assertTrue(self.rec.is_active)
+
+    def test_unarchive_in_an_archived_folder_is_409(self):
+        """A recommendation archived with its folder cannot be unarchived alone."""
+        self.folder.archive(self.owner)
+        response = self.htmx_post(self.url("recommandation_unarchive"))
+        self.assertEqual(response.status_code, 409)
+        self.rec.refresh_from_db()
+        self.assertFalse(self.rec.is_active)
+        tab = self.htmx_get(
+            reverse("inspections:folder_tab_recommandations", args=[self.folder.pk])
+        )
+        self.assertContains(tab, f"rec-{self.rec.pk}")
+        self.assertNotContains(tab, self.url("recommandation_unarchive"))
 
     def test_delete_rules(self):
         """Active: blocked (modal and 409). Archived: confirmation, then the tab."""
