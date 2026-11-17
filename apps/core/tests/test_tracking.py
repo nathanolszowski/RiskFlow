@@ -20,6 +20,7 @@ from core.services import (
     delete_archived_instance,
     hard_delete_instance,
     unarchive_tracked_instance,
+    update_tracked_form,
     update_tracked_instance,
 )
 
@@ -127,6 +128,24 @@ class TrackedInstanceHelpersTests(TestCase):
         contact.refresh_from_db()
         self.assertEqual(contact.created_by, self.user)
         self.assertEqual(contact.updated_by, self.user)
+
+    def test_update_tracked_form_records_the_editor(self):
+        """A valid edit form saves the record with the user as ``updated_by``."""
+        form = ContactForm(
+            {
+                "company": self.company.pk,
+                "first_name": "Grace",
+                "last_name": "Hopper",
+                "position": "Amirale",
+            },
+            instance=self.contact,
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        update_tracked_form(form, self.user)
+        self.contact.refresh_from_db()
+        self.assertEqual(
+            (self.contact.first_name, self.contact.updated_by), ("Grace", self.user)
+        )
 
     def test_update_tracked_instance_writes_only_the_given_fields(self):
         """Only the given fields and the tracking ones are written."""

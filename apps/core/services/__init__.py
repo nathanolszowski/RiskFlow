@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 T = TypeVar("T", bound=TrackingModel)
 
 
-def create_tracked_instance(form: ModelForm, user: "CustomUser") -> TrackingModel:
+def create_tracked_instance(form: ModelForm, user: "CustomUser") -> Any:
     """Create an instance of a tracked model from a valid form.
 
     Args:
@@ -23,12 +23,30 @@ def create_tracked_instance(form: ModelForm, user: "CustomUser") -> TrackingMode
             ``updated_by``.
 
     Returns:
-        The saved instance.
+        The saved instance, many-to-many data included.
     """
     instance = form.save(commit=False)
     instance.created_by = user
     instance.updated_by = user
     instance.save()
+    form.save_m2m()
+    return instance
+
+
+def update_tracked_form(form: ModelForm, user: "CustomUser") -> Any:
+    """Save a valid edit form of a tracked instance, recording who changed it.
+
+    Args:
+        form: Valid model form bound to an existing ``TrackingModel`` instance.
+        user: User performing the update, recorded as ``updated_by``.
+
+    Returns:
+        The saved instance, many-to-many data included.
+    """
+    instance = form.save(commit=False)
+    instance.updated_by = user
+    instance.save()
+    form.save_m2m()
     return instance
 
 
