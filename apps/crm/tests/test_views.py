@@ -386,6 +386,23 @@ class CompanyInlineTests(CrmViewTestCase):
         self.company.refresh_from_db()
         self.assertNotEqual(self.company.name, "")
 
+    def test_archived_client_cannot_be_edited(self):
+        """An archived client answers 409 to the form and to the POST, and keeps its data."""
+        self.company.archive(self.owner)
+        self.assertEqual(self.htmx_get(self.url).status_code, 409)
+        data = company_post(siret=self.company.siret, name="Nouveau nom")
+        self.assertEqual(self.htmx_post(self.url, data).status_code, 409)
+        self.company.refresh_from_db()
+        self.assertNotEqual(self.company.name, "Nouveau nom")
+
+    def test_archived_client_page_hides_the_edit_button(self):
+        """The page of an archived client offers no edit button."""
+        self.company.archive(self.owner)
+        response = self.client.get(
+            reverse("crm:company_detail", args=[self.company.pk])
+        )
+        self.assertNotContains(response, self.url)
+
 
 class CreateContactTests(CrmViewTestCase):
     """``create_contact`` modal and ``contact_inline_update``."""
@@ -470,6 +487,19 @@ class CreateContactTests(CrmViewTestCase):
         self.assertIn("first_name", response.context["form"].errors)
         response = self.htmx_get(reverse("crm:contact_inline_read", args=[contact.pk]))
         self.assertContains(response, "Directrice")
+
+    def test_archived_contact_cannot_be_edited(self):
+        """An archived contact answers 409 to the form and to the POST, and keeps its data."""
+        contact = ContactFactory(company=self.company, archived=True)
+        url = reverse("crm:contact_inline_update", args=[contact.pk])
+        self.assertEqual(self.htmx_get(url).status_code, 409)
+        self.assertEqual(
+            self.htmx_post(url, self.data(first_name="Grace")).status_code, 409
+        )
+        contact.refresh_from_db()
+        self.assertNotEqual(contact.first_name, "Grace")
+        page = self.client.get(reverse("crm:contact_detail", args=[contact.pk]))
+        self.assertNotContains(page, url)
 
 
 class CompanyListTests(CrmViewTestCase):

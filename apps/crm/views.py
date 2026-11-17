@@ -178,14 +178,17 @@ def company_inline_update(request: HttpRequest, pk: int) -> HttpResponse:
         pk: Primary key of the company.
 
     Returns:
-        On GET, the pre-filled form (``company_update.html``). On a valid POST,
-        the read fragment (``company_read.html``). On an invalid POST, the form
-        with its errors (``company_update.html``).
+        A 409 if the company is archived. On GET, the pre-filled form
+        (``company_update.html``). On a valid POST, the read fragment
+        (``company_read.html``). On an invalid POST, the form with its errors
+        (``company_update.html``).
 
     Raises:
         Http404: If the company does not exist.
     """
     company = get_company_by_id(pk)
+    if not company.is_active:
+        return HttpResponse("Ce client est archivé.", status=409)
 
     if request.method == "POST":
         form = CompanyForm(request.POST, instance=company)
@@ -584,14 +587,17 @@ def contact_inline_update(request: HttpRequest, pk: int) -> HttpResponse:
         pk: Primary key of the contact.
 
     Returns:
-        On GET, the pre-filled form (``contact_update.html``). On a valid POST,
-        the read fragment (``contact_read.html``). On an invalid POST, the form
-        with its errors (``contact_update.html``).
+        A 409 if the contact is archived. On GET, the pre-filled form
+        (``contact_update.html``). On a valid POST, the read fragment
+        (``contact_read.html``). On an invalid POST, the form with its errors
+        (``contact_update.html``).
 
     Raises:
         Http404: If the contact does not exist.
     """
     contact = get_contact_by_id(pk)
+    if not contact.is_active:
+        return HttpResponse("Ce contact est archivé.", status=409)
 
     if request.method == "POST":
         form = ContactForm(request.POST, instance=contact)
