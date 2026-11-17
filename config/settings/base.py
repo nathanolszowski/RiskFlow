@@ -159,7 +159,7 @@ MEDIA_MAX_SIZE_BY_TYPE = {
     "video": _env_int("MEDIA_MAX_VIDEO_MB", 100),
 }
 # Approximate storage quota per inspection folder, in MB
-MEDIA_FOLDER_QUOTA_MB = _env_int("MEDIA_FOLDER_QUOTA_MB", 500)
+MEDIA_FOLDER_QUOTA_MB = _env_int("MEDIA_FOLDER_QUOTA_MB", 1024)
 # Image compression: longest side in pixels, JPEG quality, thumbnail longest side
 # Images above this definition are refused before being decoded (memory protection)
 MEDIA_IMAGE_MAX_PIXELS = 50_000_000
