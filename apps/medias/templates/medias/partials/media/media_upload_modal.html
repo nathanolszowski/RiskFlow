@@ -3,7 +3,7 @@
 <div id="media-upload-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
 
   <!-- Backdrop -->
-  <div class="fixed inset-0 bg-black/70 backdrop-blur-xs transition-opacity"
+  <div class="fixed inset-0 bg-overlay/70 backdrop-blur-xs transition-opacity"
     onclick="document.getElementById('media-upload-modal').remove()"></div>
 
   <div class="relative flex max-h-[90vh] w-full max-w-xl flex-col rounded-xl border border-border-default bg-surface-primary shadow-2xl">
@@ -71,7 +71,7 @@
   <!-- Pop-up shown when files are refused (format, size, quota) -->
   <div id="media-upload-alert" class="fixed inset-0 z-[60] hidden items-center justify-center p-4" role="alertdialog"
     aria-modal="true" aria-labelledby="media-upload-alert-title">
-    <div class="fixed inset-0 bg-black/70"></div>
+    <div class="fixed inset-0 bg-overlay/70"></div>
     <div class="relative w-full max-w-md rounded-xl border border-status-danger-border bg-surface-primary p-6 shadow-2xl">
       <div class="flex items-start gap-3">
         <svg class="mt-0.5 h-6 w-6 shrink-0 text-status-danger" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>

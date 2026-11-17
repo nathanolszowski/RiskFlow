@@ -16,7 +16,7 @@
     {% csrf_token %}
 
     {% if form.non_field_errors %}
-    <div class="p-2.5 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs rounded-lg">
+    <div class="p-2.5 bg-status-danger-bg border border-status-danger-border text-status-danger text-xs rounded-lg">
       {{ form.non_field_errors }}
     </div>
     {% endif %}
@@ -25,14 +25,14 @@
     <div>
       <label class="block text-xs font-medium text-text-subtle mb-1">Sujet</label>
       {{ form.topic }}
-      {% if form.topic.errors %}<p class="text-xs text-rose-400 mt-1">{{ form.topic.errors.0 }}</p>{% endif %}
+      {% if form.topic.errors %}<p class="text-xs text-status-danger mt-1">{{ form.topic.errors.0 }}</p>{% endif %}
     </div>
 
     <!-- Description -->
     <div>
       <label class="block text-xs font-medium text-text-subtle mb-1">Description *</label>
       {{ form.description }}
-      {% if form.description.errors %}<p class="text-xs text-rose-400 mt-1">{{ form.description.errors.0 }}</p>{% endif %}
+      {% if form.description.errors %}<p class="text-xs text-status-danger mt-1">{{ form.description.errors.0 }}</p>{% endif %}
     </div>
 
     <!-- Priority, Status & Due date -->
@@ -40,17 +40,17 @@
       <div>
         <label class="block text-xs font-medium text-text-subtle mb-1">Priorité *</label>
         {{ form.priority }}
-        {% if form.priority.errors %}<p class="text-xs text-rose-400 mt-1">{{ form.priority.errors.0 }}</p>{% endif %}
+        {% if form.priority.errors %}<p class="text-xs text-status-danger mt-1">{{ form.priority.errors.0 }}</p>{% endif %}
       </div>
       <div>
         <label class="block text-xs font-medium text-text-subtle mb-1">Statut *</label>
         {{ form.current_status }}
-        {% if form.current_status.errors %}<p class="text-xs text-rose-400 mt-1">{{ form.current_status.errors.0 }}</p>{% endif %}
+        {% if form.current_status.errors %}<p class="text-xs text-status-danger mt-1">{{ form.current_status.errors.0 }}</p>{% endif %}
       </div>
       <div>
         <label class="block text-xs font-medium text-text-subtle mb-1">Date limite d'exécution</label>
         {{ form.due_date }}
-        {% if form.due_date.errors %}<p class="text-xs text-rose-400 mt-1">{{ form.due_date.errors.0 }}</p>{% endif %}
+        {% if form.due_date.errors %}<p class="text-xs text-status-danger mt-1">{{ form.due_date.errors.0 }}</p>{% endif %}
       </div>
     </div>
 
@@ -58,7 +58,7 @@
     <div>
       <label class="block text-xs font-medium text-text-subtle mb-1">Notes</label>
       {{ form.notes }}
-      {% if form.notes.errors %}<p class="text-xs text-rose-400 mt-1">{{ form.notes.errors.0 }}</p>{% endif %}
+      {% if form.notes.errors %}<p class="text-xs text-status-danger mt-1">{{ form.notes.errors.0 }}</p>{% endif %}
     </div>
 
     <!-- Actions -->

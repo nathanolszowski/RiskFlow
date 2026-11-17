@@ -1,7 +1,7 @@
 <!-- Update of a company from the Sirene API: the user ticks the fields to take -->
 <div id="sirene-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
 
-  <div class="fixed inset-0 bg-black/70 backdrop-blur-xs transition-opacity"
+  <div class="fixed inset-0 bg-overlay/70 backdrop-blur-xs transition-opacity"
     onclick="document.getElementById('sirene-modal').remove()"></div>
 
   <div class="relative flex max-h-[90vh] w-full max-w-2xl flex-col rounded-xl border border-border-default bg-surface-primary shadow-2xl">
@@ -39,7 +39,7 @@
           <li class="rounded-lg border border-border-default bg-surface-secondary p-4">
             <label class="flex cursor-pointer items-start gap-3">
               <input type="checkbox" name="fields" value="{{ change.field }}" checked
-                class="mt-1 h-4 w-4 shrink-0 cursor-pointer accent-[var(--color-primary)]">
+                class="mt-1 h-4 w-4 shrink-0 cursor-pointer accent-brand-primary">
               <span class="min-w-0 flex-1 space-y-1">
                 <span class="block text-xs font-semibold uppercase tracking-wide text-text-subtle">{{ change.label }}</span>
                 <span class="block break-words text-xs text-text-muted line-through">{{ change.current|default:"(vide)" }}</span>

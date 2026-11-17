@@ -1,4 +1,4 @@
-<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-overlay/60 backdrop-blur-xs p-4">
     <div class="w-full max-w-xl rounded-xl border border-border-default bg-surface-primary p-6 shadow-xl">
 
         <!-- Header -->
@@ -23,11 +23,11 @@
             <!-- Company -->
             <div>
                 <label class="block text-xs font-medium text-text-subtle mb-1">
-                    {{ form.company.label }} <span class="text-rose-500">*</span>
+                    {{ form.company.label }} <span class="text-status-danger">*</span>
                 </label>
                 {{ form.company }}
                 {% if form.company.errors %}
-                <p class="mt-1 text-xs text-rose-400">{{ form.company.errors.0 }}</p>
+                <p class="mt-1 text-xs text-status-danger">{{ form.company.errors.0 }}</p>
                 {% endif %}
             </div>
 
@@ -35,21 +35,21 @@
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                     <label class="block text-xs font-medium text-text-subtle mb-1">
-                        {{ form.first_name.label }} <span class="text-rose-500">*</span>
+                        {{ form.first_name.label }} <span class="text-status-danger">*</span>
                     </label>
                     {{ form.first_name }}
                     {% if form.first_name.errors %}
-                    <p class="mt-1 text-xs text-rose-400">{{ form.first_name.errors.0 }}</p>
+                    <p class="mt-1 text-xs text-status-danger">{{ form.first_name.errors.0 }}</p>
                     {% endif %}
                 </div>
 
                 <div>
                     <label class="block text-xs font-medium text-text-subtle mb-1">
-                        {{ form.last_name.label }} <span class="text-rose-500">*</span>
+                        {{ form.last_name.label }} <span class="text-status-danger">*</span>
                     </label>
                     {{ form.last_name }}
                     {% if form.last_name.errors %}
-                    <p class="mt-1 text-xs text-rose-400">{{ form.last_name.errors.0 }}</p>
+                    <p class="mt-1 text-xs text-status-danger">{{ form.last_name.errors.0 }}</p>
                     {% endif %}
                 </div>
             </div>
@@ -61,17 +61,17 @@
                     </label>
                     {{ form.email }}
                     {% if form.email.errors %}
-                    <p class="mt-1 text-xs text-rose-400">{{ form.email.errors.0 }}</p>
+                    <p class="mt-1 text-xs text-status-danger">{{ form.email.errors.0 }}</p>
                     {% endif %}
                 </div>
 
                 <div>
                     <label class="block text-xs font-medium text-text-subtle mb-1">
-                        {{ form.position.label }} <span class="text-rose-500">*</span>
+                        {{ form.position.label }} <span class="text-status-danger">*</span>
                     </label>
                     {{ form.position }}
                     {% if form.position.errors %}
-                    <p class="mt-1 text-xs text-rose-400">{{ form.position.errors.0 }}</p>
+                    <p class="mt-1 text-xs text-status-danger">{{ form.position.errors.0 }}</p>
                     {% endif %}
                 </div>
             </div>
@@ -84,7 +84,7 @@
                     </label>
                     {{ form.phone_number_fix }}
                     {% if form.phone_number_fix.errors %}
-                    <p class="mt-1 text-xs text-rose-400">{{ form.phone_number_fix.errors.0 }}</p>
+                    <p class="mt-1 text-xs text-status-danger">{{ form.phone_number_fix.errors.0 }}</p>
                     {% endif %}
                 </div>
 
@@ -94,7 +94,7 @@
                     </label>
                     {{ form.phone_number_mobile }}
                     {% if form.phone_number_mobile.errors %}
-                    <p class="mt-1 text-xs text-rose-400">{{ form.phone_number_mobile.errors.0 }}</p>
+                    <p class="mt-1 text-xs text-status-danger">{{ form.phone_number_mobile.errors.0 }}</p>
                     {% endif %}
                 </div>
             </div>

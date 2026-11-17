@@ -1,6 +1,6 @@
 {% if found %}
 <!-- Visual confirmation -->
-<div class="rounded-lg border border-emerald-500/30 bg-emerald-950/20 p-3 text-xs text-emerald-400">
+<div class="rounded-lg border border-status-success-border bg-status-success-bg p-3 text-xs text-status-success">
        ✓ Données de <strong>{{ name }}</strong> récupérées et injectées dans le formulaire !
        {% if legal_structure_label and legal_structure_label != legal_structure %}<br>Forme juridique ({{ legal_structure }}) : {{ legal_structure_label }}{% endif %}
 </div>
@@ -55,7 +55,7 @@
        class="form-input">
 
 {% elif query %}
-<div class="rounded-lg border border-amber-500/30 bg-amber-950/20 p-2.5 text-xs text-amber-400">
+<div class="rounded-lg border border-status-warning-border bg-status-warning-bg p-2.5 text-xs text-status-warning">
        Aucun établissement trouvé pour le SIRET "{{ query }}".
 </div>
 {% endif %}

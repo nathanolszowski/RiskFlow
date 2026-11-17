@@ -16,7 +16,7 @@
     {% csrf_token %}
 
     {% if form.non_field_errors %}
-    <div class="p-2.5 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs rounded-lg">
+    <div class="p-2.5 bg-status-danger-bg border border-status-danger-border text-status-danger text-xs rounded-lg">
       {{ form.non_field_errors }}
     </div>
     {% endif %}
@@ -25,7 +25,7 @@
     <div>
       <label class="block text-xs font-medium text-text-subtle mb-1">Client *</label>
       {{ form.company }}
-      {% if form.company.errors %}<p class="text-xs text-rose-400 mt-1">{{ form.company.errors.0 }}</p>{% endif %}
+      {% if form.company.errors %}<p class="text-xs text-status-danger mt-1">{{ form.company.errors.0 }}</p>{% endif %}
     </div>
 
     <!-- Names -->
@@ -33,12 +33,12 @@
       <div>
         <label class="block text-xs font-medium text-text-subtle mb-1">Prénom *</label>
         {{ form.first_name }}
-        {% if form.first_name.errors %}<p class="text-xs text-rose-400 mt-1">{{ form.first_name.errors.0 }}</p>{% endif %}
+        {% if form.first_name.errors %}<p class="text-xs text-status-danger mt-1">{{ form.first_name.errors.0 }}</p>{% endif %}
       </div>
       <div>
         <label class="block text-xs font-medium text-text-subtle mb-1">Nom *</label>
         {{ form.last_name }}
-        {% if form.last_name.errors %}<p class="text-xs text-rose-400 mt-1">{{ form.last_name.errors.0 }}</p>{% endif %}
+        {% if form.last_name.errors %}<p class="text-xs text-status-danger mt-1">{{ form.last_name.errors.0 }}</p>{% endif %}
       </div>
     </div>
 
@@ -46,14 +46,14 @@
     <div>
       <label class="block text-xs font-medium text-text-subtle mb-1">Poste / Fonction *</label>
       {{ form.position }}
-      {% if form.position.errors %}<p class="text-xs text-rose-400 mt-1">{{ form.position.errors.0 }}</p>{% endif %}
+      {% if form.position.errors %}<p class="text-xs text-status-danger mt-1">{{ form.position.errors.0 }}</p>{% endif %}
     </div>
 
     <!-- Email -->
     <div>
       <label class="block text-xs font-medium text-text-subtle mb-1">Email</label>
       {{ form.email }}
-      {% if form.email.errors %}<p class="text-xs text-rose-400 mt-1">{{ form.email.errors.0 }}</p>{% endif %}
+      {% if form.email.errors %}<p class="text-xs text-status-danger mt-1">{{ form.email.errors.0 }}</p>{% endif %}
     </div>
 
     <!-- Phones -->
@@ -61,12 +61,12 @@
       <div>
         <label class="block text-xs font-medium text-text-subtle mb-1">Téléphone fixe</label>
         {{ form.phone_number_fix }}
-        {% if form.phone_number_fix.errors %}<p class="text-xs text-rose-400 mt-1">{{ form.phone_number_fix.errors.0 }}</p>{% endif %}
+        {% if form.phone_number_fix.errors %}<p class="text-xs text-status-danger mt-1">{{ form.phone_number_fix.errors.0 }}</p>{% endif %}
       </div>
       <div>
         <label class="block text-xs font-medium text-text-subtle mb-1">Téléphone mobile</label>
         {{ form.phone_number_mobile }}
-        {% if form.phone_number_mobile.errors %}<p class="text-xs text-rose-400 mt-1">{{ form.phone_number_mobile.errors.0 }}</p>{% endif %}
+        {% if form.phone_number_mobile.errors %}<p class="text-xs text-status-danger mt-1">{{ form.phone_number_mobile.errors.0 }}</p>{% endif %}
       </div>
     </div>
 

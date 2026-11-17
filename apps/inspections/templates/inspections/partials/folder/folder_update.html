@@ -16,7 +16,7 @@
     {% csrf_token %}
 
     {% if form.non_field_errors %}
-    <div class="p-2.5 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs rounded-lg">
+    <div class="p-2.5 bg-status-danger-bg border border-status-danger-border text-status-danger text-xs rounded-lg">
       {{ form.non_field_errors }}
     </div>
     {% endif %}
@@ -32,12 +32,12 @@
       <div>
         <label class="block text-xs font-medium text-text-subtle mb-1">Contact référent</label>
         {{ form.contact }}
-        {% if form.contact.errors %}<p class="text-xs text-rose-400 mt-1">{{ form.contact.errors.0 }}</p>{% endif %}
+        {% if form.contact.errors %}<p class="text-xs text-status-danger mt-1">{{ form.contact.errors.0 }}</p>{% endif %}
       </div>
       <div>
         <label class="block text-xs font-medium text-text-subtle mb-1">Phase actuelle *</label>
         {{ form.current_phase }}
-        {% if form.current_phase.errors %}<p class="text-xs text-rose-400 mt-1">{{ form.current_phase.errors.0 }}</p>{% endif %}
+        {% if form.current_phase.errors %}<p class="text-xs text-status-danger mt-1">{{ form.current_phase.errors.0 }}</p>{% endif %}
       </div>
     </div>
 
@@ -51,7 +51,7 @@
     <div>
       <label class="block text-xs font-medium text-text-subtle mb-1">Notes internes</label>
       {{ form.notes }}
-      {% if form.notes.errors %}<p class="text-xs text-rose-400 mt-1">{{ form.notes.errors.0 }}</p>{% endif %}
+      {% if form.notes.errors %}<p class="text-xs text-status-danger mt-1">{{ form.notes.errors.0 }}</p>{% endif %}
     </div>
 
     <!-- Actions -->

@@ -16,7 +16,7 @@
     {% csrf_token %}
 
     {% if form.non_field_errors %}
-    <div class="p-2.5 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs rounded-lg">
+    <div class="p-2.5 bg-status-danger-bg border border-status-danger-border text-status-danger text-xs rounded-lg">
       {{ form.non_field_errors }}
     </div>
     {% endif %}
@@ -30,7 +30,7 @@
       <div class="col-span-2">
         <label class="block text-xs font-medium text-text-subtle mb-1">Raison sociale *</label>
         {{ form.name }}
-        {% if form.name.errors %}<p class="text-xs text-rose-400 mt-1">{{ form.name.errors.0 }}</p>{% endif %}
+        {% if form.name.errors %}<p class="text-xs text-status-danger mt-1">{{ form.name.errors.0 }}</p>{% endif %}
       </div>
     </div>
 
@@ -52,12 +52,12 @@
       <div>
         <label class="block text-xs font-medium text-text-subtle mb-1">SIREN *</label>
         {{ form.siren }}
-        {% if form.siren.errors %}<p class="text-xs text-rose-400 mt-1">{{ form.siren.errors.0 }}</p>{% endif %}
+        {% if form.siren.errors %}<p class="text-xs text-status-danger mt-1">{{ form.siren.errors.0 }}</p>{% endif %}
       </div>
       <div>
         <label class="block text-xs font-medium text-text-subtle mb-1">SIRET *</label>
         {{ form.siret }}
-        {% if form.siret.errors %}<p class="text-xs text-rose-400 mt-1">{{ form.siret.errors.0 }}</p>{% endif %}
+        {% if form.siret.errors %}<p class="text-xs text-status-danger mt-1">{{ form.siret.errors.0 }}</p>{% endif %}
       </div>
     </div>
 
@@ -82,7 +82,7 @@
       <div>
         <label class="block text-xs font-medium text-text-subtle mb-1">Nombre d'employés</label>
         {{ form.nb_employees }}
-        {% if form.nb_employees.errors %}<p class="text-xs text-rose-400 mt-1">{{ form.nb_employees.errors.0 }}</p>{%endif %}
+        {% if form.nb_employees.errors %}<p class="text-xs text-status-danger mt-1">{{ form.nb_employees.errors.0 }}</p>{%endif %}
       </div>
     </div>
 
@@ -90,7 +90,7 @@
     <div>
       <label class="block text-xs font-medium text-text-subtle mb-1">Site Web</label>
       {{ form.website }}
-      {% if form.website.errors %}<p class="text-xs text-rose-400 mt-1">{{ form.website.errors.0 }}</p>{% endif %}
+      {% if form.website.errors %}<p class="text-xs text-status-danger mt-1">{{ form.website.errors.0 }}</p>{% endif %}
     </div>
 
     <!-- Address -->

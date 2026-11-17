@@ -2,7 +2,7 @@
      class="fixed inset-0 z-50 flex items-center justify-center p-4">
 
     <!-- Backdrop -->
-    <div class="fixed inset-0 bg-black/70 backdrop-blur-xs transition-opacity"
+    <div class="fixed inset-0 bg-overlay/70 backdrop-blur-xs transition-opacity"
          onclick="document.getElementById('archive-confirm-modal').remove()"></div>
 
     <!-- Modal Content -->
@@ -25,8 +25,8 @@
             <p>Vous allez {{ action_verb|default:'archiver' }} <span class="font-semibold text-text-main">{{ object_label }}</span>.</p>
 
             {% if blocking %}
-            <div class="rounded-lg border border-red-500/30 bg-red-500/10 p-4 space-y-2">
-                <p class="font-medium text-red-400">⛔ {{ blocking.title }}</p>
+            <div class="rounded-lg border border-status-danger-border bg-status-danger-bg p-4 space-y-2">
+                <p class="font-medium text-status-danger">⛔ {{ blocking.title }}</p>
                 <ul class="list-disc pl-5 text-xs text-text-body space-y-0.5">
                     {% for item in blocking.entries %}
                     <li>{{ item }}</li>
@@ -68,7 +68,7 @@
                     hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
                     {% if post_target %}hx-target="{{ post_target }}" hx-swap="innerHTML"{% endif %}
                     hx-on::after-request="document.getElementById('archive-confirm-modal')?.remove()"
-                    class="rounded-lg px-4 py-2 text-xs font-semibold transition-colors cursor-pointer shadow-xs {% if danger %}text-white bg-red-600 hover:bg-red-500{% else %}text-brand-on bg-brand-primary hover:bg-brand-hover{% endif %}">
+                    class="rounded-lg px-4 py-2 text-xs font-semibold transition-colors cursor-pointer shadow-xs {% if danger %}text-app-bg bg-status-danger hover:bg-status-danger-hover{% else %}text-brand-on bg-brand-primary hover:bg-brand-hover{% endif %}">
                 {{ confirm_label|default:"Confirmer l'archivage" }}
             </button>
             {% endif %}

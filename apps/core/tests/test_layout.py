@@ -1,6 +1,10 @@
-"""Tests for the shared layout (``core/base.html``): modal closing."""
+"""Tests for the shared layout (``core/base.html``): modal closing and theme tokens."""
+
+import re
+from pathlib import Path
 
 from crm.tests.factories import CompanyFactory
+from django.conf import settings
 from django.test import TestCase
 from django.urls import reverse
 from inspections.tests.factories import InspectionFolderFactory, VisitInstanceFactory
@@ -42,3 +46,25 @@ class CloseModalTests(TempMediaRootMixin, HtmxClientMixin, TestCase):
                 self.assertNotContains(response, "closeModal")
         page = self.client.get(reverse("crm:company_detail", args=[company.pk]))
         self.assertEqual(page.content.decode().count(LISTENER), 1)
+
+
+class ThemeTokensTests(TestCase):
+    """Templates use the theme tokens of ``styles.css``, not raw Tailwind colors."""
+
+    def test_templates_use_no_raw_palette_color(self):
+        """No template uses a raw Tailwind palette color (red-500, amber-400, black/70...)."""
+        palette = (
+            "red|rose|pink|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue"
+            "|indigo|violet|purple|fuchsia|slate|gray|zinc|neutral|stone"
+        )
+        pattern = re.compile(
+            rf"(?<![\w-])(?:bg|text|border|ring|accent|fill|stroke|from|to|via)-"
+            rf"(?:(?:{palette})-\d{{2,3}}|black)(?:/\d+)?(?![\w-])"
+        )
+        apps = Path(settings.BASE_DIR) / "apps"
+        offenders = [
+            f"{path.relative_to(apps)}: {match.group()}"
+            for path in apps.glob("*/templates/**/*.html")
+            for match in pattern.finditer(path.read_text(encoding="utf-8"))
+        ]
+        self.assertEqual(offenders, [])

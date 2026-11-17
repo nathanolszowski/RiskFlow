@@ -218,6 +218,9 @@
   --color-status-danger-hover: var(--color-danger-hover);
   --color-status-danger-bg: var(--color-danger-bg);
   --color-status-danger-border: var(--color-danger-border);
+
+  /* Backdrop of the modals and drawers, dimmed with an opacity (bg-overlay/70) */
+  --color-overlay: #000;
 }
 
 /* ------------------------------------------------------------------------------
