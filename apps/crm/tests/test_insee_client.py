@@ -222,10 +222,11 @@ class HeadersTests(SimpleTestCase):
     """``get_headers`` and the request made."""
 
     def test_headers_carry_the_api_key(self):
-        """The key comes from the settings and the API is asked for JSON."""
+        """The key comes from the settings, the API is asked for JSON and the app is named."""
         headers = INSEEApiClient.get_headers()
         self.assertEqual(headers["X-INSEE-Api-Key-Integration"], "test")
         self.assertEqual(headers["Accept"], "application/json")
+        self.assertEqual(headers["User-Agent"], "RiskFlow/1.0")
 
     def test_request_uses_headers_and_timeout(self):
         """``requests.get`` receives the headers and a timeout."""

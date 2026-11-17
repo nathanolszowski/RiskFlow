@@ -88,7 +88,7 @@ class INSEEApiClient:
         return {
             "X-INSEE-Api-Key-Integration": api_key,
             "Accept": "application/json",
-            "User-Agent": "DjangoCRM/1.0",
+            "User-Agent": "RiskFlow/1.0",
         }
 
     @classmethod
