@@ -153,8 +153,4 @@
     var serverErrors = JSON.parse(document.getElementById("media-upload-server-errors").textContent);
     if (serverErrors.length) showAlert(serverErrors);
   })();
-
-  document.body.addEventListener("closeModal", function () {
-    document.getElementById("media-upload-modal")?.remove();
-  }, { once: true });
 </script>

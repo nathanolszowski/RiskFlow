@@ -23,6 +23,11 @@
 
     <script>
         // Forms re-rendered by the server with validation errors answer 422: HTMX must swap them like a success
+        // A valid modal form answers ``HX-Trigger: closeModal``: every modal lives in #modal-container
+        document.body.addEventListener("closeModal", function () {
+            const container = document.getElementById("modal-container");
+            if (container) container.innerHTML = "";
+        });
         document.body.addEventListener("htmx:beforeSwap", function (event) {
             if (event.detail.xhr.status === 422) {
                 event.detail.shouldSwap = true;
