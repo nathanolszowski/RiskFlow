@@ -45,6 +45,19 @@ def get_company_folders(company: "Model", user: "CustomUser") -> QuerySet:
     ).order_by("-created_at")
 
 
+def _filter_param(request: HttpRequest, name: str) -> str:
+    """Return a filter of the folders list, read from GET then POST, without spaces.
+
+    Args:
+        request: Current request.
+        name: Name of the parameter.
+
+    Returns:
+        The stripped value, empty when the parameter is missing.
+    """
+    return (request.GET.get(name) or request.POST.get(name) or "").strip()
+
+
 def get_filtered_folders(request: HttpRequest) -> QuerySet:
     """Return the folders of the logged-in user, filtered and sorted by the request.
 
@@ -58,35 +71,29 @@ def get_filtered_folders(request: HttpRequest) -> QuerySet:
     Returns:
         The filtered and sorted folders.
     """
-    # 1. Base Queryset : created_by authorization
     folders = InspectionFolder.objects.filter(created_by=request.user)
 
-    # Global search
-    query = request.GET.get("q") or request.POST.get("q", "").strip()
+    query = _filter_param(request, "q")
     if query:
         folders = folders.filter(
             Q(reference__icontains=query) | Q(company__name__icontains=query)
         )
 
-    # Filter by phase
-    phase = request.GET.get("phase") or request.POST.get("phase", "").strip()
+    phase = _filter_param(request, "phase")
     if phase:
         folders = folders.filter(current_phase=phase)
 
-    # Filter by status
-    status = request.GET.get("status") or request.POST.get("status", "").strip()
+    status = _filter_param(request, "status")
     if status == "active":
         folders = folders.filter(is_active=True)
     elif status == "archived":
         folders = folders.filter(is_active=False)
 
-    # Filtre par client
-    company_id = request.GET.get("company") or request.POST.get("company", "").strip()
-    if company_id and company_id.isdigit():
+    company_id = _filter_param(request, "company")
+    if company_id.isdigit():
         folders = folders.filter(company_id=company_id)
 
-    # Sort results
-    sort_by = request.GET.get("sort") or request.POST.get("sort", "-updated_at")
+    sort_by = _filter_param(request, "sort")
     allowed_sorts = ["-updated_at", "-created_at", "reference", "company__name"]
     if sort_by not in allowed_sorts:
         sort_by = "-updated_at"

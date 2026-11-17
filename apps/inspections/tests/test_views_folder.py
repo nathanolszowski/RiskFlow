@@ -412,3 +412,9 @@ class FolderListTests(FolderViewTestCase):
         response = self.client.get(self.list_url, {"company": "abc"})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["page_obj"].paginator.count, 16)
+
+    def test_filters_are_stripped(self):
+        """Spaces around a GET filter value are ignored, as in the other lists."""
+        reference = self.folders[2].reference
+        response = self.client.get(self.list_url, {"q": f"  {reference} "})
+        self.assertEqual(list(response.context["folders"]), [self.folders[2]])
