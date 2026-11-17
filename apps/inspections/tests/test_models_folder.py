@@ -323,14 +323,18 @@ class FolderServicesTests(TestCase):
         cls.theirs = InspectionFolderFactory(created_by=cls.other)
 
     def test_filtered_folders_only_returns_the_user_folders(self):
-        """The folders of other users never appear."""
-        folders = set(get_filtered_folders(self.me))
+        """The folders of other users never appear, whatever the status."""
+        folders = set(get_filtered_folders(self.me, status=""))
         self.assertEqual(folders, {self.mine, self.mine_archived})
+
+    def test_filtered_folders_default_to_the_active_ones(self):
+        """Without status, only the active folders are listed, like the other lists."""
+        self.assertEqual(list(get_filtered_folders(self.me)), [self.mine])
 
     def test_filtered_folders_by_query(self):
         """The search matches the reference and the company name."""
         self.assertEqual(
-            set(get_filtered_folders(self.me, q="acme")),
+            set(get_filtered_folders(self.me, q="acme", status="")),
             {self.mine, self.mine_archived},
         )
         self.assertEqual(
@@ -351,21 +355,28 @@ class FolderServicesTests(TestCase):
     def test_filtered_folders_by_phase_and_company(self):
         """The phase and the company filters apply."""
         self.assertEqual(
-            list(get_filtered_folders(self.me, phase="REPORT")),
+            list(get_filtered_folders(self.me, phase="REPORT", status="")),
             [self.mine_archived],
         )
         other_company = CompanyFactory(created_by=self.me)
         self.assertFalse(
             get_filtered_folders(self.me, company=other_company.pk).exists()
         )
-        self.assertEqual(len(get_filtered_folders(self.me, company=self.company.pk)), 2)
+        self.assertEqual(
+            len(get_filtered_folders(self.me, company=self.company.pk, status="")), 2
+        )
 
     def test_filtered_folders_sort_whitelist(self):
         """An allowed sort is applied, any other value falls back to ``-updated_at``."""
-        by_reference = get_filtered_folders(self.me, sort="reference")
+        by_reference = get_filtered_folders(self.me, status="", sort="reference")
+        # Compare with the database order, not Python's ``sorted``: collations differ
         self.assertEqual(
-            [f.reference for f in by_reference],
-            sorted([self.mine.reference, self.mine_archived.reference]),
+            list(by_reference),
+            list(
+                InspectionFolder.objects.filter(created_by=self.me).order_by(
+                    "reference"
+                )
+            ),
         )
         for bad in ("created_by__password", "pk; DROP TABLE", ""):
             with self.subTest(sort=bad):

@@ -64,8 +64,8 @@
         <select id="status"
           name="status"
           class="bg-surface-secondary border border-border-default text-text-main text-xs rounded-lg focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary block px-3 py-2 cursor-pointer transition-colors w-full">
-          <option value="">Tous les statuts</option>
-          <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Actif</option>
+          <option value="" {% if 'status' in request.GET and not request.GET.status %}selected{% endif %}>Tous les statuts</option>
+          <option value="active" {% if request.GET.status == 'active' or 'status' not in request.GET %}selected{% endif %}>Actif</option>
           <option value="archived" {% if request.GET.status == 'archived' %}selected{% endif %}>Archivé</option>
         </select>
       </div>

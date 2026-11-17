@@ -51,7 +51,7 @@ def get_filtered_folders(
     *,
     q: str = "",
     phase: str = "",
-    status: str = "",
+    status: str = "active",
     company: str = "",
     sort: str = "",
 ) -> QuerySet:
@@ -61,7 +61,8 @@ def get_filtered_folders(
         user: Owner of the folders: the folders of the others never appear.
         q: Search on reference and company name.
         phase: Phase of the folders (``InspectionFolder.Phase``), all if empty.
-        status: ``active`` or ``archived``, all for any other value.
+        status: ``active`` (default, like the other lists) or ``archived``, all for
+            any other value (``""`` from the "Tous les statuts" choice).
         company: Company id, ignored if not a number.
         sort: ``-updated_at`` (default), ``-created_at``, ``reference`` or
             ``company__name``; anything else falls back to ``-updated_at``.

@@ -527,3 +527,23 @@ class FolderDetailBadgesTests(TempMediaRootMixin, FolderViewTestCase):
         )
         self.assertContains(response, '<span id="visit-tab-badge">2</span>', html=True)
         self.assertContains(response, '<span id="media-tab-badge">1</span>', html=True)
+
+
+class FolderListDefaultStatusTests(FolderViewTestCase):
+    """Default status of ``folder_list``."""
+
+    def test_list_opens_on_the_active_folders(self):
+        """Without filter the list shows the active folders, ``status=`` shows them all."""
+        active = self.make_folder()
+        self.make_folder(archived=True)
+        url = reverse("inspections:folder_list")
+        response = self.client.get(url)
+        self.assertEqual(list(response.context["folders"]), [active])
+        self.assertContains(
+            response, '<option value="active" selected>Actif</option>', html=True
+        )
+        response = self.client.get(url, {"status": ""})
+        self.assertEqual(response.context["page_obj"].paginator.count, 2)
+        self.assertContains(
+            response, '<option value="" selected>Tous les statuts</option>', html=True
+        )
