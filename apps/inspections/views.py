@@ -1048,3 +1048,24 @@ def folder_tab_recommandations(request: HttpRequest, pk: int) -> HttpResponse:
     """
     folder = get_inspection_folder_by_id(pk, request.user)
     return _render_recommandations_tab(request, folder)
+
+
+@htmx_login_required
+@require_GET
+def folder_tab_reports(request: HttpRequest, pk: int) -> HttpResponse:
+    """Render the placeholder of the reports tab (not implemented yet).
+
+    Args:
+        request: Current request.
+        pk: Primary key of the folder.
+
+    Returns:
+        The "under construction" tab fragment.
+
+    Raises:
+        Http404: If the folder does not exist or belongs to another user.
+    """
+    folder = get_inspection_folder_by_id(pk, request.user)
+    return render(
+        request, "inspections/partials/tabs/tab_reports.html", {"folder": folder}
+    )

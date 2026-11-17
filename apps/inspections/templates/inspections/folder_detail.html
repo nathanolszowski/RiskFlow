@@ -30,7 +30,7 @@
       <option value="{% url 'inspections:folder_tab_visit' folder.id %}">Formulaire de visite</option>
       <option value="{% url 'inspections:folder_tab_recommandations' folder.id %}">Recommandations</option>
       <option value="{% url 'medias:folder_tab_medias' folder.id %}">Médias</option>
-      <option value="{% url 'inspections:folder_tab_overview' folder.id %}">Rapports</option>
+      <option value="{% url 'inspections:folder_tab_reports' folder.id %}">Rapports</option>
     </select>
   </div>
 
@@ -128,7 +128,7 @@
       </button>
 
       <!-- Rapports -->
-      <button hx-get="{% url 'inspections:folder_tab_overview' folder.id %}" data-fallback-overview
+      <button hx-get="{% url 'inspections:folder_tab_reports' folder.id %}" data-reports
         class="tab-btn group inline-flex items-center border-b-2 border-transparent px-1 pb-4 text-sm font-medium text-text-subtle hover:border-border-hover hover:text-text-main transition-colors cursor-pointer">
         <svg class="mr-2 h-5 w-5 text-text-faded transition-colors" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
           stroke="currentColor">

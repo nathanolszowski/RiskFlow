@@ -160,4 +160,9 @@ urlpatterns = [
         views.folder_tab_recommandations,
         name="folder_tab_recommandations",
     ),
+    path(
+        "dossier/<int:pk>/tabs/rapports/",
+        views.folder_tab_reports,
+        name="folder_tab_reports",
+    ),
 ]

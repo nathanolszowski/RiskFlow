@@ -33,6 +33,7 @@ FOLDER_ROUTES = [
     Route("inspections:folder_tab_overview", "pk", GET),
     Route("inspections:folder_tab_visit", "pk", GET),
     Route("inspections:folder_tab_recommandations", "pk", GET),
+    Route("inspections:folder_tab_reports", "pk", GET),
     Route("inspections:folder_inline_update", "pk", BOTH),
     Route("inspections:folder_inline_read", "pk", GET),
     Route("inspections:folder_archive", "folder_id", BOTH),
