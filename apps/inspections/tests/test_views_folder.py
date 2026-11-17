@@ -5,9 +5,15 @@ from crm.tests.factories import CompanyFactory, ContactFactory
 from django.test import TestCase
 from django.urls import reverse
 from django.utils.html import escape
+from medias.tests.factories import MediaFactory
+from medias.tests.helpers import TempMediaRootMixin
 
 from inspections.models import InspectionFolder, Recommandation
-from inspections.tests.factories import InspectionFolderFactory, RecommandationFactory
+from inspections.tests.factories import (
+    InspectionFolderFactory,
+    RecommandationFactory,
+    VisitInstanceFactory,
+)
 
 GRID = "inspections/partials/folder/folder_grid.html"
 MODAL = "inspections/partials/folder/folder_form_modal.html"
@@ -504,3 +510,20 @@ class FolderListTests(FolderViewTestCase):
         reference = self.folders[2].reference
         response = self.client.get(self.list_url, {"q": f"  {reference} "})
         self.assertEqual(list(response.context["folders"]), [self.folders[2]])
+
+
+class FolderDetailBadgesTests(TempMediaRootMixin, FolderViewTestCase):
+    """Tab badges of ``folder_detail``."""
+
+    def test_badges_count_active_and_archived_items(self):
+        """Each tab badge counts the visits, recommendations and medias, archived ones included."""
+        folder = self.make_folder()
+        VisitInstanceFactory(folder=folder, created_by=self.owner)
+        VisitInstanceFactory(folder=folder, created_by=self.owner, archived=True)
+        RecommandationFactory(folder=folder, created_by=self.owner)
+        MediaFactory(folder=folder, created_by=self.owner)
+        response = self.client.get(
+            reverse("inspections:folder_detail", args=[folder.pk])
+        )
+        self.assertContains(response, '<span id="visit-tab-badge">2</span>', html=True)
+        self.assertContains(response, '<span id="media-tab-badge">1</span>', html=True)
