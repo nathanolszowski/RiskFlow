@@ -271,3 +271,14 @@ class ThemeTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["HX-Refresh"], "true")
         self.assertEqual(self.client.session["theme"], "light")
+
+
+class RootRedirectTests(TestCase):
+    """The site root."""
+
+    def test_root_redirects_to_the_dashboard(self):
+        """The site root redirects to the dashboard instead of a 404."""
+        response = self.client.get("/")
+        self.assertRedirects(
+            response, reverse("core:dashboard"), fetch_redirect_response=False
+        )
