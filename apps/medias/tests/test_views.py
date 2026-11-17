@@ -592,6 +592,19 @@ class MediaArchiveDeleteTests(MediaViewTestCase):
         self.media.refresh_from_db()
         self.assertTrue(self.media.is_active)
 
+    def test_unarchive_in_an_archived_folder_is_409(self):
+        """A media archived with its folder cannot be unarchived alone, nor offered to."""
+        self.folder.archive(self.owner)
+        unarchive_url = self.url("media_unarchive", self.media.pk)
+        self.assertEqual(self.htmx_post(unarchive_url).status_code, 409)
+        self.media.refresh_from_db()
+        self.assertFalse(self.media.is_active)
+        tab = self.htmx_get(
+            self.url("folder_tab_medias", self.folder.pk), {"status": "archived"}
+        )
+        self.assertIn(self.media, tab.context["medias"])
+        self.assertNotContains(tab, unarchive_url)
+
     def test_archive_without_htmx_redirects_to_the_folder(self):
         """A classic POST redirects to the folder."""
         response = self.client.post(self.url("media_archive", self.media.pk))

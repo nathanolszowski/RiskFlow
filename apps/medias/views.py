@@ -485,19 +485,22 @@ def media_archive(request: HttpRequest, pk: int) -> HttpResponse:
 @htmx_login_required
 @require_POST
 def media_unarchive(request: HttpRequest, pk: int) -> HttpResponse:
-    """Unarchive a media.
+    """Unarchive a media, unless its folder is archived.
 
     Args:
         request: Current request.
         pk: Primary key of the media.
 
     Returns:
-        The tab for an HTMX request, otherwise a redirect to the folder.
+        A 409 if the folder is archived (unarchive the folder instead). Otherwise the
+        tab for an HTMX request, or a redirect to the folder.
 
     Raises:
         Http404: If the media does not exist or belongs to another user.
     """
     media = get_media_by_id(pk, logged_user(request))
+    if not media.folder.is_active:
+        return HttpResponse("Le dossier est archivé.", status=409)
     unarchive_media(media, logged_user(request))
     if request.headers.get("HX-Request"):
         return _render_medias_tab(request, media.folder)
