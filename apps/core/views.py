@@ -1,20 +1,16 @@
 """Core views: dashboard, session heartbeat, theme toggle and global search."""
 
-from typing import Any, cast
-
-from crm.models import Company, Contact
-from django.db.models import Q
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_GET, require_POST
 from django_htmx.middleware import HtmxDetails
-from inspections.models import InspectionFolder
 
-from core.decorators import htmx_login_required
+from core.decorators import htmx_login_required, logged_user
 from core.services.dashboard import get_dashboard_context, parse_period
 from core.services.geo import suggest
+from core.services.search import global_search as global_search_service
 
 
 class HtmxHttpRequest(HttpRequest):
@@ -39,7 +35,7 @@ def dashboard(request: HtmxHttpRequest) -> HttpResponse:
         The full page or the dashboard content partial.
     """
     month, year = parse_period(request.GET.get("month"), request.GET.get("year"))
-    context = get_dashboard_context(cast("Any", request.user), month, year)
+    context = get_dashboard_context(logged_user(request), month, year)
     context["today"] = timezone.localdate()
     template = (
         "core/partials/dashboard/dashboard_content.html"
@@ -98,9 +94,8 @@ def toggle_theme(request: HttpRequest) -> HttpResponse:
 def global_search(request: HttpRequest) -> HttpResponse:
     """Search folders, companies and contacts matching the ``q`` GET parameter.
 
-    The search starts at two characters and returns at most five results per
-    category. Folders are searched among the ones of the user; clients and contacts
-    are shared between users, so all of them are searched.
+    See ``core.services.search.global_search``: from two characters, at most five
+    results per category, folders of the user only, every client and contact.
 
     Args:
         request: Current request.
@@ -109,38 +104,12 @@ def global_search(request: HttpRequest) -> HttpResponse:
         The search results partial.
     """
     query = request.GET.get("q", "").strip()
-    folders = []
-    companies = []
-    contacts = []
-
-    if query and len(query) >= 2:
-        folders = InspectionFolder.objects.filter(
-            Q(reference__icontains=query) | Q(company__name__icontains=query),
-            created_by=request.user,
-        )[:5]
-
-        companies = Company.objects.filter(
-            Q(name__icontains=query)
-            | Q(address_line__icontains=query)
-            | Q(city__icontains=query)
-            | Q(postal_code__icontains=query)
-        )[:5]
-
-        contacts = Contact.objects.filter(
-            Q(first_name__icontains=query)
-            | Q(last_name__icontains=query)
-            | Q(email__icontains=query)
-        )[:5]
+    results = global_search_service(logged_user(request), query)
 
     return render(
         request,
         "core/partials/search/search_results.html",
-        {
-            "query": query,
-            "folders": folders,
-            "companies": companies,
-            "contacts": contacts,
-        },
+        {"query": query, **results},
     )
 
 
