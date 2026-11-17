@@ -8,9 +8,7 @@ import os
 from typing import TYPE_CHECKING, Any, Optional
 
 from core.services import (
-    archive_tracked_instance,
     delete_archived_instance,
-    unarchive_tracked_instance,
     update_tracked_instance,
 )
 from django.conf import settings
@@ -270,7 +268,8 @@ def archive_media(media: Media, user: "CustomUser") -> Media:
     Returns:
         The archived media.
     """
-    return archive_tracked_instance(media, user)
+    media.archive(user=user)
+    return media
 
 
 def unarchive_media(media: Media, user: "CustomUser") -> Media:
@@ -283,7 +282,8 @@ def unarchive_media(media: Media, user: "CustomUser") -> Media:
     Returns:
         The restored media.
     """
-    return unarchive_tracked_instance(media, user)
+    media.unarchive(user=user)
+    return media
 
 
 def delete_media(media: Media) -> None:

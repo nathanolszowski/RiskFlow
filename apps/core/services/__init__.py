@@ -1,10 +1,13 @@
-"""Generic helpers for tracked models (create, update, archive, delete) and template context."""
+"""Generic helpers for tracked models (create, update, delete) and template context.
+
+Archiving goes through ``TrackingModel.archive()`` / ``unarchive()``, which run the
+cascade of the model.
+"""
 
 from typing import TYPE_CHECKING, Any, TypeVar
 
 from django.forms import ModelForm
 from django.http import HttpRequest
-from django.utils import timezone
 
 from core.models import TrackingModel
 
@@ -74,46 +77,6 @@ def update_tracked_instance(
     # Force the update of the updated_by and updated_at fields
     update_fields = list(fields_to_update.keys()) + ["updated_by", "updated_at"]
     instance.save(update_fields=update_fields)
-    return instance
-
-
-def archive_tracked_instance(instance: T, user: "CustomUser") -> T:
-    """Archive a tracked instance, without cascading to its related records.
-
-    Sets ``is_active`` to False and records the archive date and user.
-
-    Args:
-        instance: Instance to archive.
-        user: User performing the action.
-
-    Returns:
-        The archived instance.
-    """
-    instance.is_active = False
-    instance.archived_at = timezone.now()
-    instance.archived_by = user
-    instance.updated_by = user
-    instance.save()
-    return instance
-
-
-def unarchive_tracked_instance(instance: T, user: "CustomUser") -> T:
-    """Unarchive a tracked instance, without cascading to its related records.
-
-    Restores ``is_active`` and clears the archive date and user.
-
-    Args:
-        instance: Instance to unarchive.
-        user: User performing the action.
-
-    Returns:
-        The unarchived instance.
-    """
-    instance.is_active = True
-    instance.archived_at = None
-    instance.archived_by = None
-    instance.updated_by = user
-    instance.save()
     return instance
 
 

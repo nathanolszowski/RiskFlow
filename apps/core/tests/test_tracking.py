@@ -12,14 +12,11 @@ from django import forms
 from django.test import TestCase
 from inspections.models import InspectionFolder
 from inspections.services import inspectionfolder as folder_services
-from inspections.tests.factories import InspectionFolderFactory
 
 from core.services import (
-    archive_tracked_instance,
     create_tracked_instance,
     delete_archived_instance,
     hard_delete_instance,
-    unarchive_tracked_instance,
     update_tracked_form,
     update_tracked_instance,
 )
@@ -157,26 +154,6 @@ class TrackedInstanceHelpersTests(TestCase):
         self.assertEqual(self.contact.first_name, "Nouveau")
         self.assertEqual(self.contact.last_name, original_last_name)
         self.assertEqual(self.contact.updated_by, self.user)
-
-    def test_archive_and_unarchive_tracked_instance(self):
-        """The helpers archive and restore a record without calling the cascade."""
-        archive_tracked_instance(self.contact, self.user)
-        self.contact.refresh_from_db()
-        self.assertFalse(self.contact.is_active)
-        self.assertEqual(self.contact.archived_by, self.user)
-        self.assertIsNotNone(self.contact.archived_at)
-        unarchive_tracked_instance(self.contact, self.user)
-        self.contact.refresh_from_db()
-        self.assertTrue(self.contact.is_active)
-        self.assertIsNone(self.contact.archived_at)
-        self.assertIsNone(self.contact.archived_by)
-
-    def test_archive_tracked_instance_does_not_cascade(self):
-        """Unlike ``archive()``, the helper leaves the children untouched."""
-        folder = InspectionFolderFactory()
-        archive_tracked_instance(folder.company, folder.created_by)
-        folder.contact.refresh_from_db()
-        self.assertTrue(folder.contact.is_active)
 
     def test_hard_delete_instance_deletes_an_active_record(self):
         """The hard delete does not check the state of the record."""
