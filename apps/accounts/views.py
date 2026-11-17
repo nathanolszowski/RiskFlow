@@ -1,8 +1,7 @@
 """Views of the profile page. Every section is an HTMX fragment swapped in place."""
 
-from typing import Any, cast
-
-from core.decorators import htmx_login_required
+from core.decorators import htmx_login_required, logged_user
+from django.contrib.auth import update_session_auth_hash
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_GET, require_http_methods
@@ -21,9 +20,7 @@ def profile(request: HttpRequest) -> HttpResponse:
         request,
         "accounts/profile.html",
         {
-            "inspector": profile_service.get_inspector_profile(
-                cast("Any", request.user)
-            ),
+            "inspector": profile_service.get_inspector_profile(logged_user(request)),
             "password_form": ProfilePasswordForm(request.user),
         },
     )
@@ -47,9 +44,7 @@ def profile_email(request: HttpRequest) -> HttpResponse:
         form = EmailForm(request.POST, instance=request.user)
         if not form.is_valid():
             return _section(request, "email", form, True, status=422)
-        profile_service.update_email(
-            cast("Any", request.user), form.cleaned_data["email"]
-        )
+        profile_service.update_email(logged_user(request), form.cleaned_data["email"])
         return _section(request, "email", EmailForm(instance=request.user), False)
     return _section(
         request,
@@ -67,7 +62,7 @@ def profile_address(request: HttpRequest) -> HttpResponse:
         form = AddressForm(request.POST, instance=request.user)
         if not form.is_valid():
             return _section(request, "address", form, True, status=422)
-        profile_service.update_address(cast("Any", request.user), form.cleaned_data)
+        profile_service.update_address(logged_user(request), form.cleaned_data)
         return _section(request, "address", AddressForm(instance=request.user), False)
     return _section(
         request,
@@ -84,7 +79,9 @@ def profile_password(request: HttpRequest) -> HttpResponse:
     form = ProfilePasswordForm(request.user, request.POST)
     if not form.is_valid():
         return _section(request, "password", form, True, status=422)
-    profile_service.change_password(request, form)
+    user = profile_service.change_password(logged_user(request), form)
+    # The password is part of the session hash: keep the user logged in
+    update_session_auth_hash(request, user)
     return _section(
         request, "password", ProfilePasswordForm(request.user), False, saved=True
     )
