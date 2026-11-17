@@ -5,7 +5,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 
-class CustomUser(AbstractUser, AddressMixin):
+class CustomUser(AbstractUser, AddressMixin):  # pyright: ignore[reportIncompatibleVariableOverride]
     """User of the application, set as ``AUTH_USER_MODEL``.
 
     Extends Django's ``AbstractUser`` with fields common to all users. The home

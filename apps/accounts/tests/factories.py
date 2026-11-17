@@ -1,6 +1,11 @@
 """Factories of the accounts app (accounts/models.py)."""
 
 import factory
+from factory.declarations import (
+    LazyAttribute,
+    PostGenerationMethodCall,
+    Sequence,
+)
 
 from accounts.models import CustomUser
 
@@ -15,12 +20,12 @@ class UserFactory(factory.django.DjangoModelFactory):
             ``client.login`` and ``client.force_login`` both work.
     """
 
-    class Meta:
+    class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]
         """Bind the factory to the user model."""
 
         model = CustomUser
         skip_postgeneration_save = False
 
-    username = factory.Sequence(lambda n: f"user{n}")
-    email = factory.LazyAttribute(lambda o: f"{o.username}@example.com")
-    password = factory.PostGenerationMethodCall("set_password", "password")
+    username = Sequence(lambda n: f"user{n}")
+    email = LazyAttribute(lambda o: f"{o.username}@example.com")
+    password = PostGenerationMethodCall("set_password", "password")

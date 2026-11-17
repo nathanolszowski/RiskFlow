@@ -1,5 +1,7 @@
 """Views of the profile page. Every section is an HTMX fragment swapped in place."""
 
+from typing import Any, cast
+
 from core.decorators import htmx_login_required
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
@@ -19,7 +21,9 @@ def profile(request: HttpRequest) -> HttpResponse:
         request,
         "accounts/profile.html",
         {
-            "inspector": profile_service.get_inspector_profile(request.user),
+            "inspector": profile_service.get_inspector_profile(
+                cast("Any", request.user)
+            ),
             "password_form": ProfilePasswordForm(request.user),
         },
     )
@@ -43,7 +47,9 @@ def profile_email(request: HttpRequest) -> HttpResponse:
         form = EmailForm(request.POST, instance=request.user)
         if not form.is_valid():
             return _section(request, "email", form, True, status=422)
-        profile_service.update_email(request.user, form.cleaned_data["email"])
+        profile_service.update_email(
+            cast("Any", request.user), form.cleaned_data["email"]
+        )
         return _section(request, "email", EmailForm(instance=request.user), False)
     return _section(
         request,
@@ -61,7 +67,7 @@ def profile_address(request: HttpRequest) -> HttpResponse:
         form = AddressForm(request.POST, instance=request.user)
         if not form.is_valid():
             return _section(request, "address", form, True, status=422)
-        profile_service.update_address(request.user, form.cleaned_data)
+        profile_service.update_address(cast("Any", request.user), form.cleaned_data)
         return _section(request, "address", AddressForm(instance=request.user), False)
     return _section(
         request,
