@@ -123,6 +123,15 @@ class CreateCompanyTests(CrmViewTestCase):
         )
         self.assertEqual(company.creation_date, date(2010, 1, 1))
 
+    def test_creation_records_the_user_as_creator_and_last_editor(self):
+        """A new client has the user as ``created_by`` and ``updated_by``, even without Sirene."""
+        self.network()
+        self.htmx_post(self.url, company_post())
+        company = Company.objects.get()
+        self.assertEqual(
+            (company.created_by, company.updated_by), (self.owner, self.owner)
+        )
+
     def test_reference_is_generated_and_cannot_be_posted(self):
         """A reference posted by the form is ignored, the generated one is stored."""
         self.network(**{SIRET_SIEGE: "etab_siege_actif.json"})
@@ -486,7 +495,8 @@ class CreateContactTests(CrmViewTestCase):
         self.assertEqual(response["HX-Refresh"], "true")
         contact = Contact.objects.get()
         self.assertEqual(
-            (contact.created_by, contact.company), (self.owner, self.company)
+            (contact.created_by, contact.updated_by, contact.company),
+            (self.owner, self.owner, self.company),
         )
 
     def test_inline_update(self):

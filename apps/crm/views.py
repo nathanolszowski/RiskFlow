@@ -138,6 +138,7 @@ def create_company(request: HttpRequest) -> HttpResponse:
         if form.is_valid():
             company = form.save(commit=False)
             company.created_by = request.user
+            company.updated_by = request.user
             company.save()
             certify_address(company)
             # Store the Sirene state (closed?) and the head office of the client, shown on its page
@@ -540,6 +541,7 @@ def create_contact(request: HttpRequest) -> HttpResponse:
         if form.is_valid():
             contact = form.save(commit=False)
             contact.created_by = request.user
+            contact.updated_by = request.user
             contact.save()
 
             # If created from a company detail page, refresh the page to show the new contact
