@@ -111,7 +111,7 @@ class AnonymousAccessTests(TestCase):
 
     def test_public_routes_stay_reachable(self):
         """The theme toggle works without login (it only writes to the session)."""
-        response = self.client.get(reverse("core:toggle_theme"))
+        response = self.client.post(reverse("core:toggle_theme"))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(self.client.session["theme"], "light")
 
@@ -222,32 +222,52 @@ class ThemeTests(TestCase):
 
     def test_toggle_switches_between_dark_and_light(self):
         """Each toggle flips the theme stored in the session."""
-        self.client.get(reverse("core:toggle_theme"))
+        self.client.post(reverse("core:toggle_theme"))
         self.assertEqual(self.client.session["theme"], "light")
-        self.client.get(reverse("core:toggle_theme"))
+        self.client.post(reverse("core:toggle_theme"))
         self.assertEqual(self.client.session["theme"], "dark")
 
     def test_context_follows_the_session(self):
         """After a toggle the templates receive the new theme."""
-        self.client.get(reverse("core:toggle_theme"))
+        self.client.post(reverse("core:toggle_theme"))
         response = self.client.get(reverse("core:dashboard"))
         self.assertEqual(response.context["current_theme"], "light")
 
     def test_toggle_redirects_to_the_referer(self):
         """A classic request goes back to the page it came from."""
-        response = self.client.get(
+        response = self.client.post(
             reverse("core:toggle_theme"), HTTP_REFERER="/dossiers/"
         )
         self.assertRedirects(response, "/dossiers/", fetch_redirect_response=False)
 
+    def test_toggle_ignores_an_external_referer(self):
+        """A referer on another host is not followed (no open redirect)."""
+        response = self.client.post(
+            reverse("core:toggle_theme"), HTTP_REFERER="https://evil.example/x"
+        )
+        self.assertEqual(response["Location"], "/")
+
+    def test_toggle_refuses_get(self):
+        """A GET answers 405 and leaves the theme untouched."""
+        response = self.client.get(reverse("core:toggle_theme"))
+        self.assertEqual(response.status_code, 405)
+        self.assertNotIn("theme", self.client.session)
+
+    def test_global_search_refuses_post(self):
+        """The global search only answers GET."""
+        response = self.client.post(reverse("core:global_search"), {"q": "abc"})
+        self.assertEqual(response.status_code, 405)
+
     def test_toggle_without_referer_goes_home(self):
         """Without referer the redirect goes to the site root."""
-        response = self.client.get(reverse("core:toggle_theme"))
+        response = self.client.post(reverse("core:toggle_theme"))
         self.assertEqual(response["Location"], "/")
 
     def test_htmx_toggle_asks_for_a_refresh(self):
         """An HTMX request gets ``HX-Refresh`` instead of a redirect."""
-        response = self.client.get(reverse("core:toggle_theme"), HTTP_HX_REQUEST="true")
+        response = self.client.post(
+            reverse("core:toggle_theme"), HTTP_HX_REQUEST="true"
+        )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["HX-Refresh"], "true")
         self.assertEqual(self.client.session["theme"], "light")

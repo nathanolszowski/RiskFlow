@@ -7,7 +7,8 @@ from django.db.models import Q
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
-from django.views.decorators.http import require_GET
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.http import require_GET, require_POST
 from django_htmx.middleware import HtmxDetails
 from inspections.models import InspectionFolder
 
@@ -65,6 +66,7 @@ def session_ping(request: HttpRequest) -> HttpResponse:
     return HttpResponse(status=204)
 
 
+@require_POST
 def toggle_theme(request: HttpRequest) -> HttpResponse:
     """Switch the theme stored in the session between dark and light.
 
@@ -83,10 +85,16 @@ def toggle_theme(request: HttpRequest) -> HttpResponse:
         response["HX-Refresh"] = "true"
         return response
 
-    return redirect(request.META.get("HTTP_REFERER", "/"))
+    referer = request.META.get("HTTP_REFERER", "")
+    if not url_has_allowed_host_and_scheme(
+        referer, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        referer = "/"
+    return redirect(referer)
 
 
 @htmx_login_required
+@require_GET
 def global_search(request: HttpRequest) -> HttpResponse:
     """Search folders, companies and contacts matching the ``q`` GET parameter.
 
