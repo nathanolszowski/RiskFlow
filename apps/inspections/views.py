@@ -3,14 +3,15 @@
 from typing import Any
 
 from core.decorators import htmx_login_required, logged_user
-from core.modals import delete_confirm_modal
-from core.services import delete_archived_instance
+from core.http import filter_params
+from core.modals import confirm_modal, delete_confirm_modal
+from core.services import delete_archived_instance, update_tracked_form
 from core.services.directory import (
     get_companies_with_folders,
     get_company_by_id,
     get_company_or_none,
 )
-from core.services.geo import certify_address
+from core.text import agree, plural
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse
@@ -20,10 +21,13 @@ from django.utils import timezone
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from inspections.services.inspectionfolder import (
-    create_tracked_instance,
+    create_folder as create_folder_service,
+)
+from inspections.services.inspectionfolder import (
     get_company_folders,
     get_filtered_folders,
     get_inspection_folder_by_id,
+    update_folder,
 )
 from inspections.services.recommandation import get_recommandation_by_id
 from inspections.services.travel import (
@@ -54,6 +58,24 @@ from .models import InspectionFolder
 # ==========================================
 
 
+def _folders(request: HttpRequest) -> Any:
+    """Return the folders of the user filtered by the request (GET, then POST).
+
+    Args:
+        request: Current request, with the ``q``, ``phase``, ``status``, ``company``
+            and ``sort`` filters.
+
+    Returns:
+        The filtered folders.
+    """
+    return get_filtered_folders(
+        logged_user(request),
+        **filter_params(
+            request, "q", "phase", "status", "company", "sort", include_post=True
+        ),
+    )
+
+
 @htmx_login_required
 @require_GET
 def folder_list(request: HttpRequest) -> HttpResponse:
@@ -67,7 +89,7 @@ def folder_list(request: HttpRequest) -> HttpResponse:
         The full page, first page of the filtered list.
     """
     companies = get_companies_with_folders(logged_user(request))
-    folders = get_filtered_folders(request)
+    folders = _folders(request)
 
     paginator = Paginator(folders, 15)
     page_obj = paginator.get_page(1)
@@ -147,7 +169,7 @@ def folder_list_paginated(request: HttpRequest, page: int = 1) -> HttpResponse:
     Returns:
         The grid partial.
     """
-    folders = get_filtered_folders(request)
+    folders = _folders(request)
 
     paginator = Paginator(folders, 15)
     page_obj = paginator.get_page(page)
@@ -214,7 +236,7 @@ def create_folder(request: HttpRequest) -> HttpResponse:
         form = InspectionFolderForm(request.POST, company=selected_company)
 
         if form.is_valid():
-            create_tracked_instance(form, logged_user(request))
+            create_folder_service(form, logged_user(request))
 
             # From company
             if selected_company:
@@ -223,7 +245,7 @@ def create_folder(request: HttpRequest) -> HttpResponse:
                 return response
 
             # From folders list
-            folders = get_filtered_folders(request)
+            folders = _folders(request)
             paginator = Paginator(folders, 15)
             page_obj = paginator.get_page(1)
 
@@ -281,10 +303,7 @@ def folder_inline_update(request: HttpRequest, pk: int) -> HttpResponse:
     if request.method == "POST":
         form = InspectionFolderUpdateForm(request.POST, instance=folder)
         if form.is_valid():
-            folder = form.save(commit=False)
-            folder.updated_by = logged_user(request)
-            folder.save()
-            certify_address(folder)
+            folder = update_folder(form, logged_user(request))
             return render(
                 request,
                 "inspections/partials/folder/folder_read.html",
@@ -347,27 +366,23 @@ def folder_archive(request: HttpRequest, folder_id: int) -> HttpResponse:
         visits = folder.visits.filter(is_active=True).count()
         recs = folder.recommandations.filter(is_active=True).count()
         medias = folder.medias.filter(is_active=True).count()
-        items = [
-            f"{visits} visite{'s' if visits > 1 else ''}",
-            f"{recs} recommandation{'s' if recs > 1 else ''}",
-            f"{medias} média{'s' if medias > 1 else ''}",
-        ]
-        return render(
+        return confirm_modal(
             request,
-            "core/partials/modal/archive_confirm_modal.html",
-            {
-                "title": "Archiver ce dossier ?",
-                "object_label": folder.reference,
-                "post_url": reverse("inspections:folder_archive", args=[folder.pk]),
-                "sections": [
-                    {
-                        "warning": True,
-                        "title": "Tous les éléments liés à ce dossier seront archivés :",
-                        "entries": items,
-                        "note": "Le client et le contact référent ne sont pas archivés. Au désarchivage du dossier, ces éléments seront réactivés (sauf ceux archivés séparément auparavant).",
-                    }
-                ],
-            },
+            title="Archiver ce dossier ?",
+            label=folder.reference,
+            post_url=reverse("inspections:folder_archive", args=[folder.pk]),
+            sections=[
+                {
+                    "warning": True,
+                    "title": "Tous les éléments liés à ce dossier seront archivés :",
+                    "entries": [
+                        plural(visits, "visite"),
+                        plural(recs, "recommandation"),
+                        plural(medias, "média"),
+                    ],
+                    "note": "Le client et le contact référent ne sont pas archivés. Au désarchivage du dossier, ces éléments seront réactivés (sauf ceux archivés séparément auparavant).",
+                }
+            ],
         )
 
     folder.archive(user=logged_user(request))
@@ -419,8 +434,8 @@ def _kept_medias_entries(obj: Any) -> list[str]:
     if not count:
         return []
     return [
-        f"{count} média{'s' if count > 1 else ''} rattaché{'s' if count > 1 else ''} "
-        "conservé" + ("s" if count > 1 else "") + " dans le dossier"
+        f"{plural(count, 'média')} {agree(count, 'rattaché')} "
+        f"{agree(count, 'conservé')} dans le dossier"
     ]
 
 
@@ -457,9 +472,9 @@ def folder_delete(request: HttpRequest, folder_id: int) -> HttpResponse:
                     "warning": True,
                     "title": "Seront supprimés avec ce dossier :",
                     "entries": [
-                        f"{visits} visite{'s' if visits > 1 else ''}",
-                        f"{recs} recommandation{'s' if recs > 1 else ''}",
-                        f"{medias} média{'s' if medias > 1 else ''} (fichiers supprimés du stockage)",
+                        plural(visits, "visite"),
+                        plural(recs, "recommandation"),
+                        f"{plural(medias, 'média')} (fichiers supprimés du stockage)",
                     ],
                     "note": "Le client et le contact référent sont conservés. Cette action est irréversible.",
                 }
@@ -573,9 +588,7 @@ def visit_update(request: HttpRequest, pk: int) -> HttpResponse:
     if request.method == "POST":
         form = VisitInstanceUpdateForm(request.POST, instance=visit)
         if form.is_valid():
-            visit = form.save(commit=False)
-            visit.updated_by = logged_user(request)
-            visit.save()
+            visit = update_tracked_form(form, logged_user(request))
             response = _render_visit_tab(request, visit.folder)
             response["HX-Trigger"] = "closeModal"
             return response
@@ -752,9 +765,7 @@ def recommandation_inline_update(request: HttpRequest, pk: int) -> HttpResponse:
     if request.method == "POST":
         form = RecommandationUpdateForm(request.POST, instance=rec)
         if form.is_valid():
-            rec = form.save(commit=False)
-            rec.updated_by = logged_user(request)
-            rec.save()
+            rec = update_tracked_form(form, logged_user(request))
             return render(
                 request,
                 "inspections/partials/recommandation/recommandation_read.html",

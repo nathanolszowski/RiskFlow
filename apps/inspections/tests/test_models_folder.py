@@ -14,7 +14,7 @@ from core.tests.helpers import MixinBase
 from crm.tests.factories import CompanyFactory, ContactFactory
 from django.core.exceptions import ValidationError
 from django.http import Http404
-from django.test import RequestFactory, TestCase
+from django.test import TestCase
 from django.utils import timezone
 from medias.models import Media
 from medias.tests.factories import MediaFactory
@@ -322,69 +322,54 @@ class FolderServicesTests(TestCase):
         )
         cls.theirs = InspectionFolderFactory(created_by=cls.other)
 
-    def request(self, **params):
-        """Build a GET request of ``me`` with the given parameters.
-
-        Args:
-            **params: Query string parameters.
-
-        Returns:
-            The request.
-        """
-        request = RequestFactory().get("/dossiers/", params)
-        request.user = self.me
-        return request
-
     def test_filtered_folders_only_returns_the_user_folders(self):
         """The folders of other users never appear."""
-        folders = set(get_filtered_folders(self.request()))
+        folders = set(get_filtered_folders(self.me))
         self.assertEqual(folders, {self.mine, self.mine_archived})
 
     def test_filtered_folders_by_query(self):
         """The search matches the reference and the company name."""
         self.assertEqual(
-            set(get_filtered_folders(self.request(q="acme"))),
+            set(get_filtered_folders(self.me, q="acme")),
             {self.mine, self.mine_archived},
         )
         self.assertEqual(
-            list(get_filtered_folders(self.request(q=self.mine.reference))), [self.mine]
+            list(get_filtered_folders(self.me, q=self.mine.reference)), [self.mine]
         )
-        self.assertFalse(get_filtered_folders(self.request(q="zzz-none")).exists())
+        self.assertFalse(get_filtered_folders(self.me, q="zzz-none").exists())
 
     def test_filtered_folders_by_status(self):
         """``active`` and ``archived`` split the folders."""
         self.assertEqual(
-            list(get_filtered_folders(self.request(status="active"))), [self.mine]
+            list(get_filtered_folders(self.me, status="active")), [self.mine]
         )
         self.assertEqual(
-            list(get_filtered_folders(self.request(status="archived"))),
+            list(get_filtered_folders(self.me, status="archived")),
             [self.mine_archived],
         )
 
     def test_filtered_folders_by_phase_and_company(self):
         """The phase and the company filters apply."""
         self.assertEqual(
-            list(get_filtered_folders(self.request(phase="REPORT"))),
+            list(get_filtered_folders(self.me, phase="REPORT")),
             [self.mine_archived],
         )
         other_company = CompanyFactory(created_by=self.me)
         self.assertFalse(
-            get_filtered_folders(self.request(company=other_company.pk)).exists()
+            get_filtered_folders(self.me, company=other_company.pk).exists()
         )
-        self.assertEqual(
-            len(get_filtered_folders(self.request(company=self.company.pk))), 2
-        )
+        self.assertEqual(len(get_filtered_folders(self.me, company=self.company.pk)), 2)
 
     def test_filtered_folders_sort_whitelist(self):
         """An allowed sort is applied, any other value falls back to ``-updated_at``."""
-        by_reference = get_filtered_folders(self.request(sort="reference"))
+        by_reference = get_filtered_folders(self.me, sort="reference")
         self.assertEqual(
             [f.reference for f in by_reference],
             sorted([self.mine.reference, self.mine_archived.reference]),
         )
         for bad in ("created_by__password", "pk; DROP TABLE", ""):
             with self.subTest(sort=bad):
-                qs = get_filtered_folders(self.request(sort=bad))
+                qs = get_filtered_folders(self.me, sort=bad)
                 self.assertEqual(list(qs.query.order_by), ["-updated_at"])
 
     def test_get_inspection_folder_by_id(self):

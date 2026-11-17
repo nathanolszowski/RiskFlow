@@ -2,10 +2,9 @@
 
 from typing import TYPE_CHECKING
 
+from core.services import create_tracked_instance, update_tracked_form
 from core.services.geo import certify_address
 from django.db.models import Q, QuerySet
-from django.forms import ModelForm
-from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 
 from inspections.models import InspectionFolder
@@ -13,6 +12,8 @@ from inspections.models import InspectionFolder
 if TYPE_CHECKING:
     from accounts.models import CustomUser
     from django.db.models import Model
+
+    from inspections.forms import InspectionFolderForm, InspectionFolderUpdateForm
 
 
 def get_inspection_folders_by_user(user: "CustomUser") -> QuerySet:
@@ -45,60 +46,48 @@ def get_company_folders(company: "Model", user: "CustomUser") -> QuerySet:
     ).order_by("-created_at")
 
 
-def _filter_param(request: HttpRequest, name: str) -> str:
-    """Return a filter of the folders list, read from GET then POST, without spaces.
+def get_filtered_folders(
+    user: "CustomUser",
+    *,
+    q: str = "",
+    phase: str = "",
+    status: str = "",
+    company: str = "",
+    sort: str = "",
+) -> QuerySet:
+    """Return the folders of the user, filtered and sorted.
 
     Args:
-        request: Current request.
-        name: Name of the parameter.
-
-    Returns:
-        The stripped value, empty when the parameter is missing.
-    """
-    return (request.GET.get(name) or request.POST.get(name) or "").strip()
-
-
-def get_filtered_folders(request: HttpRequest) -> QuerySet:
-    """Return the folders of the logged-in user, filtered and sorted by the request.
-
-    Args:
-        request: Current request. Reads, from GET or POST, ``q`` (search on
-            reference and company name), ``phase``, ``status`` (``active`` or
-            ``archived``), ``company`` (company id, ignored if not a number) and
-            ``sort`` (``-updated_at``, ``-created_at``, ``reference`` or
-            ``company__name``, anything else falls back to ``-updated_at``).
+        user: Owner of the folders: the folders of the others never appear.
+        q: Search on reference and company name.
+        phase: Phase of the folders (``InspectionFolder.Phase``), all if empty.
+        status: ``active`` or ``archived``, all for any other value.
+        company: Company id, ignored if not a number.
+        sort: ``-updated_at`` (default), ``-created_at``, ``reference`` or
+            ``company__name``; anything else falls back to ``-updated_at``.
 
     Returns:
         The filtered and sorted folders.
     """
-    folders = InspectionFolder.objects.filter(created_by=request.user)
+    q, phase, status = q.strip(), phase.strip(), status.strip()
+    company = str(company).strip()
 
-    query = _filter_param(request, "q")
-    if query:
+    folders = InspectionFolder.objects.filter(created_by=user)
+    if q:
         folders = folders.filter(
-            Q(reference__icontains=query) | Q(company__name__icontains=query)
+            Q(reference__icontains=q) | Q(company__name__icontains=q)
         )
-
-    phase = _filter_param(request, "phase")
     if phase:
         folders = folders.filter(current_phase=phase)
-
-    status = _filter_param(request, "status")
     if status == "active":
         folders = folders.filter(is_active=True)
     elif status == "archived":
         folders = folders.filter(is_active=False)
+    if company.isdigit():
+        folders = folders.filter(company_id=company)
 
-    company_id = _filter_param(request, "company")
-    if company_id.isdigit():
-        folders = folders.filter(company_id=company_id)
-
-    sort_by = _filter_param(request, "sort")
     allowed_sorts = ["-updated_at", "-created_at", "reference", "company__name"]
-    if sort_by not in allowed_sorts:
-        sort_by = "-updated_at"
-
-    return folders.order_by(sort_by)
+    return folders.order_by(sort if sort in allowed_sorts else "-updated_at")
 
 
 def get_inspection_folder_by_id(pk: int, user: "CustomUser") -> InspectionFolder:
@@ -123,24 +112,33 @@ def get_inspection_folder_by_id(pk: int, user: "CustomUser") -> InspectionFolder
     )
 
 
-def create_tracked_instance(form: ModelForm, user: "CustomUser") -> InspectionFolder:
-    """Save a model form, setting ``created_by`` if it is empty.
-
-    Unlike ``core.services.create_tracked_instance``, it also saves the
-    many-to-many data and keeps an existing ``created_by``.
+def create_folder(form: "InspectionFolderForm", user: "CustomUser") -> InspectionFolder:
+    """Create a folder of the user from a valid form and certify the site address.
 
     Args:
-        form: Valid model form.
-        user: User recorded as ``created_by`` when the instance has none.
+        form: Valid creation form.
+        user: User creating the folder, who becomes its owner.
 
     Returns:
-        The saved instance.
+        The folder.
     """
-    instance = form.save(commit=False)
-    # Test the id: reading an unset ``created_by`` raises instead of returning None
-    if not instance.created_by_id:
-        instance.created_by = user
-    instance.save()
-    form.save_m2m()
-    certify_address(instance)
-    return instance
+    folder = create_tracked_instance(form, user)
+    certify_address(folder)
+    return folder
+
+
+def update_folder(
+    form: "InspectionFolderUpdateForm", user: "CustomUser"
+) -> InspectionFolder:
+    """Save a valid edit form of a folder and certify the site address again if needed.
+
+    Args:
+        form: Valid edit form.
+        user: User editing the folder.
+
+    Returns:
+        The folder.
+    """
+    folder = update_tracked_form(form, user)
+    certify_address(folder)
+    return folder

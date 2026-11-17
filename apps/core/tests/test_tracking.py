@@ -1,7 +1,7 @@
 """Tests for ``TrackingModel`` and the generic tracked-instance helpers.
 
 Covers ``core/models.py``, ``core/services/__init__.py`` and
-``inspections/services/inspectionfolder.py::create_tracked_instance``. ``Contact``
+``inspections/services/inspectionfolder.py::create_folder``. ``Contact``
 is the model used for the generic behaviour: it has no cascade of its own.
 """
 
@@ -197,7 +197,7 @@ class TrackedInstanceHelpersTests(TestCase):
 
 
 class FolderCreateTrackedInstanceTests(TestCase):
-    """``inspections.services.inspectionfolder.create_tracked_instance``."""
+    """``inspections.services.inspectionfolder.create_folder``."""
 
     def setUp(self):
         """Create a company with a contact and two users."""
@@ -210,17 +210,17 @@ class FolderCreateTrackedInstanceTests(TestCase):
         """Without ``created_by`` on the instance, the given user is recorded."""
         form = FolderForm(self.data)
         self.assertTrue(form.is_valid(), form.errors)
-        folder = folder_services.create_tracked_instance(form, self.user)
+        folder = folder_services.create_folder(form, self.user)
         self.assertEqual(folder.created_by, self.user)
         self.assertTrue(folder.reference.startswith("DOS-"))
 
-    def test_keeps_an_existing_created_by(self):
-        """An instance that already has a creator keeps it."""
+    def test_owner_is_always_the_given_user(self):
+        """A creator set beforehand on the instance is replaced by the user."""
         form = FolderForm(self.data)
         self.assertTrue(form.is_valid(), form.errors)
         form.instance.created_by = self.company.created_by
-        folder = folder_services.create_tracked_instance(form, self.user)
-        self.assertEqual(folder.created_by, self.company.created_by)
+        folder = folder_services.create_folder(form, self.user)
+        self.assertEqual((folder.created_by, folder.updated_by), (self.user, self.user))
 
     def test_contact_of_another_company_is_refused(self):
         """The form rejects a contact of another client (``InspectionFolder.clean``)."""

@@ -3,6 +3,8 @@
 from typing import Any, Optional
 
 from core.decorators import htmx_login_required, logged_user
+from core.modals import confirm_modal, delete_confirm_modal
+from core.text import agree, plural
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
@@ -453,21 +455,18 @@ def template_toggle_share(request: HttpRequest, pk: int) -> HttpResponse:
 def _template_modal(
     request: HttpRequest, template: VisitTemplate, **extra: Any
 ) -> HttpResponse:
-    """Render the generic confirmation modal for a template action.
+    """Render the archiving confirmation modal of a template, in the drawer.
 
     Args:
         request: Current request.
         template: Template concerned.
-        **extra: Context of the modal (``title``, ``post_url``, ``sections``...).
+        **extra: Arguments of ``confirm_modal`` (``title``, ``post_url``, ``sections``).
     """
-    return render(
+    return confirm_modal(
         request,
-        "core/partials/modal/archive_confirm_modal.html",
-        {
-            "object_label": template.name,
-            "post_target": "#template-drawer-content",
-            **extra,
-        },
+        label=template.name,
+        post_target="#template-drawer-content",
+        **extra,
     )
 
 
@@ -552,36 +551,25 @@ def template_delete(request: HttpRequest, pk: int) -> HttpResponse:
 
     if request.method == "GET":
         used = template.instances.count()
-        blocking = None
-        if template.is_active:
-            blocking = {
-                "title": "Suppression impossible : ce template n'est pas archivé.",
-                "note": "Archivez-le d'abord, puis supprimez-le.",
-            }
-        return render(
+        return delete_confirm_modal(
             request,
-            "core/partials/modal/archive_confirm_modal.html",
-            {
-                "title": "Supprimer définitivement ce template ?",
-                "object_label": template.name,
-                "action_verb": "supprimer définitivement",
-                "confirm_label": "Supprimer définitivement",
-                "danger": True,
-                "post_url": reverse("inspections:template_delete", args=[template.pk])
-                + _folder_query(request),
-                "post_target": "#template-drawer-content",
-                "blocking": blocking,
-                "sections": [
-                    {
-                        "warning": True,
-                        "title": "Cette action est irréversible.",
-                        "note": (
-                            f"{used} visite{'s' if used > 1 else ''} créée{'s' if used > 1 else ''} depuis ce template "
-                            f"garde{'nt' if used > 1 else ''} son formulaire et le nom du template."
-                        ),
-                    }
-                ],
-            },
+            template,
+            title="Supprimer définitivement ce template ?",
+            label=template.name,
+            post_url=reverse("inspections:template_delete", args=[template.pk])
+            + _folder_query(request),
+            post_target="#template-drawer-content",
+            sections=[
+                {
+                    "warning": True,
+                    "title": "Cette action est irréversible.",
+                    "note": (
+                        f"{plural(used, 'visite')} {agree(used, 'créée')} depuis ce "
+                        f"template {agree(used, 'garde', 'gardent')} son formulaire "
+                        "et le nom du template."
+                    ),
+                }
+            ],
         )
 
     if template.is_active:
