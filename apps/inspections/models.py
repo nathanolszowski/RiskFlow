@@ -235,11 +235,9 @@ class InspectionFolder(TrackingModel, AddressMixin):
         """
         year = timezone.now().year
         while True:
-            # Code aléatoire de 6 caractères hexadécimaux
             random_code = uuid.uuid4().hex[:6].upper()
             ref = f"DOS-{year}-{random_code}"
 
-            # On vérifie si la référence existe déjà en BDD
             if not InspectionFolder.objects.filter(reference=ref).exists():
                 return ref
 

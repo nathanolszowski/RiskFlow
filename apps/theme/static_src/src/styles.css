@@ -172,7 +172,7 @@
   --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  /* Colors mapping pour classes utilitaires (ex: bg-app, text-body, border-default) */
+  /* Colors exposed as utility classes (e.g. bg-app-bg, text-text-body, border-border-default) */
   --color-app-bg: var(--bg-app);
   --color-surface-primary: var(--bg-surface-primary);
   --color-surface-secondary: var(--bg-surface-secondary);
@@ -248,7 +248,6 @@ body {
 @layer components {
   /* Input standard / Select / Textarea */
   .form-input {
-    /* Remplacer placeholder-text-faded par placeholder:text-text-faded */
     @apply w-full rounded-lg border border-border-default bg-surface-secondary p-2.5 
            text-sm text-text-main placeholder:text-text-faded 
            focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary 
