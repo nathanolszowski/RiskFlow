@@ -29,13 +29,13 @@ RiskFlow vise à rassembler ce flux de travail, aujourd'hui éclaté entre table
 - **CRM** : clients et contacts, avec pré-remplissage d'un client à partir de son SIRET via l'**API Sirene de l'INSEE** (forme juridique, activité NAF 2025, siège social). Une alerte signale un établissement fermé ou une entreprise cessée, et un bouton « Actualiser (Sirene) » compare la fiche aux données de l'API et applique, champ par champ, ce que l'utilisateur accepte.
 - **Adresses certifiées** : autocomplétion et géocodage par la **Géoplateforme IGN** (sans clé), position sur une carte, et temps de trajet en voiture depuis le domicile de l'inspecteur (ou un autre point de départ) jusqu'au site, mémorisé et recalculé seulement à la demande.
 - **Dossiers d'inspection** : création, suivi de l'avancement par phase, référence générée automatiquement (`DOS-<année>-<hex>`), filtres, tri et pagination.
-- **Visites dynamiques** : les modèles de visite sont décrits en JSON (sections et champs `boolean`, `text`, `select`, `number`), leur structure est validée avec **Pydantic**, et chaque visite d'un dossier travaille sur sa propre copie du modèle. Les réponses sont validées et enregistrées à la volée, champ par champ, y compris après une coupure réseau.
-- **Recommandations de prévention** rattachées à un dossier.
+- **Visites dynamiques** : les modèles de visite sont décrits en JSON (sections et champs `boolean`, `text`, `select`, `number`), leur structure est validée avec **Pydantic**, et chaque visite d'un dossier travaille sur sa propre copie du modèle. Les réponses sont validées et enregistrées à la volée, champ par champ, y compris après une coupure réseau. Les modèles se créent et se modifient dans un éditeur intégré (panneau latéral), peuvent être partagés avec les autres inspecteurs, et une visite s'exporte en PDF vierge à remplir à la main.
+- **Recommandations de prévention** rattachées à un dossier : création depuis l'onglet du dossier (sujet, description, priorité, date limite, notes), puis suivi et modification en ligne.
 - **Médias** : photos, PDF, Excel, Word, PowerPoint et vidéos rattachés à un dossier, une visite ou une recommandation, à toutes les étapes de la mission. Images compressées avec Pillow (miniature, EXIF conservé : date, GPS, appareil), tags libres par utilisateur, limites de taille par type, quota approximatif par dossier avec barre de remplissage, fichiers privés servis uniquement à leur propriétaire. Voir [Gestion des médias](#gestion-des-médias-développement-et-production).
 - **Archivage (soft delete) et suppression définitive** de tous les objets métier, avec cascades (dossier → visites, recommandations et médias, client → contacts), popups de confirmation et règles de protection (on n'efface qu'un objet préalablement archivé).
 - **Traçabilité** : date et auteur de la création, de la dernière modification et de l'archivage.
 - **Tests automatisés et CI** : suite de tests Django (factory_boy, API Sirene simulée) et workflow GitHub Actions. Voir [Tests](#tests).
-- **Tableau de bord**, **recherche globale** et **thème clair / sombre**.
+- **Tableau de bord** (les prochaines visites mènent directement à l'onglet Visites du dossier), **recherche globale** et **thème clair / sombre**.
 
 ### Prévues
 
@@ -50,7 +50,7 @@ RiskFlow vise à rassembler ce flux de travail, aujourd'hui éclaté entre table
 | Base de données | PostgreSQL (via `psycopg` 3), `JSONField` pour les formulaires dynamiques |
 | Front-end | Templates Django, HTMX (`django-htmx`), Tailwind CSS v4 (`django-tailwind`, binaire standalone, sans npm) |
 | Validation | Pydantic 2 |
-| Fichiers | Système de fichiers local (`MEDIA_ROOT`), Pillow pour les images |
+| Fichiers | Système de fichiers local (`MEDIA_ROOT`), Pillow pour les images, WeasyPrint pour les PDF |
 | Intégrations | API Sirene (INSEE), référentiel de nomenclatures `id.insee.fr` (libellés NAF 2025), Géoplateforme IGN (géocodage, itinéraires, fond de carte), sans clé |
 | Déploiement | Docker Compose (Django + gunicorn + WhiteNoise, PostgreSQL), un seul PC, accès local uniquement |
 | Outillage | `uv` |
@@ -82,6 +82,7 @@ Quelques principes :
 
 - Python 3.12 et [uv](https://docs.astral.sh/uv/)
 - PostgreSQL
+- Pango, nécessaire à WeasyPrint pour l'export PDF (déjà installé dans l'image Docker ; sous Debian, Ubuntu ou WSL : `sudo apt install libpango-1.0-0 libpangoft2-1.0-0`)
 - Une clé d'API Sirene, à obtenir sur le [portail des API de l'INSEE](https://portail-api.insee.fr/) (facultative, seulement pour le pré-remplissage par SIRET)
 
 ### Mise en route
@@ -111,7 +112,7 @@ uv run python manage.py createsuperuser
 uv run python manage.py tailwind dev
 ```
 
-`tailwind dev` lance à la fois le serveur Django et le watcher Tailwind. L'application est alors accessible sur <http://127.0.0.1:8000/auth/login/>. Les modèles de visite se créent depuis l'administration Django (`/admin/`).
+`tailwind dev` lance à la fois le serveur Django et le watcher Tailwind. L'application est alors accessible sur <http://127.0.0.1:8000/auth/login/>. Les modèles de visite se créent depuis l'onglet Visites d'un dossier, bouton « Templates de visite » (éditeur en panneau latéral).
 
 ### Gestion des médias
 

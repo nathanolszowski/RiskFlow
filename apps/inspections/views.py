@@ -216,7 +216,7 @@ def folder_detail(request: HttpRequest, pk: int) -> HttpResponse:
         "folder": folder,
         "travel_stale": is_travel_estimate_stale(folder, logged_user(request)),
         "company_folders": get_company_folders(folder.company, logged_user(request)),
-        # Lets the visit form send the inspector back to the visits tab (?tab=visit)
+        # Opens the visits tab (?tab=visit): back from the visit form, or from the dashboard
         "initial_tab": request.GET.get("tab"),
     }
     return render(request, "inspections/folder_detail.html", context)

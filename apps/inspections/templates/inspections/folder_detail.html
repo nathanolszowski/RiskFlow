@@ -206,7 +206,7 @@
 
 <script>
   // The tabs do not update the URL. The open tab is kept for the page reload (HX-Refresh of the theme toggle, archive...),
-  // and ?tab=visit (coming back from the visit form) opens the visits tab.
+  // and ?tab=visit (coming back from the visit form, or from the upcoming visits of the dashboard) opens the visits tab.
   document.addEventListener('DOMContentLoaded', function () {
     var key = 'folder-{{ folder.id }}-tab';
     var overviewUrl = "{% url 'inspections:folder_tab_overview' folder.id %}";
