@@ -576,6 +576,19 @@ class CompanyListTests(CrmViewTestCase):
         ):
             self.assertEqual(list(response.context["companies"]), [target])
 
+    def test_status_select_shows_the_applied_filter(self):
+        """The status menu shows "Tous les clients" when ``status=`` lists them all."""
+        response = self.client.get(self.list_url, {"status": ""})
+        self.assertContains(
+            response, '<option value="" selected>Tous les clients</option>', html=True
+        )
+        response = self.client.get(self.list_url)
+        self.assertContains(
+            response,
+            '<option value="active" selected>Actives uniquement</option>',
+            html=True,
+        )
+
     def test_sort_outside_the_whitelist_is_ignored(self):
         """An unknown sort falls back to the name order, as the database sorts it."""
         response = self.client.get(self.list_url, {"sort": "created_by__password"})
