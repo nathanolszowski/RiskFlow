@@ -406,3 +406,9 @@ class FolderListTests(FolderViewTestCase):
         CompanyFactory(name="Sans dossier")
         response = self.client.get(self.list_url)
         self.assertEqual(list(response.context["companies"]), [self.company])
+
+    def test_invalid_company_filter_is_ignored(self):
+        """A company id that is not a number is ignored instead of failing with a 500."""
+        response = self.client.get(self.list_url, {"company": "abc"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["page_obj"].paginator.count, 16)

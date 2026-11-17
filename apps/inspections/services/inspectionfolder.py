@@ -51,9 +51,9 @@ def get_filtered_folders(request: HttpRequest) -> QuerySet:
     Args:
         request: Current request. Reads, from GET or POST, ``q`` (search on
             reference and company name), ``phase``, ``status`` (``active`` or
-            ``archived``), ``company`` (company id) and ``sort`` (``-updated_at``,
-            ``-created_at``, ``reference`` or ``company__name``, anything else
-            falls back to ``-updated_at``).
+            ``archived``), ``company`` (company id, ignored if not a number) and
+            ``sort`` (``-updated_at``, ``-created_at``, ``reference`` or
+            ``company__name``, anything else falls back to ``-updated_at``).
 
     Returns:
         The filtered and sorted folders.
@@ -82,7 +82,7 @@ def get_filtered_folders(request: HttpRequest) -> QuerySet:
 
     # Filtre par client
     company_id = request.GET.get("company") or request.POST.get("company", "").strip()
-    if company_id:
+    if company_id and company_id.isdigit():
         folders = folders.filter(company_id=company_id)
 
     # Sort results
