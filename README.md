@@ -132,7 +132,7 @@ Les fichiers sont écrits dans `folders/<id du dossier>/` sous un nom aléatoire
 | `MEDIA_MAX_IMAGE_MB` | 25 | Image reçue (avant compression) |
 | `MEDIA_MAX_PDF_MB` | 25 | PDF |
 | `MEDIA_MAX_OFFICE_MB` | 25 | Excel, Word, PowerPoint |
-| `MEDIA_MAX_VIDEO_MB` | 100 | Vidéo (mp4, mov, webm), stockée telle quelle |
+| `MEDIA_MAX_VIDEO_MB` | 250 | Vidéo (mp4, mov, webm), stockée telle quelle |
 | `MEDIA_FOLDER_QUOTA_MB` | 1024 | Quota approximatif par dossier, médias archivés compris |
 
 Un fichier refusé (format, taille, quota) ouvre un pop-up explicatif ; les images de plus de 50 mégapixels sont refusées. Les formats HEIC ne sont pas acceptés.

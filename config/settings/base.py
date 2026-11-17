@@ -156,7 +156,7 @@ MEDIA_MAX_SIZE_BY_TYPE = {
     "excel": _env_int("MEDIA_MAX_OFFICE_MB", 25),
     "word": _env_int("MEDIA_MAX_OFFICE_MB", 25),
     "powerpoint": _env_int("MEDIA_MAX_OFFICE_MB", 25),
-    "video": _env_int("MEDIA_MAX_VIDEO_MB", 100),
+    "video": _env_int("MEDIA_MAX_VIDEO_MB", 250),
 }
 # Approximate storage quota per inspection folder, in MB
 MEDIA_FOLDER_QUOTA_MB = _env_int("MEDIA_FOLDER_QUOTA_MB", 1024)
