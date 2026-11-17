@@ -4,6 +4,7 @@ from typing import Any
 
 from core.forms import enable_address_autocomplete
 from django import forms
+from django.db.models import Q
 
 from .models import Company, Contact
 
@@ -125,7 +126,8 @@ class ContactForm(forms.ModelForm):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Style the widgets, set the company empty label and the placeholders.
 
-        Every company can be chosen: companies are shared between users.
+        Every active company can be chosen (companies are shared between users), plus
+        the current company of an edited contact even if it is archived.
 
         Args:
             *args: Positional arguments passed to ``ModelForm``.
@@ -139,6 +141,10 @@ class ContactForm(forms.ModelForm):
         company_field = self.fields.get("company")
         if isinstance(company_field, forms.ModelChoiceField):
             company_field.empty_label = "Sélectionnez un client"
+            # Archived companies are not offered, except the current one of the contact
+            company_field.queryset = Company.objects.filter(
+                Q(is_active=True) | Q(pk=self.instance.company_id)
+            ).order_by("name")
         # Placeholders
         placeholders = {
             "first_name": "ex: Jean",

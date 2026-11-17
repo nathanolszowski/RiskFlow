@@ -446,6 +446,26 @@ class CreateContactTests(CrmViewTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["form"].initial, {})
 
+    def test_archived_client_is_not_offered(self):
+        """A contact cannot be created for an archived client, nor from its page."""
+        self.company.archive(self.owner)
+        response = self.htmx_post(self.url, self.data())
+        self.assertEqual(response.status_code, 422)
+        self.assertIn("company", response.context["form"].errors)
+        self.assertEqual(Contact.objects.count(), 0)
+        page = self.client.get(reverse("crm:company_detail", args=[self.company.pk]))
+        self.assertNotContains(page, self.url)
+
+    def test_edited_contact_keeps_its_archived_client(self):
+        """A contact still active on an archived client can be edited without changing client."""
+        contact = ContactFactory(company=self.company)
+        Company.objects.filter(pk=self.company.pk).update(is_active=False)
+        url = reverse("crm:contact_inline_update", args=[contact.pk])
+        response = self.htmx_post(url, self.data(first_name="Grace"))
+        self.assertTemplateUsed(response, "crm/partials/contact/contact_read.html")
+        contact.refresh_from_db()
+        self.assertEqual(contact.first_name, "Grace")
+
     def test_invalid_post_is_422(self):
         """A missing last name re-renders the modal with 422."""
         response = self.htmx_post(self.url, self.data(last_name=""))
