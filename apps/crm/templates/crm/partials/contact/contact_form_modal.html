@@ -16,7 +16,8 @@
 
         <!-- HTMX Form -->
         <form {% if form.instance.pk %} hx-post="{% url 'crm:update_contact' form.instance.pk %}" {% else %}
-            hx-post="{% url 'crm:create_contact' %}" {% endif %} hx-target="#contact-cards-container"
+            hx-post="{% url 'crm:create_contact' %}{% if from_company %}?company={{ from_company }}{% endif %}" {% endif %}
+            hx-target="{% if from_company %}#modal-container{% else %}#contact-cards-container{% endif %}"
             hx-swap="innerHTML" class="space-y-4">
             {% csrf_token %}
 

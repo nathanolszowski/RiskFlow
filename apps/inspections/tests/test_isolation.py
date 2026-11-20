@@ -296,7 +296,7 @@ class CrmSharingTests(HtmxClientMixin, TestCase):
         )
         self.assertNotEqual(folder.pk, self.folder.pk)
         response = self.htmx_post(
-            reverse("crm:create_contact"),
+            f"{reverse('crm:create_contact')}?company={self.company.pk}",
             {
                 "company": self.company.pk,
                 "first_name": "A",

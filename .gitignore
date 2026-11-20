@@ -5,7 +5,6 @@ build/
 dist/
 wheels/
 *.egg-info
-docs/
 # MEDIA_ROOT : racine seulement, partials/media/ doit rester suivi par Git et scanné par Tailwind
 /media/
 CLAUDE.md
