@@ -3,7 +3,7 @@
 from typing import Any
 
 from core.decorators import htmx_login_required, logged_user
-from core.htmx import close_modal, htmx_redirect, htmx_refresh
+from core.htmx import close_modal, htmx_redirect, htmx_refresh, retarget_modal
 from core.http import filter_params
 from core.modals import confirm_modal, delete_confirm_modal
 from core.pagination import paginate
@@ -555,7 +555,9 @@ def create_contact(request: HttpRequest) -> HttpResponse:
         ``HX-Trigger: closeModal``. On an invalid POST, the modal with a 422 status.
     """
     # Retrieve company_id from query parameters (GET) or form submission (POST)
-    company_id = request.GET.get("company") or request.POST.get("company")
+    # (the POST form field "company" is always present, so only the query string
+    # tells that the modal was opened from a company page)
+    company_id = request.GET.get("company")
 
     if request.method == "POST":
         form = ContactForm(request.POST)
@@ -568,11 +570,13 @@ def create_contact(request: HttpRequest) -> HttpResponse:
             # Default behavior for global contact list view
             return close_modal(_render_contact_grid(request))
         else:
-            return render(
-                request,
-                "crm/partials/contact/contact_form_modal.html",
-                {"form": form},
-                status=422,
+            return retarget_modal(
+                render(
+                    request,
+                    "crm/partials/contact/contact_form_modal.html",
+                    {"form": form, "from_company": company_id},
+                    status=422,
+                )
             )
     # Pre-fill company initial data for GET request
     initial_data = {}
@@ -581,7 +585,9 @@ def create_contact(request: HttpRequest) -> HttpResponse:
 
     form = ContactForm(initial=initial_data)
     return render(
-        request, "crm/partials/contact/contact_form_modal.html", {"form": form}
+        request,
+        "crm/partials/contact/contact_form_modal.html",
+        {"form": form, "from_company": company_id},
     )
 
 

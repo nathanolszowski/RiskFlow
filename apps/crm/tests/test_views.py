@@ -489,8 +489,8 @@ class CreateContactTests(CrmViewTestCase):
         self.assertIn("email", response.context["form"].errors)
 
     def test_valid_post_creates_the_contact(self):
-        """A valid POST creates the contact for the user and refreshes the page."""
-        response = self.htmx_post(self.url, self.data())
+        """A valid POST from a company page creates the contact and refreshes it."""
+        response = self.htmx_post(f"{self.url}?company={self.company.pk}", self.data())
         self.assertEqual(response.status_code, 204)
         self.assertEqual(response["HX-Refresh"], "true")
         contact = Contact.objects.get()
